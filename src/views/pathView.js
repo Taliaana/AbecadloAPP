@@ -3,7 +3,7 @@ import { icon } from '../components/icons.js'
 import { lessons, moduleNames } from '../data/lessons.js'
 import { getStudentProgress } from '../storage/studentStorage.js'
 
-const labels = { completed: 'Ukończona', available: 'Dostępna', 'in-progress': 'Rozpoczęta', locked: 'Jeszcze zablokowana', review: 'Do powtórki' }
+const labels = { completed: 'Ukończona', available: 'Dostępna', 'in-progress': 'Rozpoczęta', locked: 'Jeszcze niedostępna', review: 'Do powtórki' }
 
 export function pathView({ student }) {
   const progress = getStudentProgress()

@@ -1,7 +1,7 @@
 export const profiles = [
-  { id: 'zosia', name: 'Zosia', greetingName: 'Zosiu', avatar: 'leaf', color: 'green' },
-  { id: 'antek', name: 'Antek', greetingName: 'Antku', avatar: 'kite', color: 'blue' },
-  { id: 'lena', name: 'Lena', greetingName: 'Leno', avatar: 'sun', color: 'yellow' },
+  { id: 'zosia', name: 'Zosia', greetingName: 'Zosiu', avatar: 'leaf', color: 'green', avatarConfig: { face: 'round', hair: 'bob', hairColor: 'brown', shirtColor: 'green', backgroundColor: 'mint' } },
+  { id: 'antek', name: 'Antek', greetingName: 'Antku', avatar: 'kite', color: 'blue', avatarConfig: { face: 'soft', hair: 'short', hairColor: 'dark', shirtColor: 'blue', backgroundColor: 'sky' } },
+  { id: 'lena', name: 'Lena', greetingName: 'Leno', avatar: 'sun', color: 'yellow', avatarConfig: { face: 'round', hair: 'tufts', hairColor: 'gold', shirtColor: 'yellow', backgroundColor: 'sand' } },
 ]
 
 export const sampleWorks = [

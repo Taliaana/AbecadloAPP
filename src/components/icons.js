@@ -19,6 +19,14 @@ const paths = {
   monitor: '<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M12 16v4m-5 0h10"/>',
   tower: '<rect x="7" y="2" width="10" height="20" rx="2"/><circle cx="12" cy="7" r="1.5"/><path d="M10 17h4"/>',
   headphones: '<path d="M4 14v-3a8 8 0 0 1 16 0v3M4 14h3v6H5a1 1 0 0 1-1-1Zm16 0h-3v6h2a1 1 0 0 0 1-1Z"/>',
+  class: '<path d="M4 20v-2a4 4 0 0 1 4-4h3a4 4 0 0 1 4 4v2"/><circle cx="9.5" cy="7" r="3"/><path d="M15 5.5a3 3 0 0 1 0 5.5m2 3a4 4 0 0 1 3 4v2"/>',
+  review: '<path d="M6 3h12a2 2 0 0 1 2 2v16H4V5a2 2 0 0 1 2-2Z"/><path d="M8 8h8m-8 4h5m-5 4h3"/>',
+  teacher: '<circle cx="12" cy="8" r="4"/><path d="M5 21a7 7 0 0 1 14 0M18 4l3-1v5"/>',
+  download: '<path d="M12 3v12m-4-4 4 4 4-4M4 20h16"/>',
+  print: '<path d="M7 8V3h10v5M7 17H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-3"/><path d="M7 14h10v7H7z"/>',
+  edit: '<path d="m4 20 4-.8L19 8.2 15.8 5 4.8 16Z"/><path d="m14.5 6.3 3.2 3.2"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  eye: '<path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="2.5"/>',
 }
 
 export function icon(name, className = '') {
@@ -26,5 +34,22 @@ export function icon(name, className = '') {
 }
 
 export function avatar(profile, size = 'medium') {
-  return `<span class="avatar avatar--${profile.color} avatar--${size}" aria-hidden="true">${icon(profile.avatar)}</span>`
+  const config = profile.avatarConfig || { face: 'round', hair: 'short', hairColor: 'brown', shirtColor: profile.color || 'green', backgroundColor: profile.color || 'mint' }
+  const allowed = (value, options, fallback) => options.includes(value) ? value : fallback
+  const face = allowed(config.face, ['round', 'soft', 'wide'], 'round')
+  const hair = allowed(config.hair, ['short', 'bob', 'tufts'], 'short')
+  const hairColor = allowed(config.hairColor, ['dark', 'brown', 'gold', 'copper'], 'brown')
+  const shirtColor = allowed(config.shirtColor, ['green', 'blue', 'yellow', 'coral'], 'green')
+  const background = allowed(config.backgroundColor, ['mint', 'sky', 'sand', 'rose'], 'mint')
+  const faceShapes = {
+    round: '<ellipse cx="32" cy="29" rx="15" ry="17"/>',
+    soft: '<path d="M17 24c0-10 6-16 15-16s15 6 15 16c0 12-6 21-15 21s-15-9-15-21Z"/>',
+    wide: '<ellipse cx="32" cy="29" rx="18" ry="15"/>',
+  }
+  const hairShapes = {
+    short: '<path d="M17 25c-1-11 5-18 15-18 9 0 15 6 15 17-5-5-10-7-17-7-5 0-9 3-13 8Z"/>',
+    bob: '<path d="M15 28C13 15 20 6 32 6s19 9 17 22l-5 9-2-14c-6-6-14-7-21 0l-1 14Z"/>',
+    tufts: '<path d="M17 24c0-9 5-16 14-17l2-5 3 6 6-3-1 7c4 3 6 7 6 12-5-5-10-7-15-7s-10 2-15 7Z"/>',
+  }
+  return `<span class="avatar avatar--${size} avatar-bg--${background}" aria-hidden="true"><svg viewBox="0 0 64 64" focusable="false"><path class="avatar-shirt avatar-shirt--${shirtColor}" d="M10 64c1-13 9-20 22-20s21 7 22 20Z"/><g class="avatar-skin avatar-face--${face}">${faceShapes[face]}</g><g class="avatar-hair avatar-hair--${hairColor}">${hairShapes[hair]}</g><circle cx="26" cy="30" r="1.4"/><circle cx="38" cy="30" r="1.4"/><path d="M28 36c2.5 2 5.5 2 8 0" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>`
 }

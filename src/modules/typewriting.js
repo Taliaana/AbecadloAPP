@@ -14,7 +14,7 @@ export function typewritingView({ student, render, navigate }) {
 
   function screen() {
     const currentKey = exercise.sequence[position]
-    const content = `<section class="tool-header"><a class="text-link" href="#/free-work">${icon('back')} Wróć na półkę</a><p class="eyebrow">Typewriting · etap 1</p><h1>F i J</h1><p>Połóż palce wskazujące na klawiszach F i J.</p></section>
+    const content = `<section class="tool-header"><a class="text-link" href="#/workshop">${icon('back')} Wróć do Pracowni</a><p class="eyebrow">Typewriting · etap 1</p><h1>F i J</h1><p>Połóż palce wskazujące na klawiszach F i J.</p></section>
       ${finished ? `<section class="completion-card completion-card--tool"><span class="completion-check">${icon('check')}</span><p class="eyebrow">Ćwiczenie ukończone</p><h2>Dokładność: ${correct}/${attempts}</h2><p>Ćwicz spokojnie. Szybkość przyjdzie później.</p><button class="button button--primary" type="button" data-again>Jeszcze raz</button></section>` : `<section class="typing-card">
         <p class="typing-instruction">Naciśnij</p><div class="target-letter" aria-live="polite">${currentKey.toUpperCase()}</div>
         <div class="typing-sequence" aria-label="Postęp ćwiczenia">${[...exercise.sequence].map((letter, index) => `<span class="${index < position ? 'is-done' : index === position ? 'is-current' : ''}">${index < position ? icon('check') : letter.toUpperCase()}</span>`).join('')}</div>
@@ -23,7 +23,7 @@ export function typewritingView({ student, render, navigate }) {
         <p class="accuracy" aria-live="polite">Dokładność: ${correct}/${attempts || 0}</p>
       </section>`}
       <section class="next-stages"><p class="eyebrow">Kolejne etapy</p>${typingLessons.slice(1).map((item) => `<span>${icon('lock')} ${item.title}</span>`).join('')}</section>`
-    return { html: appLayout(content, student, '/free-work'), mount }
+    return { html: appLayout(content, student, '/workshop'), mount }
   }
 
   function press(key) {
@@ -53,5 +53,5 @@ export function typewritingView({ student, render, navigate }) {
 }
 
 function lockedTool(student) {
-  return { html: appLayout('<section class="empty-state"><h1>To narzędzie jeszcze czeka</h1><p>Ukończ lekcję „Poznaję klawiaturę”.</p><a class="button button--primary" href="#/home">Wróć do domu</a></section>', student, '/free-work') }
+  return { html: appLayout('<section class="empty-state"><h1>To narzędzie jeszcze czeka</h1><p>Ukończ lekcję „Poznaję klawiaturę”.</p><a class="button button--primary" href="#/home">Wróć do domu</a></section>', student, '/workshop') }
 }

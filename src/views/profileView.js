@@ -14,6 +14,7 @@ export function profileView({ navigate }) {
       <div class="profile-grid" aria-label="Profile uczniów">
         ${profiles.map((profile) => `<button class="profile-card" type="button" data-profile="${profile.id}">${avatar(profile, 'large')}<span>${profile.name}</span></button>`).join('')}
       </div>
+      <a class="text-link profile-role-link" href="#/welcome">Zmień rolę</a>
     </main>`,
     mount(root) {
       root.querySelectorAll('[data-profile]').forEach((button) => button.addEventListener('click', () => {
