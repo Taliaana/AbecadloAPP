@@ -11,6 +11,7 @@ import { teacherAssignmentView } from './views/teacher/assignmentView.js'
 import { teacherClassView } from './views/teacher/classView.js'
 import { teacherReviewView } from './views/teacher/reviewView.js'
 import { teacherStudentView } from './views/teacher/studentView.js'
+import { teacherStudentFormView } from './views/teacher/studentFormView.js'
 import { teacherWorkDetailView } from './views/teacher/workDetailView.js'
 import { teacherWorksView } from './views/teacher/worksView.js'
 import { lessonOneView } from './lessons/lessonOne.js'
@@ -53,6 +54,7 @@ export function startApp(root) {
       '/teacher/review': teacherReviewView,
       '/teacher/works': teacherWorksView,
       '/teacher/assignments/new': teacherAssignmentView,
+      '/teacher/students/new': teacherStudentFormView,
     }
     if (staticRoutes[route]) { renderView(staticRoutes[route](context())); return true }
     const studentMatch = route.match(/^\/teacher\/student\/([^/]+)$/)

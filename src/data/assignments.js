@@ -4,6 +4,7 @@ export const initialAssignments = [
     title: 'Cykl życia motyla',
     instruction: 'Przedstaw cykl życia motyla.',
     tool: 'studio',
+    completionType: 'teacher-review',
     studentIds: [],
     wholeClass: true,
     status: 'active',

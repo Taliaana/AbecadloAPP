@@ -40,15 +40,15 @@ export function completionScreen({ final = false, lessonTitle = '', nextLessonId
     return `<section class="completion-card completion-card--step" role="status" aria-live="polite">
       <span class="completion-check">${icon('check')}</span><p class="eyebrow">Gotowe</p>
       <h2>Ukończyłeś ten etap.</h2><p>Kliknij Dalej, kiedy jesteś gotowy.</p>
-      <button class="button button--primary" type="button" data-step-continue>Dalej ${icon('arrow')}</button>
+      <button class="button button-primary" type="button" data-step-continue>Dalej ${icon('arrow')}</button>
     </section>`
   }
   return `<section class="completion-card" role="status" aria-live="polite">
     <span class="completion-check">${icon('check')}</span><p class="eyebrow">Lekcja ukończona</p>
     <h2>${lessonTitle} ukończona.</h2><p>${finalMessage || (model.nextLessonId ? 'Następna lekcja jest już dostępna.' : 'Dobra praca. Możesz wrócić do domu.')}</p>
     <div class="completion-actions">
-      <a class="button button--secondary" href="#/home">Wróć do domu</a>
-      ${model.nextLessonId ? `<a class="button button--primary" href="#/lesson/${model.nextLessonId}">Przejdź dalej ${icon('arrow')}</a>` : ''}
+      <a class="button button-secondary" href="#/home">Wróć do domu</a>
+      ${model.nextLessonId ? `<a class="button button-primary" href="#/lesson/${model.nextLessonId}">Przejdź dalej ${icon('arrow')}</a>` : ''}
     </div>
   </section>`
 }

@@ -6,9 +6,9 @@ export function teacherAssignmentView({ navigate }) {
   const students = getAllStudents()
   return {
     html: teacherLayout(`<a class="text-link" href="#/teacher/class">${icon('back')} Wróć do klasy</a><section class="form-card"><p class="eyebrow">Dodatkowe zadanie</p><h1>Nowe zadanie</h1><form data-assignment-form>
-      <label>Tytuł<input name="title" required value="Cykl życia motyla" /></label><label>Polecenie<textarea name="instruction" required>Przedstaw cykl życia motyla.</textarea></label><label>Narzędzie<select name="tool"><option value="studio">Studio</option><option value="typewriting">Typewriting</option><option value="mouse-practice">Ćwicz mysz</option></select></label>
+      <label>Tytuł<input name="title" required value="Cykl życia motyla" /></label><label>Polecenie<textarea name="instruction" required>Przedstaw cykl życia motyla.</textarea></label><label>Narzędzie<select name="tool"><option value="studio">Studio (praca otwarta)</option></select></label>
       <fieldset><legend>Dla kogo?</legend><label class="check-label"><input type="radio" name="audience" value="wholeClass" checked /> Cała klasa</label><label class="check-label"><input type="radio" name="audience" value="selected" /> Wybrani uczniowie</label><div class="student-checks">${students.map((student) => `<label class="check-label"><input type="checkbox" name="studentIds" value="${student.profile.id}" /> ${student.profile.name}</label>`).join('')}</div></fieldset>
-      <label class="check-label"><input type="checkbox" name="addToCourse" /> Dodaj do programu w przyszłości</label><div class="form-actions"><a class="button button--secondary" href="#/teacher/class">Anuluj</a><button class="button button--primary" type="submit">Utwórz zadanie</button></div>
+      <label class="check-label"><input type="checkbox" name="addToCourse" /> Dodaj do programu w przyszłości</label><div class="form-actions"><a class="button button-secondary" href="#/teacher/class">Anuluj</a><button class="button button-primary" type="submit">Utwórz zadanie</button></div>
     </form></section>`, '/teacher/class'),
     mount(root) {
       root.querySelector('[data-assignment-form]').addEventListener('submit', (event) => {

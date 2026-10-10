@@ -10,7 +10,7 @@ export function teacherLoginView({ navigate }) {
         <h1>Wpisz PIN</h1><p>Wersja testowa używa prostego kodu.</p>
         <label class="pin-field"><span>PIN testowy: 1234</span><input type="password" inputmode="numeric" maxlength="4" autocomplete="off" data-pin aria-describedby="pin-error" /></label>
         <p class="form-error" id="pin-error" role="alert"></p>
-        <button class="button button--primary" type="submit">Wejdź do panelu</button>
+        <button class="button button-primary" type="submit">Wejdź do panelu</button>
       </form>
     </main>`,
     mount(root) {

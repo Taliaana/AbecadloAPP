@@ -1,5 +1,5 @@
 import { icon } from '../components/icons.js'
-import { selectRole } from '../storage/studentStorage.js'
+import { clearCurrentStudent, selectRole } from '../storage/studentStorage.js'
 
 export function welcomeView({ navigate }) {
   return {
@@ -11,7 +11,7 @@ export function welcomeView({ navigate }) {
       </div>
     </main>`,
     mount(root) {
-      root.querySelector('[data-role="student"]').addEventListener('click', () => { selectRole('student'); navigate('/profiles') })
+      root.querySelector('[data-role="student"]').addEventListener('click', () => { selectRole('student'); clearCurrentStudent(); navigate('/profiles') })
       root.querySelector('[data-role="teacher"]').addEventListener('click', () => navigate('/teacher-login'))
     },
   }

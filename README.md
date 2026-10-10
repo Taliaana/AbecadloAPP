@@ -13,6 +13,7 @@ Kontrola przed wydaniem:
 
 ```bash
 npm run test:storage
+npm run test:ui
 npm run build
 ```
 
@@ -26,16 +27,26 @@ npm run build
 - `src/modules` – Typewriting oraz swobodne ćwiczenie myszy,
 - `src/styles` – design system i układy responsywne.
 
-Postęp, odblokowane narzędzia, wyniki Typewritingu i portfolio są przechowywane osobno dla każdego profilu. Warstwa storage ma małe API, dzięki czemu można ją później zastąpić klientem backendu bez przepisywania widoków. Schemat v2 automatycznie migruje dane zapisane wcześniej pod kluczem `abecadlo-state-v1` i nie usuwa starego zapisu.
+Postęp, odblokowane narzędzia, wyniki Typewritingu i portfolio są przechowywane osobno dla każdego profilu. Warstwa storage ma małe API, dzięki czemu można ją później zastąpić klientem backendu bez przepisywania widoków. Schemat v3 automatycznie migruje dane zapisane pod kluczami `abecadlo-state-v1` i `abecadlo-state-v2`, zachowuje również profile dodane przez nauczyciela i nie usuwa starych zapisów.
+
+Rekord ucznia zawiera `id`, `className`, daty utworzenia i archiwizacji, profil z avatarem, `progress`, osobny `toolProgress` oraz `works`. `className` pozostaje prostym polem tekstowym, ale jest odseparowane od profilu wizualnego, aby później można je było zastąpić relacją do modelu `Class`.
 
 ## Model produktu
 
 Główna ścieżka lekcji pozostaje sekwencyjna. Pracownia przechowuje poznane narzędzia, ale postęp Typewritingu jest niezależny od numeru lekcji. Dodatkowe zadania nauczyciela również nie zmieniają miejsca ucznia w programie.
 
+Każda lekcja, aktywność, narzędzie i zadanie ma jawny `completionType`:
+
+- `automatic` – aplikacja jednoznacznie sprawdza rezultat,
+- `self-check` – dziecko korzysta ze wzoru lub kontroli błędu i kończy samodzielnie,
+- `teacher-review` – otwarta praca twórcza trafia do pedagogicznego obejrzenia.
+
+Nauczyciel nie zatwierdza ćwiczeń automatycznych ani zadań z samokontrolą. Kolejka „Do obejrzenia” przyjmuje wyłącznie otwarte prace `teacher-review`; nie służy do oceniania i nie zawiera punktów, średnich ani porównań dzieci.
+
 Prace ucznia korzystają ze wspólnego modelu ze statusami:
 
 - `draft` – praca w toku,
-- `waiting-review` – czeka na nauczyciela,
+- `waiting-review` – czeka na obejrzenie,
 - `completed` – zakończona przez nauczyciela,
 - `returned` – zwrócona uczniowi do kontynuowania.
 

@@ -21,7 +21,7 @@ export function avatarView({ student, render, navigate }) {
       <div class="avatar-editor">
         <aside class="avatar-preview"><div aria-live="polite">${avatar(previewProfile, 'xlarge')}</div><strong>${student.profile.name}</strong></aside>
         <div class="avatar-options">${Object.entries(choices).map(([trait, options]) => `<fieldset><legend>${labels[trait]}</legend><div class="option-pills">${options.map(([value, label]) => `<button type="button" class="option-pill ${config[trait] === value ? 'is-selected' : ''}" data-trait="${trait}" data-value="${value}" aria-pressed="${config[trait] === value}">${label}</button>`).join('')}</div></fieldset>`).join('')}
-          <div class="form-actions"><button class="button button--secondary" type="button" data-switch-profile>Zmień profil</button><button class="button button--primary" type="button" data-save-avatar>Zapisz avatar</button></div>
+          <div class="form-actions"><button class="button button-secondary" type="button" data-switch-profile>Zmień profil</button><button class="button button-primary" type="button" data-save-avatar>Zapisz avatar</button></div>
         </div>
       </div>`
     return { html: appLayout(content, { ...student, profile: previewProfile }), mount }

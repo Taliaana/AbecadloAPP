@@ -36,19 +36,26 @@ storage.initializeStorage()
 
 // Migration and backward compatibility.
 const migrated = storage.getStateSnapshot()
-expect(migrated.schemaVersion === 2, 'Migracja powinna ustawić schemaVersion 2.')
+expect(migrated.schemaVersion === 3, 'Migracja powinna ustawić schemaVersion 3.')
 expect(migrated.currentRole === 'student', 'Aktywna uczennica z v1 powinna zachować rolę ucznia.')
 expect(migrated.currentStudentId === 'zosia', 'Migracja powinna zachować aktywny profil.')
 expect(migrated.students.zosia.progress[1] === 'in-progress', 'Migracja powinna zachować postęp lekcji.')
-expect(migrated.students.zosia.unlockedTools.includes('mouse-practice'), 'Migracja powinna zachować narzędzia.')
-expect(migrated.students.zosia.typingResults.fj.correct === 8, 'Migracja powinna zachować niezależny postęp Typewritingu.')
+expect(migrated.students.zosia.toolProgress.unlockedTools.includes('mouse-practice'), 'Migracja powinna zachować narzędzia.')
+expect(migrated.students.zosia.toolProgress.typingResults.fj.correct === 8, 'Migracja powinna zachować niezależny postęp Typewritingu.')
 const legacyWork = storage.getWork('legacy-work')
 expect(legacyWork.status === 'completed' && legacyWork.studentId === 'zosia', 'Stara praca powinna otrzymać nowy model bez utraty danych.')
 expect(legacyWork.data.thumbnail === 'cat', 'Miniatura starej pracy powinna zostać przeniesiona do data.')
 expect(migrated.students.zosia.profile.avatarConfig.face, 'Migracja powinna dodać konfigurację avatara.')
+const migratedCustom = storage.migrateState({
+  schemaVersion: 2,
+  students: { kuba: { profile: { id: 'kuba', name: 'Kuba', className: '1C' }, progress: legacyProgress(), unlockedTools: ['typewriting'], works: [] } },
+})
+expect(migratedCustom.students.kuba.profile.name === 'Kuba', 'Migracja v2 powinna zachować profil dodany poza listą startową.')
+expect(migratedCustom.students.kuba.toolProgress.unlockedTools.includes('typewriting'), 'Migracja v2 powinna przenieść postęp narzędzi własnego profilu.')
 const migratedWorkCount = storage.getStudentWorks('zosia').length
 storage.initializeStorage()
-expect(storage.getStudentWorks('zosia').length === migratedWorkCount, 'Ponowna inicjalizacja v2 nie może duplikować prac ani resetować danych.')
+expect(storage.getStudentWorks('zosia').length === migratedWorkCount, 'Ponowna inicjalizacja v3 nie może duplikować prac ani resetować danych.')
+expect(lessons.every((lesson) => ['automatic', 'self-check', 'teacher-review'].includes(lesson.completionType)), 'Każda lekcja powinna mieć jawny completionType.')
 expect(storage.enterTeacher('0000') === false, 'Niepoprawny PIN nie powinien otwierać panelu nauczyciela.')
 expect(storage.enterTeacher('1234') && storage.getCurrentRole() === 'teacher', 'Testowy PIN powinien otwierać rolę nauczyciela.')
 storage.setCurrentStudent('zosia')
@@ -69,10 +76,10 @@ expect(storage.getStudentById('antek').profile.avatarConfig.hair === 'tufts', 'Z
 expect(storage.getStudentById('zosia').profile.avatarConfig.hair !== 'tufts', 'Avatary uczniów muszą być niezależne.')
 
 // Work statuses and teacher review.
-const lessonWork = storage.createWork({ studentId: 'antek', title: 'Praca lekcyjna', type: 'Studio', lessonId: 3, data: { note: 'Szkic' } })
+const lessonWork = storage.createWork({ studentId: 'antek', title: 'Praca lekcyjna', type: 'Studio', completionType: 'teacher-review', data: { note: 'Szkic' } })
 expect(lessonWork.status === 'draft', 'Nowa praca powinna zaczynać jako draft.')
 const waiting = storage.updateWork(lessonWork.id, { status: 'waiting-review' })
-expect(waiting.status === 'waiting-review', 'Poproś nauczyciela powinno ustawić waiting-review.')
+expect(waiting.status === 'waiting-review', 'Pokaż nauczycielowi powinno ustawić waiting-review.')
 expect(storage.getPendingWorks().some((work) => work.id === lessonWork.id), 'Praca powinna trafić do kolejki nauczyciela.')
 const returned = storage.reviewWork(lessonWork.id, 'returned')
 expect(returned.status === 'returned', 'Nauczyciel powinien móc zwrócić pracę.')
@@ -80,9 +87,21 @@ expect(storage.getResumableWork('antek').id === lessonWork.id, 'Zwrócona praca 
 storage.updateWork(lessonWork.id, { status: 'waiting-review' })
 const completed = storage.reviewWork(lessonWork.id, 'completed')
 expect(completed.status === 'completed', 'Nauczyciel powinien móc zakończyć pracę.')
-expect(storage.getStudentProgress('antek')[3] === 'completed', 'Zakończenie obowiązkowej pracy powinno zaliczyć jej lekcję.')
-expect(storage.getStudentProgress('antek')[4] === 'available', 'Review obowiązkowej pracy powinno odblokować następną lekcję.')
 expect(storage.reviewWork(lessonWork.id, 'returned') === null, 'Zakończonej pracy nie można zwrócić bez nowej prośby.')
+
+const automaticWork = storage.createWork({ studentId: 'antek', title: 'Sekwencja', type: 'Sekwencje', completionType: 'automatic' })
+expect(storage.updateWork(automaticWork.id, { status: 'waiting-review' }) === null, 'Automatyczne ćwiczenie nie może trafić do kolejki nauczyciela.')
+expect(!storage.getPendingWorks().some((work) => work.id === automaticWork.id), 'Kolejka ma zawierać wyłącznie prace teacher-review.')
+
+// Student profiles, classes and non-destructive archiving.
+const maria = storage.createStudentProfile({ name: 'Maria', className: '1A' })
+expect(maria?.progress[1] === 'available' && maria.progress[2] === 'locked', 'Nowy uczeń powinien rozpocząć od pierwszej lekcji.')
+expect(maria.toolProgress.unlockedTools.length === 0, 'Nowy uczeń powinien mieć pusty postęp narzędzi.')
+storage.updateStudentProfile(maria.id, { name: 'Marysia', className: '1B' })
+expect(storage.getStudentById(maria.id).profile.name === 'Marysia' && storage.getStudentById(maria.id).className === '1B', 'Nauczyciel powinien móc zmienić imię i klasę.')
+expect(storage.archiveStudent(maria.id), 'Archiwizacja powinna się udać.')
+expect(!storage.getAllStudents().some((student) => student.id === maria.id), 'Archiwalny uczeń nie powinien być widoczny na aktywnej liście.')
+expect(storage.getAllStudents({ includeArchived: true }).some((student) => student.id === maria.id), 'Archiwizacja nie może usuwać danych ucznia.')
 
 // Additional assignments do not change course position.
 const beforeAssignmentProgress = JSON.stringify(storage.getStudentProgress('lena'))

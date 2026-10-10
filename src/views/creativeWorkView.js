@@ -10,17 +10,17 @@ export function creativeWorkView({ student, workId = null, assignmentId = null, 
   let work = workId ? getWork(workId) : getOrCreateAssignmentWork(assignmentId)
   const assignment = getAssignment(work?.assignmentId || assignmentId)
   if (!work || work.studentId !== student.profile.id) {
-    return { html: appLayout('<section class="empty-state"><h1>Nie znaleziono pracy</h1><a class="button button--primary" href="#/home">Wróć do domu</a></section>', student, '/home') }
+    return { html: appLayout('<section class="empty-state"><h1>Nie znaleziono pracy</h1><a class="button button-primary" href="#/home">Wróć do domu</a></section>', student, '/home') }
   }
   let data = { note: '', selectedStages: [], ...work.data }
   let showWaiting = work.status === 'waiting-review'
 
   function current() {
     if (showWaiting) return { html: appLayout(waitingReviewScreen(), student, '/home') }
-    if (work.status === 'completed') return { html: appLayout(`<section class="completion-card"><span class="completion-check">${icon('check')}</span><p class="eyebrow">Praca zakończona</p><h2>${work.title}</h2><p>Praca jest już w Twoim portfolio.</p><a class="button button--primary" href="#/works">Zobacz moje prace</a></section>`, student, '/works') }
+    if (work.status === 'completed') return { html: appLayout(`<section class="completion-card"><span class="completion-check">${icon('check')}</span><p class="eyebrow">Praca zakończona</p><h2>${work.title}</h2><p>Praca jest już w Twoim portfolio.</p><a class="button button-primary" href="#/works">Zobacz moje prace</a></section>`, student, '/works') }
     const returned = work.status === 'returned'
     const content = `<section class="tool-header"><a class="text-link" href="#/home">${icon('back')} Wróć do domu</a><p class="eyebrow">${returned ? 'Wróć do swojej pracy' : 'Dodatkowe zadanie'}</p><h1>${work.title}</h1><p>${assignment?.instruction || 'Zapisz swój pomysł.'}</p></section>
-      ${returned ? '<div class="returned-note" role="status">Nauczyciel prosi, aby kontynuować pracę.</div>' : ''}
+      ${returned ? '<div class="returned-note" role="status">Możesz jeszcze popracować nad tą pracą.</div>' : ''}
       <section class="mock-studio" aria-labelledby="mock-title"><div><p class="eyebrow">Szkic pomysłu</p><h2 id="mock-title">Wybierz etapy</h2><div class="stage-picker">${stages.map((stage, index) => `<button type="button" class="stage-tile ${data.selectedStages.includes(stage) ? 'is-selected' : ''}" data-stage="${stage}" aria-pressed="${data.selectedStages.includes(stage)}"><span>${index + 1}</span>${stage}</button>`).join('')}</div></div>
         <label class="work-note">Krótka notatka<textarea data-work-note placeholder="Co chcesz pokazać?">${data.note || ''}</textarea></label><p class="autosave-status" data-autosave-status role="status" aria-live="polite">Zmiany zapisują się automatycznie.</p>
       </section>${workActions()}`
