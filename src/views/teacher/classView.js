@@ -11,10 +11,12 @@ export function teacherClassView({ render }) {
     const classNames = [...new Set(allStudents.map((student) => student.className).filter(Boolean))].sort()
     const students = selectedClass === 'all' ? allStudents : allStudents.filter((student) => student.className === selectedClass)
     const pending = getPendingWorks()
-    const content = `<section class="teacher-page-heading"><div><p class="eyebrow">Panel nauczyciela</p><h1>Klasa</h1><p>Obserwuj, gdzie dzieci pracują i czego potrzebują.</p></div><div class="heading-actions no-print"><a class="button button-secondary" href="#/teacher/assignments/new">${icon('plus')} Nowe zadanie</a><a class="button button-primary" href="#/teacher/students/new">${icon('plus')} Dodaj ucznia</a></div></section>
-      <div class="teacher-summary"><article><strong>${allStudents.length}</strong><span>aktywnych uczniów</span></article><article><strong>${pending.length}</strong><span>prac do obejrzenia</span></article></div>
-      <label class="teacher-filter class-filter">Klasa<select data-class-filter aria-label="Filtruj uczniów według klasy"><option value="all">Wszystkie klasy</option>${classNames.map((name) => `<option value="${escapeHtml(name)}" ${name === selectedClass ? 'selected' : ''}>${escapeHtml(name)}</option>`).join('')}</select></label>
-      <section class="teacher-table-card" aria-label="Lista uczniów"><div class="teacher-table-head"><span>Uczeń</span><span>Klasa</span><span>Aktualna lekcja</span><span>Status</span><span></span></div>
+    const content = `<section class="teacher-page-heading teacher-page-heading--class"><div><p class="eyebrow">Obserwacja klasy</p><h1>Klasa</h1><p>Zobacz, gdzie dzieci pracują i które prace chcą wspólnie obejrzeć.</p></div><div class="heading-actions no-print"><a class="button button-secondary" href="#/teacher/assignments/new">${icon('plus')} Nowe zadanie</a><a class="button button-primary" href="#/teacher/students/new">${icon('plus')} Dodaj ucznia</a></div></section>
+      <section class="teacher-observation">
+        <div class="teacher-summary"><article><span class="summary-mark summary-mark--sage"></span><strong>${allStudents.length}</strong><span>dzieci pracuje</span></article><article><span class="summary-mark summary-mark--ochre"></span><strong>${pending.length}</strong><span>prac do obejrzenia</span></article></div>
+        <label class="teacher-filter class-filter">Półka klasy<select data-class-filter aria-label="Filtruj uczniów według klasy"><option value="all">Wszystkie klasy</option>${classNames.map((name) => `<option value="${escapeHtml(name)}" ${name === selectedClass ? 'selected' : ''}>${escapeHtml(name)}</option>`).join('')}</select></label>
+      </section>
+      <section class="teacher-table-card" aria-label="Lista uczniów"><div class="teacher-table-head"><span>Uczeń</span><span>Klasa</span><span>Aktualna praca</span><span>Obserwacja</span><span></span></div>
         ${students.length ? students.map((student) => {
           const lesson = getCurrentLesson(student.id)
           const hasPending = student.works.some((work) => work.status === 'waiting-review' && work.completionType === 'teacher-review')

@@ -8,16 +8,16 @@ const labels = { completed: 'Ukończona', available: 'Dostępna', 'in-progress':
 export function pathView({ student }) {
   const progress = getStudentProgress()
   const groups = moduleNames.map((name, index) => ({ name, lessons: lessons.filter((lesson) => lesson.moduleId === index + 1) }))
-  const content = `<section class="page-heading"><p class="eyebrow">Twoja ścieżka</p><h1>Lekcje krok po kroku</h1><p>Ukończ lekcję, aby otworzyć następną.</p></section>
-    <div class="lesson-modules">
-      ${groups.map((group, index) => `<section class="module-card">
-        <header><span>Moduł ${index + 1}</span><h2>${group.name}</h2></header>
+  const content = `<section class="path-heading"><div><p class="eyebrow">Twoja ścieżka</p><h1>Pracujemy krok po kroku</h1></div><p>Nie trzeba się spieszyć. Każda lekcja otwiera następną.</p></section>
+    <div class="lesson-modules" aria-label="Ścieżka lekcji">
+      ${groups.map((group, index) => `<section class="module-card module-card--${(index % 3) + 1}">
+        <header><span class="module-number">${index + 1}</span><div><small>Moduł ${index + 1}</small><h2>${group.name}</h2></div></header>
         <ol class="lesson-list">${group.lessons.map((lesson) => {
           const status = progress[lesson.id] || 'locked'
           const mark = status === 'completed' ? icon('check') : status === 'locked' ? icon('lock') : '<span class="current-mark">●</span>'
           const available = status !== 'locked' && lesson.implemented
-          const row = `<span class="lesson-status lesson-status--${status}">${mark}</span><span class="lesson-row-copy"><strong>${lesson.id}. ${lesson.title}</strong><small>${labels[status]}</small></span>${available ? icon('arrow') : ''}`
-          return `<li>${available ? `<a href="#/lesson/${lesson.id}" class="lesson-row">${row}</a>` : `<div class="lesson-row ${status === 'locked' ? 'is-locked' : ''}">${row}</div>`}</li>`
+          const row = `<span class="lesson-status lesson-status--${status}">${mark}</span><span class="lesson-row-copy"><small>${labels[status]}</small><strong><span>${lesson.id}</span>${lesson.title}</strong></span>${available ? icon('arrow') : ''}`
+          return `<li class="lesson-step lesson-step--${status}">${available ? `<a href="#/lesson/${lesson.id}" class="lesson-row lesson-row--${status}">${row}</a>` : `<div class="lesson-row lesson-row--${status} ${status === 'locked' ? 'is-locked' : ''}">${row}</div>`}</li>`
         }).join('')}</ol>
       </section>`).join('')}
     </div>`

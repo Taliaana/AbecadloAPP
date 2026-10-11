@@ -25,6 +25,7 @@ import { getLesson } from './data/lessons.js'
 
 export function startApp(root) {
   let cleanup = null
+  let expectedHashChange = null
 
   function path() {
     return (window.location.hash.slice(1).split('?')[0] || '/welcome').replace(/\/$/, '') || '/welcome'
@@ -32,7 +33,11 @@ export function startApp(root) {
 
   function navigate(route) {
     if (window.location.hash === `#${route}`) renderRoute()
-    else window.location.hash = route
+    else {
+      expectedHashChange = `#${route}`
+      window.location.hash = route
+      renderRoute()
+    }
   }
 
   function renderView(view) {
@@ -41,6 +46,12 @@ export function startApp(root) {
     root.innerHTML = view.html
     root.firstElementChild?.classList.add('view-enter')
     cleanup = view.mount?.(root) || null
+    root.firstElementChild?.addEventListener('click', (event) => {
+      const link = event.target.closest('a[href^="#/"]')
+      if (!link || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
+      event.preventDefault()
+      navigate(link.getAttribute('href').slice(1))
+    })
     root.querySelector('[data-action="leave-role"]')?.addEventListener('click', () => { leaveRole(); navigate('/welcome') })
     requestAnimationFrame(() => root.querySelector('#main-content')?.focus({ preventScroll: true }))
   }
@@ -116,6 +127,10 @@ export function startApp(root) {
     if (!renderStudentRoute(route, student)) navigate('/home')
   }
 
-  window.addEventListener('hashchange', renderRoute)
+  window.addEventListener('hashchange', () => {
+    if (expectedHashChange === window.location.hash) { expectedHashChange = null; return }
+    expectedHashChange = null
+    renderRoute()
+  })
   renderRoute()
 }
