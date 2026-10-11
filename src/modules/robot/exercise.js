@@ -124,6 +124,7 @@ export function robotExerciseView(context, { board, work = null, onChange = null
           root.querySelector('[data-completion-text]').textContent = predictionMessage || (board.mode === 'alternative' && another ? 'To inne rozwiązanie.' : 'Robot dotarł do celu.')
           firstRoute ||= route; message.textContent = predictionMessage || 'Gotowe. Robot dotarł do celu.'
           complete.querySelector('button, a').focus({ preventScroll: true })
+          complete.scrollIntoView({ block: 'start', behavior: 'auto' })
         } else message.textContent = predictionMessage || ({ obstacle: 'Robot zatrzymał się przed przeszkodą. Sprawdź swój program.', edge: 'Robot dotarł do brzegu planszy. Sprawdź program.' }[result.reason] || 'Robot nie dotarł do celu. Sprawdź swój program.')
         if (onChange) onChange(structuredClone(program), result.success)
       }

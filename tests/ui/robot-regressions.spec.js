@@ -45,6 +45,7 @@ test('szkic programu przeżywa reload, Reset i zmianę widoku; drag oraz klawiat
   await expect(page.locator('.robot-block')).toHaveCount(2)
   await page.locator('[data-run]').focus(); await page.keyboard.press('Enter')
   await expect(page.getByRole('heading', { name: 'Gotowe', exact: true })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Gotowe', exact: true })).toBeInViewport()
   await page.locator('[data-clear]').click(); await expect(page.locator('.robot-block')).toHaveCount(0)
   await page.locator('[data-command="forward"]').focus(); await page.keyboard.press('Enter')
   await page.goto('/#/home'); await open(page)
