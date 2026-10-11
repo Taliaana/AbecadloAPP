@@ -26,7 +26,19 @@ export function typewritingView({ student, render, navigate }) {
     return { html: appLayout(content, student, '/workshop'), mount }
   }
 
-  function press(key) {
+  function updateExercise(root) {
+    const currentKey = exercise.sequence[position]
+    root.querySelector('.target-letter').textContent = currentKey.toUpperCase()
+    root.querySelectorAll('.typing-sequence span').forEach((item, index) => {
+      item.classList.toggle('is-done', index < position)
+      item.classList.toggle('is-current', index === position)
+      item.innerHTML = index < position ? icon('check') : exercise.sequence[index].toUpperCase()
+    })
+    root.querySelectorAll('[data-type-key]').forEach((button) => button.classList.toggle('is-active', button.dataset.typeKey === currentKey))
+    root.querySelector('.accuracy').textContent = `Dokładność: ${correct}/${attempts}`
+  }
+
+  function press(key, root) {
     if (finished || !['f', 'j'].includes(key)) return
     attempts += 1
     if (key === exercise.sequence[position]) { correct += 1; position += 1 }
@@ -34,16 +46,18 @@ export function typewritingView({ student, render, navigate }) {
       finished = true
       const minutes = Math.max((Date.now() - startedAt) / 60000, 0.1)
       saveTypingResult(exercise.id, { correct, attempts, wpm: Math.round((position / 5) / minutes) })
+      render(screen())
+      return
     }
-    render(screen())
+    updateExercise(root)
   }
 
   function mount(root) {
     if (finished) root.querySelector('[data-again]').addEventListener('click', () => navigate('/tools/typewriting?again=1'))
     else {
-      root.querySelectorAll('[data-type-key]').forEach((button) => button.addEventListener('click', () => press(button.dataset.typeKey)))
+      root.querySelectorAll('[data-type-key]').forEach((button) => button.addEventListener('click', () => press(button.dataset.typeKey, root)))
       const onKey = (event) => {
-        if (['f', 'j'].includes(event.key.toLowerCase())) { event.preventDefault(); window.removeEventListener('keydown', onKey); press(event.key.toLowerCase()) }
+        if (['f', 'j'].includes(event.key.toLowerCase())) { event.preventDefault(); press(event.key.toLowerCase(), root) }
       }
       window.addEventListener('keydown', onKey, { once: false })
       return () => window.removeEventListener('keydown', onKey)

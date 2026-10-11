@@ -1,5 +1,6 @@
 import { avatar } from '../components/icons.js'
 import { getProfiles, setCurrentStudent } from '../storage/studentStorage.js'
+import { escapeHtml } from '../utils/html.js'
 
 export function profileView({ navigate }) {
   const profiles = getProfiles()
@@ -12,7 +13,7 @@ export function profileView({ navigate }) {
         <p>Wybierz swój profil.</p>
       </div>
       <div class="profile-grid" aria-label="Profile uczniów">
-        ${profiles.map((profile) => `<button class="profile-card" type="button" data-profile="${profile.id}">${avatar(profile, 'large')}<span>${profile.name}</span></button>`).join('')}
+        ${profiles.map((profile) => `<button class="profile-card" type="button" data-profile="${escapeHtml(profile.id)}">${avatar(profile, 'large')}<span>${escapeHtml(profile.name)}</span></button>`).join('')}
       </div>
       <a class="text-link profile-role-link" href="#/welcome">Zmień rolę</a>
     </main>`,

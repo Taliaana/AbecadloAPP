@@ -21,6 +21,7 @@ import { lessonFourView } from './lessons/lessonFour.js'
 import { mousePracticeView } from './modules/mousePractice.js'
 import { typewritingView } from './modules/typewriting.js'
 import { getCurrentRole, getCurrentStudent, getStudentProgress, leaveRole } from './storage/studentStorage.js'
+import { getLesson } from './data/lessons.js'
 
 export function startApp(root) {
   let cleanup = null
@@ -79,8 +80,9 @@ export function startApp(root) {
     if (lessonMatch) {
       const id = Number(lessonMatch[1])
       const progress = getStudentProgress()
-      if (progress[id] === 'locked' || ![1, 2, 3, 4].includes(id)) { navigate('/path'); return true }
+      const lesson = getLesson(id)
       const lessonViews = { 1: lessonOneView, 2: lessonTwoView, 3: lessonThreeView, 4: lessonFourView }
+      if (progress[id] === 'locked' || !lesson?.implemented || !lessonViews[id]) { navigate('/path'); return true }
       renderView(lessonViews[id](context())); return true
     }
     const assignmentMatch = route.match(/^\/assignment\/([^/]+)$/)

@@ -20,7 +20,9 @@ test('nauczyciel dodaje ucznia, przypisuje klasę i dane trwają po reloadzie', 
 
 test('otwarta praca może wrócić do dziecka i zostać zakończona bez oceny', async ({ page }) => {
   await chooseStudent(page, 'Zosia')
-  await page.getByRole('link', { name: 'Kontynuuj', exact: true }).click()
+  await expect(page.locator('.assignment-card')).toHaveCount(1)
+  await expect(page.locator('.resume-card')).toHaveCount(0)
+  await page.getByRole('link', { name: /Cykl życia motyla.*Kontynuuj/ }).click()
   await page.getByRole('button', { name: /jajo/i }).click()
   await page.getByLabel('Krótka notatka').fill('Mój spokojny szkic')
   await page.getByRole('button', { name: /Pokaż nauczycielowi/ }).click()
@@ -33,8 +35,10 @@ test('otwarta praca może wrócić do dziecka i zostać zakończona bez oceny', 
 
   await page.goto('/#/welcome')
   await chooseStudent(page, 'Zosia')
-  await expect(page.getByText('Możesz jeszcze popracować nad tą pracą.')).toBeVisible()
-  await page.getByRole('link', { name: 'Kontynuuj', exact: true }).click()
+  await expect(page.getByRole('link', { name: /Cykl życia motyla.*Wróć do pracy/ })).toBeVisible()
+  await expect(page.locator('.assignment-card')).toHaveCount(1)
+  await expect(page.locator('.resume-card')).toHaveCount(0)
+  await page.getByRole('link', { name: /Cykl życia motyla.*Wróć do pracy/ }).click()
   await expect(page.getByText('Możesz jeszcze popracować nad tą pracą.')).toBeVisible()
   await page.getByRole('button', { name: /Pokaż nauczycielowi/ }).click()
 

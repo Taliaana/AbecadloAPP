@@ -59,3 +59,4 @@ Panel nauczyciela w MVP używa testowego PIN-u `1234`. Uwierzytelnianie pozostaj
 - Nie planujemy otwartego chatu AI dla dzieci z klasy 1. Zadania AI powinny używać gotowych pytań, ograniczonych wyborów i uczyć przede wszystkim sprawdzania informacji wygenerowanych przez AI.
 - Podstawowe lekcje nie wymagają sieci ani zewnętrznych zasobów. Architektura pozostaje gotowa na dodanie service workera, manifestu i strategii cache w przyszłym etapie PWA/offline.
 - Eksport prac korzysta obecnie z JSON i `window.print()`. Osobna warstwa eksportu pozwoli później dodać generowanie PDF.
+- Przyszłe Studio nie będzie zapisywać dużych obrazów PNG ani danych base64 w `localStorage`. Rysunki powinny być przechowywane jako lekkie dane wektorowe, np. punkty i pociągnięcia, a docelowe pliki binarne trafią do IndexedDB lub backendu.

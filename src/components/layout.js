@@ -1,4 +1,5 @@
 import { avatar, icon } from './icons.js'
+import { escapeHtml } from '../utils/html.js'
 
 const navigation = [
   { route: '/home', label: 'Dom', icon: 'home' },
@@ -14,14 +15,15 @@ const teacherNavigation = [
 
 export function appLayout(content, student, activeRoute = '') {
   const profile = student.profile
+  const profileName = escapeHtml(profile.name)
   return `
     <div class="app-shell">
       <header class="topbar">
         <a class="brand" href="#/home" aria-label="Abecadło, strona główna">
           <span class="brand-mark" aria-hidden="true">A</span><span>Abecadło</span>
         </a>
-        <a class="profile-chip" href="#/avatar" aria-label="Edytuj avatar. Obecnie profil ${profile.name}">
-          ${avatar(profile, 'small')}<span>${profile.name}</span>
+        <a class="profile-chip" href="#/avatar" aria-label="Edytuj avatar. Obecnie profil ${profileName}">
+          ${avatar(profile, 'small')}<span>${profileName}</span>
         </a>
       </header>
       <nav class="main-nav" aria-label="Główna nawigacja">

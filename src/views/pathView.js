@@ -15,7 +15,7 @@ export function pathView({ student }) {
         <ol class="lesson-list">${group.lessons.map((lesson) => {
           const status = progress[lesson.id] || 'locked'
           const mark = status === 'completed' ? icon('check') : status === 'locked' ? icon('lock') : '<span class="current-mark">●</span>'
-          const available = status !== 'locked' && lesson.id <= 4
+          const available = status !== 'locked' && lesson.implemented
           const row = `<span class="lesson-status lesson-status--${status}">${mark}</span><span class="lesson-row-copy"><strong>${lesson.id}. ${lesson.title}</strong><small>${labels[status]}</small></span>${available ? icon('arrow') : ''}`
           return `<li>${available ? `<a href="#/lesson/${lesson.id}" class="lesson-row">${row}</a>` : `<div class="lesson-row ${status === 'locked' ? 'is-locked' : ''}">${row}</div>`}</li>`
         }).join('')}</ol>

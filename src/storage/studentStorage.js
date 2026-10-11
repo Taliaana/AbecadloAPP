@@ -1,13 +1,12 @@
 import { initialAssignments } from '../data/assignments.js'
 import { isCompletionType } from '../data/completionTypes.js'
-import { lessons } from '../data/lessons.js'
+import { implementedLessons, lessons } from '../data/lessons.js'
 import { profiles, sampleWorks } from '../data/profiles.js'
 import { tools } from '../data/tools.js'
 import { isWorkStatus } from '../data/workModel.js'
 
 export const SCHEMA_VERSION = 3
 export const STORAGE_KEYS = { current: 'abecadlo-state-v3', previous: 'abecadlo-state-v2', legacy: 'abecadlo-state-v1' }
-const IMPLEMENTED_LESSON_COUNT = 4
 const TEACHER_PIN = '1234'
 const DEFAULT_AVATAR = { face: 'round', hair: 'short', hairColor: 'brown', shirtColor: 'green', backgroundColor: 'mint' }
 
@@ -150,21 +149,22 @@ export function updateStudentProfile(studentId, changes) {
 export function archiveStudent(studentId) { const state = readState(); const student = state.students[studentId]; if (!student) return false; student.archivedAt = new Date().toISOString(); if (state.currentStudentId === studentId) state.currentStudentId = null; writeState(state); return true }
 export function updateCurrentAvatar(avatarConfig) { const state = readState(); const student = state.students[state.currentStudentId]; if (!student) return false; student.profile.avatarConfig = { ...student.profile.avatarConfig, ...avatarConfig }; writeState(state); return true }
 export function getStudentProgress(studentId = null) { const state = readState(); const id = studentId || state.currentStudentId; return state.students[id]?.progress || createProgress() }
-export function getCurrentLesson(studentId) { const progress = getStudentProgress(studentId); return lessons.find((lesson) => ['available', 'in-progress'].includes(progress[lesson.id])) || [...lessons].reverse().find((lesson) => progress[lesson.id] === 'completed') || lessons[0] }
+export function getCurrentLesson(studentId) { const progress = getStudentProgress(studentId); return implementedLessons.find((lesson) => ['available', 'in-progress'].includes(progress[lesson.id])) || [...implementedLessons].reverse().find((lesson) => progress[lesson.id] === 'completed') || implementedLessons[0] }
 
 export function startLesson(lessonId) { const state = readState(); const student = state.students[state.currentStudentId]; if (!student || student.progress[lessonId] === 'locked') return false; if (student.progress[lessonId] !== 'completed') student.progress[lessonId] = 'in-progress'; writeState(state); return true }
 export function completeLessonForStudent(studentId, lessonId) {
   const state = readState(); const student = state.students[studentId]
   if (!student || student.progress[lessonId] === 'locked') return false
   student.progress[lessonId] = 'completed'
-  if (lessonId < IMPLEMENTED_LESSON_COUNT && student.progress[lessonId + 1] === 'locked') student.progress[lessonId + 1] = 'available'
+  const nextLesson = lessons.find((lesson) => lesson.id === Number(lessonId) + 1)
+  if (nextLesson?.implemented && student.progress[nextLesson.id] === 'locked') student.progress[nextLesson.id] = 'available'
   if (lessonId === 2 && !student.toolProgress.unlockedTools.includes('mouse-practice')) student.toolProgress.unlockedTools.push('mouse-practice')
   if (lessonId === 3 && !student.toolProgress.unlockedTools.includes('typewriting')) student.toolProgress.unlockedTools.push('typewriting')
   writeState(state); return true
 }
 export function completeLesson(lessonId) { const state = readState(); return state.currentStudentId ? completeLessonForStudent(state.currentStudentId, lessonId) : false }
-export function unlockLessonForStudent(studentId, lessonId) { const state = readState(); const student = state.students[studentId]; if (!student || !lessons.some((lesson) => lesson.id === Number(lessonId))) return false; if (student.progress[lessonId] === 'locked') student.progress[lessonId] = 'available'; writeState(state); return true }
-export function unlockNextLessonForStudent(studentId) { const progress = getStudentProgress(studentId); const open = Object.entries(progress).filter(([, status]) => status !== 'locked').map(([id]) => Number(id)); const nextId = Math.max(...open, 0) + 1; return nextId <= IMPLEMENTED_LESSON_COUNT && unlockLessonForStudent(studentId, nextId) }
+export function unlockLessonForStudent(studentId, lessonId) { const state = readState(); const student = state.students[studentId]; if (!student || !implementedLessons.some((lesson) => lesson.id === Number(lessonId))) return false; if (student.progress[lessonId] === 'locked') student.progress[lessonId] = 'available'; writeState(state); return true }
+export function unlockNextLessonForStudent(studentId) { const progress = getStudentProgress(studentId); const open = Object.entries(progress).filter(([, status]) => status !== 'locked').map(([id]) => Number(id)); const nextId = Math.max(...open, 0) + 1; return implementedLessons.some((lesson) => lesson.id === nextId) && unlockLessonForStudent(studentId, nextId) }
 export function getUnlockedTools(studentId = null) { const state = readState(); const id = studentId || state.currentStudentId; return state.students[id]?.toolProgress.unlockedTools || [] }
 export function getTypingResults(studentId = null) { const state = readState(); const id = studentId || state.currentStudentId; return state.students[id]?.toolProgress.typingResults || {} }
 export function getStudentWorks(studentId = null) { const state = readState(); const id = studentId || state.currentStudentId; return state.students[id]?.works || [] }

@@ -40,8 +40,10 @@ export const lessons = modules.flatMap(([module, titles], moduleIndex) => titles
     estimatedMinutes: lessonId <= 3 ? 7 : 8,
     activityType: lessonId <= 3 ? 'interactive' : 'lesson',
     completionType: completionTypeByLesson[lessonId],
+    implemented: lessonId <= 4,
   }
 }))
 
 export const getLesson = (id) => lessons.find((lesson) => lesson.id === Number(id))
+export const implementedLessons = lessons.filter((lesson) => lesson.implemented)
 export const moduleNames = modules.map(([name]) => name)
