@@ -11,6 +11,7 @@ export function robotProjectView(context, initialWork) {
   let work = initialWork
   let data = structuredClone(work.data)
   let title = work.title
+  let mountedRoot = null
   const persist = () => { work = updateWork(work.id, { title: title.trim() || 'Moja trasa', data, status: 'draft' }) }
   function screen() {
     if (work.status === 'waiting-review') return { html: appLayout(waitingReviewScreen(), context.student, '/works') }
@@ -32,9 +33,14 @@ export function robotProjectView(context, initialWork) {
     }
     return robotExerciseView(context, {
       board: data.board, work,
-      onChange(program, solved = false) { data.program = program; data.solved = solved; persist() },
+      onChange(program, solved = false) {
+        data.program = program; data.solved = solved; persist()
+        const status = mountedRoot?.querySelector('[data-project-status]')
+        if (status) status.textContent = solved ? 'Twoja trasa prowadzi do celu.' : 'Sprawdź trasę, uruchamiając program.'
+      },
       extra: `${returned}<section class="robot-project-actions"><button type="button" class="button button-ghost" data-edit-board>Zmień planszę</button><p data-project-status role="status">${data.solved ? 'Twoja trasa prowadzi do celu.' : 'Sprawdź trasę, uruchamiając program.'}</p>${workActions()}</section>`,
       onMount(root, exercise) {
+        mountedRoot = root
         root.querySelector('[data-edit-board]').addEventListener('click', () => {
           if (exercise.running()) return
           exercise.flush(); data.program = exercise.program(); data.editorMode = true; persist(); context.render(screen())

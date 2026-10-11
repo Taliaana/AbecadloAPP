@@ -50,9 +50,8 @@ export function simulateRobot(board, program) {
     executed.push({ ...instruction, state: { ...robot }, collision })
     states.push({ ...robot })
     if (collision) { reason = collision; break }
-    // Stage 1 convention: reaching the goal ends this run, even with remaining blocks.
-    if (sameCell(robot, board.goal)) { reason = 'goal'; break }
   }
+  if (reason === 'unfinished' && instructions.length && sameCell(robot, board.goal)) reason = 'goal'
   return { states, executed, finalState: { ...robot }, success: reason === 'goal', reason,
     collision: ['edge', 'obstacle'].includes(reason) ? reason : null }
 }

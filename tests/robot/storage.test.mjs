@@ -4,6 +4,18 @@ globalThis.localStorage = { data: {}, getItem(key) { return this.data[key] || nu
 const storage = await import('../../src/storage/studentStorage.js')
 const { assignmentRobotWork, createRobotWork } = await import('../../src/modules/robot/integration.js')
 
+test('saving a robot draft preserves history and isolates students', () => {
+  storage.initializeStorage(); storage.setCurrentStudent('zosia')
+  storage.saveRobotProgram('draft-only', ['right'])
+  assert.equal(storage.getRobotProgress()['draft-only'].runs, 0)
+  storage.saveRobotAttempt('draft-only', { success: true, route: 'a', program: ['forward'] })
+  storage.saveRobotProgram('draft-only', ['left'])
+  assert.equal(storage.getRobotProgress()['draft-only'].runs, 1)
+  assert.equal(storage.getRobotProgress()['draft-only'].completed, true)
+  assert.deepEqual(storage.getRobotProgress()['draft-only'].program, ['left'])
+  storage.setCurrentStudent('lena'); assert.deepEqual(storage.getRobotProgress(), {})
+})
+
 test('robot history persists independently and preserves original progress and typing', () => {
   storage.initializeStorage(); storage.setCurrentStudent('zosia'); storage.saveTypingResult('fj', { correct: 8, attempts: 8 })
   const before = storage.getStudentProgress()

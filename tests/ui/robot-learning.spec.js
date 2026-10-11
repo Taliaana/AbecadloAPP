@@ -63,6 +63,7 @@ test('własna trasa zapisuje planszę i program po reloadzie, trafia do nauczyci
   await add(page, ['forward', 'forward']); await page.reload()
   await expect(page.locator('.robot-block')).toHaveCount(2)
   await run(page); await done(page)
+  await expect(page.locator('[data-project-status]')).toHaveText('Twoja trasa prowadzi do celu.')
   await page.getByRole('button', { name: /Pokaż nauczycielowi/ }).click()
   await expect(page.getByText('Praca czeka na nauczyciela.')).toBeVisible()
   await enterTeacher(page); await page.getByRole('link', { name: /Do obejrzenia/ }).click()

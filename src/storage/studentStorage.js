@@ -200,6 +200,13 @@ export function saveTypingResult(lessonId, result) { const state = readState(); 
 export function getRobotProgress(studentId = null) {
   const state = readState(); return state.students[studentId || state.currentStudentId]?.toolProgress.robot || {}
 }
+export function saveRobotProgram(challengeId, program) {
+  const state = readState(); const student = state.students[state.currentStudentId]; if (!student) return
+  student.toolProgress.robot ||= {}
+  const previous = student.toolProgress.robot[challengeId] || { runs: 0, completed: false, routes: [] }
+  student.toolProgress.robot[challengeId] = { ...previous, program: structuredClone(program), updatedAt: new Date().toISOString() }
+  writeState(state)
+}
 export function saveRobotAttempt(challengeId, { success, route, program }) {
   const state = readState(); const student = state.students[state.currentStudentId]; if (!student) return null
   student.toolProgress.robot ||= {}

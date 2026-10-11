@@ -2,7 +2,7 @@ import { appLayout } from '../../components/layout.js'
 import { icon } from '../../components/icons.js'
 import { robotBoard, robotDrawing } from '../../components/robotBoard.js'
 import { robotCommands } from '../../data/robotChallenges.js'
-import { getRobotProgress, saveRobotAttempt, updateWork } from '../../storage/studentStorage.js'
+import { getRobotProgress, saveRobotAttempt, saveRobotProgram, updateWork } from '../../storage/studentStorage.js'
 import { createAutosave } from '../../utils/autosave.js'
 import { escapeHtml } from '../../utils/html.js'
 import { simulateRobot, sameCell, routeSignature, expandProgram } from './engine.js'
@@ -11,23 +11,24 @@ import { programHtml, sequenceAt } from './programView.js'
 export function robotExerciseView(context, { board, work = null, onChange = null, extra = '', onMount = null }) {
   const { student } = context
   let robot = { ...board.start, direction: board.startDirection }
-  let program = structuredClone(work?.data.program || board.initialProgram || [])
+  let program = structuredClone(work?.data.program ?? getRobotProgress()[board.id]?.program ?? board.initialProgram ?? [])
   let running = false, timer = null, disposed = false, prediction = null
-  const readOnly = work && ['waiting-review', 'completed'].includes(work.status)
+  let readOnly = work && ['waiting-review', 'completed'].includes(work.status)
   let firstRoute = getRobotProgress()[board.id]?.routes?.[0] || null
-  const content = `<section class="tool-header"><a class="text-link" href="#/tools/robot">${icon('back')} Wróć do Robota</a><p class="eyebrow">Robot · ${escapeHtml(board.title)}</p><h1>Poprowadź robota.</h1><p>${board.mode === 'predict' ? 'Gdzie zatrzyma się robot? Wskaż pole.' : board.mode === 'debug' ? 'Uruchom program. Obserwuj i popraw.' : 'Ułóż polecenia. Doprowadź robota do celu.'}</p></section>
-    <section class="robot-workspace">${robotBoard(board, { interactive: board.mode === 'predict' })}
+  const content = `<section class="robot-session"><section class="robot-workspace"><div class="robot-board-area"><section class="tool-header"><a class="text-link" href="#/tools/robot">${icon('back')} Wróć do Robota</a><p class="eyebrow">Robot · ${escapeHtml(board.title)}</p><h1>Poprowadź robota.</h1><p>${board.mode === 'predict' ? 'Gdzie zatrzyma się robot? Wskaż pole.' : board.mode === 'debug' ? 'Uruchom program. Obserwuj i popraw.' : 'Ułóż polecenia. Doprowadź robota do celu.'}</p></section>
+    ${robotBoard(board, { interactive: board.mode === 'predict' })}</div>
     <div class="robot-program-panel"><h2>Twój program</h2><p id="robot-help">Przeciągnij bloczek lub kliknij. Strzałkami zmienisz kolejność.</p><div class="robot-palette" role="group" aria-label="Polecenia robota">${board.availableCommands.map(id => `<button type="button" class="button button-secondary" draggable="true" data-command="${id}"><span aria-hidden="true">${robotCommands[id].symbol}</span> ${robotCommands[id].label}</button>`).join('')}</div>
     <ol class="robot-program" data-container="root" aria-label="Ułożony program" aria-describedby="robot-help" tabindex="0"></ol>
     <div class="robot-actions"><button class="button button-primary" type="button" data-run disabled>Uruchom</button><button class="button button-secondary" type="button" data-stop disabled>Zatrzymaj</button><button class="button button-secondary" type="button" data-reset>Reset</button><button class="button button-ghost" type="button" data-clear disabled>Wyczyść program</button></div>
     <p class="robot-message" role="status" aria-live="polite"></p></div></section>
-    <section class="completion-card" data-robot-complete hidden><span class="completion-check">${icon('check')}</span><h2>Gotowe</h2><p data-completion-text>Robot dotarł do celu.</p>${board.mode === 'alternative' ? '<button class="button button-secondary" type="button" data-other-route>Czy znajdziesz inną drogę?</button>' : ''}<a class="button button-primary" href="#/tools/robot">Wróć do Robota</a></section>${extra}`
+    <section class="completion-card" data-robot-complete hidden><span class="completion-check">${icon('check')}</span><h2>Gotowe</h2><p data-completion-text>Robot dotarł do celu.</p>${board.mode === 'alternative' ? '<button class="button button-secondary" type="button" data-other-route>Czy znajdziesz inną drogę?</button>' : ''}<a class="button button-primary" href="#/tools/robot">Wróć do Robota</a></section>${extra}</section>`
 
   return { html: appLayout(content, student, '/workshop'), mount(root) {
     const list = root.querySelector('.robot-program'), message = root.querySelector('.robot-message'), complete = root.querySelector('[data-robot-complete]')
     const autosave = createAutosave(nextProgram => {
       if (onChange) onChange(nextProgram)
       else if (work && !readOnly) work = updateWork(work.id, { data: { program: nextProgram }, status: 'draft' })
+      else if (!work) saveRobotProgram(board.id, nextProgram)
     })
     const token = document.createElement('span'); token.className = 'robot-token'; token.setAttribute('role', 'img'); token.innerHTML = robotDrawing
     function drawRobot() {
@@ -53,6 +54,9 @@ export function robotExerciseView(context, { board, work = null, onChange = null
       list.innerHTML = programHtml(program); controls()
       if (focusPath !== undefined) (list.querySelector(`[data-path="${focusPath}"] [data-remove]`) || root.querySelector('[data-command]')).focus({ preventScroll: true })
     }
+    function clearHighlight() {
+      list.querySelectorAll('[data-path]').forEach(block => { block.classList.remove('is-executing'); block.removeAttribute('aria-current') })
+    }
     function changed() {
       complete.hidden = true; prediction = null; root.querySelectorAll('[data-cell]').forEach(cell => { cell.classList.remove('is-predicted'); cell.removeAttribute('aria-pressed') })
       message.textContent = ''; drawProgram(); autosave.schedule(structuredClone(program))
@@ -76,7 +80,8 @@ export function robotExerciseView(context, { board, work = null, onChange = null
       let block, source
       if (kind === 'command' && board.availableCommands.includes(value)) block = value === 'repeat' ? { type: 'repeat', times: 2, body: [] } : value
       else if (kind === 'path' && /^\d+(\.\d+)?$/.test(value)) { source = sequenceAt(program, value); block = source.sequence?.[source.index] }
-      if (!block || (destination !== program && typeof block !== 'string') || destination.length >= (destination === program ? 30 : 12)) return
+      if (!block || (destination !== program && typeof block !== 'string') || (source?.sequence !== destination && destination.length >= (destination === program ? 30 : 12))) return
+      if (source?.sequence === destination && source.index < to) to -= 1
       if (source) source.sequence.splice(source.index, 1)
       destination.splice(Math.min(to, destination.length), 0, block); changed()
     })
@@ -91,7 +96,7 @@ export function robotExerciseView(context, { board, work = null, onChange = null
     })
     list.addEventListener('change', event => { if (running || readOnly || !event.target.matches('[data-repeat-times]')) return; const index = Number(event.target.closest('[data-path]').dataset.path); program[index].times = Number(event.target.value); changed(); list.querySelector(`[data-path="${index}"] [data-repeat-times]`).focus({ preventScroll: true }) })
     root.querySelector('[data-reset]').addEventListener('click', reset)
-    root.querySelector('[data-stop]').addEventListener('click', () => { clearTimeout(timer); running = false; controls(); message.textContent = 'Robot zatrzymał się tutaj. Możesz sprawdzić program.' })
+    root.querySelector('[data-stop]').addEventListener('click', () => { clearTimeout(timer); running = false; clearHighlight(); controls(); message.textContent = 'Robot zatrzymał się tutaj. Możesz sprawdzić program.' })
     root.querySelector('[data-clear]').addEventListener('click', () => { if (running || readOnly) return; program = []; changed() })
     root.querySelector('[data-other-route]')?.addEventListener('click', () => { reset(); program = []; changed(); root.querySelector('[data-command]').focus() })
     if (board.mode === 'predict') root.querySelector('.robot-board').addEventListener('click', event => {
@@ -106,10 +111,12 @@ export function robotExerciseView(context, { board, work = null, onChange = null
       if (!result.executed.length) { message.textContent = 'Dodaj polecenia do programu i do bloczka Powtórz.'; return }
       running = true; controls(); let index = 0
       function finish() {
-        running = false; controls()
+        running = false; clearHighlight()
         const route = routeSignature(result)
         if (!readOnly && !work?.data.kind?.includes('project')) saveRobotAttempt(board.id, { success: result.success, route, program })
         if (result.success && work?.completionType === 'automatic' && !readOnly) work = updateWork(work.id, { status: 'completed', data: { program, solved: true } })
+        readOnly = work && ['waiting-review', 'completed'].includes(work.status)
+        controls()
         const predictionMessage = board.mode === 'predict' ? (sameCell(prediction, result.finalState) ? 'Tak właśnie wykonał program.' : 'Robot dotarł gdzie indziej. Sprawdź, który krok to zmienił.') : ''
         if (result.success) {
           complete.hidden = false
