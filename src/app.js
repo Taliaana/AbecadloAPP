@@ -20,7 +20,8 @@ import { lessonThreeView } from './lessons/lessonThree.js'
 import { lessonFourView } from './lessons/lessonFour.js'
 import { mousePracticeView } from './modules/mousePractice.js'
 import { typewritingView } from './modules/typewriting.js'
-import { getCurrentRole, getCurrentStudent, getStudentProgress, leaveRole } from './storage/studentStorage.js'
+import { robotView, robotWorkView } from './modules/robot.js'
+import { getCurrentRole, getCurrentStudent, getStudentProgress, leaveRole, getAssignment, getWork } from './storage/studentStorage.js'
 import { getLesson } from './data/lessons.js'
 
 export function startApp(root) {
@@ -85,6 +86,7 @@ export function startApp(root) {
       '/avatar': avatarView,
       '/tools/typewriting': typewritingView,
       '/tools/mouse': mousePracticeView,
+      '/tools/robot': robotView,
     }
     if (staticRoutes[route]) { renderView(staticRoutes[route](context())); return true }
     const lessonMatch = route.match(/^\/lesson\/(\d+)$/)
@@ -97,9 +99,9 @@ export function startApp(root) {
       renderView(lessonViews[id](context())); return true
     }
     const assignmentMatch = route.match(/^\/assignment\/([^/]+)$/)
-    if (assignmentMatch) { renderView(creativeWorkView(context({ assignmentId: assignmentMatch[1] }))); return true }
+    if (assignmentMatch) { const view = getAssignment(assignmentMatch[1])?.tool === 'robot' ? robotWorkView : creativeWorkView; renderView(view(context({ assignmentId: assignmentMatch[1] }))); return true }
     const workMatch = route.match(/^\/work\/([^/]+)$/)
-    if (workMatch) { renderView(creativeWorkView(context({ workId: workMatch[1] }))); return true }
+    if (workMatch) { const view = getWork(workMatch[1])?.data.kind?.startsWith('robot-') ? robotWorkView : creativeWorkView; renderView(view(context({ workId: workMatch[1] }))); return true }
     return false
   }
 

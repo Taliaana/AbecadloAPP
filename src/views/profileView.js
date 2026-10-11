@@ -1,4 +1,5 @@
 import { avatar } from '../components/icons.js'
+import { brandLogo } from '../components/brand.js'
 import { getProfiles, setCurrentStudent } from '../storage/studentStorage.js'
 import { escapeHtml } from '../utils/html.js'
 
@@ -8,7 +9,7 @@ export function profileView({ navigate }) {
     html: `<main id="main-content" class="profile-screen" tabindex="-1">
       <div class="profile-room" aria-hidden="true"><span class="room-sun"></span><span class="room-leaf room-leaf--one"></span><span class="room-leaf room-leaf--two"></span></div>
       <header class="profile-intro">
-        <a class="brand profile-brand" href="#/welcome"><span class="brand-mark" aria-hidden="true">A</span><span>Abecadło</span></a>
+        <a class="profile-brand" href="#/welcome" aria-label="PinkTower, wybór roli">${brandLogo('brand-logo--profile')}</a>
         <p class="eyebrow">Nasza pracownia</p>
         <h1>Znajdź swoje miejsce</h1>
         <p>Wybierz poduszkę ze swoim imieniem.</p>

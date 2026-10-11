@@ -1,0 +1,15 @@
+# Robot w PinkTower
+
+Moduł rozwija planszę i sterowanie z etapu 1. `src/modules/robot.js` jest wejściem do biblioteki i prac; `robot/exercise.js` obsługuje wykonanie i dotychczasowe operacje na programie. Dane 14 plansz znajdują się w `src/data/robotChallenges.js`, czysta symulacja w `robot/engine.js`, kontenery powtarzania w `robot/programView.js`, własne trasy w `robot/boardEditor.js` i `robot/project.js`. `components/robotBoard.js` wspólnie renderuje planszę, miniaturę i podgląd nauczyciela.
+
+Kolejność materiałów: pierwsze trasy, przeszkody, przewidywanie, szukanie błędu, inna droga, powtarzanie. Powtarzanie pojawia się w bibliotece po ukończeniu trzech pierwszych tras. Nauczyciel może bezpośrednio przydzielić dowolny materiał. Komendy są ciągami `forward`, `left`, `right`. Powtarzanie ma postać `{ type: 'repeat', times: 2 | 3 | 4, body: [...] }`. Druga warstwa pętli nie jest obsługiwana. Można przeciągać polecenia do kontenera i poza niego albo używać przycisków. Limit: 30 bloczków głównych i 12 wewnątrz pojedynczego powtarzania.
+
+Silnik zatrzymuje się przy pierwszym dotarciu do celu, jak w etapie 1, albo przed przeszkodą / brzegiem. Wynik zawiera stany i ścieżki bloczków, które UI odtwarza co 550 ms. Tryb reduced motion zachowuje logiczne kroki i usuwa animację obrotu. Reset zatrzymuje wykonanie, ustawia robota na starcie i zachowuje program; czyszczenie programu zachowuje pozycję robota i planszę. Inne rozwiązanie rozpoznajemy po odwiedzonych polach, nie po wzorcowym programie ani liczbie instrukcji.
+
+Storage pozostaje w schemacie 3. Opcjonalne `toolProgress.robot[challengeId]` przechowuje liczbę uruchomień, ukończenie, maksymalnie dwie różne trasy, ostatni program i daty. Normalizacja zachowuje nowe opcjonalne pola `toolProgress` oraz wcześniejsze wyniki pisania i postęp lekcji.
+
+Praca własna korzysta z istniejącego `works`, `completionType: teacher-review` oraz `data.kind: robot-project`. Jej `data` zawiera planszę, program, tryb edycji, informację o sprawdzeniu trasy i `share: { scope: 'local', version: 1 }`. Dane są JSON-em. Autosave jest odroczony o 450 ms i opróżniany przy przejściu, ukryciu strony oraz `pagehide`. Dziecko może poprosić nauczyciela o obejrzenie projektu. Prace oczekujące i zakończone mają podgląd bez edycji. Powrót od nauczyciela pozwala kontynuować.
+
+Istniejące assignments z `tool: robot` mają `robotTask: { challengeId }` lub kopię `board` i `sourceWorkId`. Formularz nauczyciela pozwala wybrać także sprawdzoną własną trasę ucznia. Rozwiązanie ma `data.kind: robot-assignment` i kończy się automatycznie, bez kolejki nauczyciela i bez zmiany numeru lekcji. Nie implementujemy sieciowego udostępniania; nie ma osobnego dziecięcego przycisku publikowania zadania dla kolegi. Nauczyciel przydziela lokalną kopię przez wspólny formularz assignments.
+
+Weryfikacja: `npm run test:robot`, `npm run test:storage`, `npm run test:ui`, `npm run build`. Testy UI etapu 1 zachowują dotychczasowe asercje, wybierając teraz „Poznaną trasę” z biblioteki.

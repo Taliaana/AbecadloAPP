@@ -6,8 +6,8 @@ import { getUnlockedTools } from '../storage/studentStorage.js'
 
 export function workshopView({ student }) {
   const unlocked = getUnlockedTools()
-  const visibleTools = tools.filter((tool) => unlocked.includes(tool.id))
-  const waitingTools = tools.filter((tool) => !unlocked.includes(tool.id)).slice(0, 4)
+  const visibleTools = tools.filter((tool) => tool.available || unlocked.includes(tool.id))
+  const waitingTools = tools.filter((tool) => !tool.available && !unlocked.includes(tool.id)).slice(0, 4)
   const content = `<section class="workshop-heading"><div><p class="eyebrow">Pracownia</p><h1>Półka materiałów</h1></div><p>Wybierz materiał wskazany przez nauczyciela. Każdy wraca na swoje miejsce.</p></section>
     <section class="material-shelf" aria-label="Dostępne materiały">
       <div class="shelf-wall" aria-hidden="true"><span></span><span></span><span></span></div>

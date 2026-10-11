@@ -76,6 +76,7 @@ function normalizeStudent(source, id, fallbackProfile = {}) {
     id, className: profile.className, createdAt: source?.createdAt || fallbackProfile.createdAt || new Date().toISOString(), archivedAt: source?.archivedAt || null,
     profile, progress: { ...createProgress(), ...source?.progress },
     toolProgress: {
+      ...source?.toolProgress,
       unlockedTools: [...new Set(source?.toolProgress?.unlockedTools || source?.unlockedTools || [])],
       typingResults: { ...(source?.toolProgress?.typingResults || source?.typingResults || {}) },
     },
@@ -189,9 +190,23 @@ export function getAssignment(assignmentId) { return getAssignments().find((assi
 export function getAssignmentsForStudent(studentId = null) { const state = readState(); const id = studentId || state.currentStudentId; return state.assignments.filter((assignment) => assignment.status === 'active' && (assignment.wholeClass || assignment.studentIds.includes(id))) }
 export function createAssignment(input) {
   const state = readState(); const tool = tools.find((item) => item.id === (input.tool || 'studio'))
-  const assignment = normalizeAssignment({ id: createId('assignment'), title: String(input.title || '').trim(), instruction: String(input.instruction || '').trim(), tool: input.tool || 'studio', completionType: input.completionType || tool?.completionType || 'teacher-review', studentIds: input.wholeClass ? [] : input.studentIds, wholeClass: input.wholeClass, status: 'active', createdAt: new Date().toISOString(), addToCourse: input.addToCourse })
+  const assignment = normalizeAssignment({ id: createId('assignment'), title: String(input.title || '').trim(), instruction: String(input.instruction || '').trim(), tool: input.tool || 'studio', completionType: input.completionType || tool?.completionType || 'teacher-review', studentIds: input.wholeClass ? [] : input.studentIds, wholeClass: input.wholeClass, status: 'active', createdAt: new Date().toISOString(), addToCourse: input.addToCourse, ...(input.tool === 'robot' ? { robotTask: structuredClone(input.robotTask || { challengeId: 'two-steps' }) } : {}) })
   if (!assignment.title || !assignment.instruction) return null
   state.assignments.push(assignment); writeState(state); return assignment
 }
 export function getOrCreateAssignmentWork(assignmentId, studentId = null) { const state = readState(); const id = studentId || state.currentStudentId; const assignment = state.assignments.find((item) => item.id === assignmentId); const student = state.students[id]; if (!assignment || !student) return null; const existing = student.works.find((work) => work.assignmentId === assignmentId); return existing || createWork({ studentId: id, title: assignment.title, type: 'Szkic pomysłu', assignmentId, completionType: assignment.completionType, data: { thumbnail: 'assignment', note: '', selectedStages: [] } }) }
 export function saveTypingResult(lessonId, result) { const state = readState(); const student = state.students[state.currentStudentId]; if (!student) return; student.toolProgress.typingResults[lessonId] = { ...result, updatedAt: new Date().toISOString() }; writeState(state) }
+
+export function getRobotProgress(studentId = null) {
+  const state = readState(); return state.students[studentId || state.currentStudentId]?.toolProgress.robot || {}
+}
+export function saveRobotAttempt(challengeId, { success, route, program }) {
+  const state = readState(); const student = state.students[state.currentStudentId]; if (!student) return null
+  student.toolProgress.robot ||= {}
+  const previous = student.toolProgress.robot[challengeId] || { runs: 0, completed: false, routes: [] }
+  const routes = [...new Set([...previous.routes, ...(success ? [route] : [])])].slice(0, 2)
+  const result = { ...previous, runs: previous.runs + 1, completed: previous.completed || success, routes,
+    alternative: routes.length > 1, program: structuredClone(program), updatedAt: new Date().toISOString(),
+    completedAt: previous.completedAt || (success ? new Date().toISOString() : null) }
+  student.toolProgress.robot[challengeId] = result; writeState(state); return result
+}
