@@ -2,6 +2,7 @@ import { teacherLayout } from '../../components/layout.js'
 import { avatar, icon } from '../../components/icons.js'
 import { getAllStudents, getCurrentLesson, getPendingWorks } from '../../storage/studentStorage.js'
 import { escapeHtml } from '../../utils/html.js'
+import { restoreControlFocus } from '../../utils/focus.js'
 
 export function teacherClassView({ render }) {
   let selectedClass = 'all'
@@ -31,6 +32,7 @@ export function teacherClassView({ render }) {
     root.querySelector('[data-class-filter]')?.addEventListener('change', (event) => {
       selectedClass = event.target.value
       render(current())
+      restoreControlFocus(root, '[data-class-filter]')
     })
   }
 

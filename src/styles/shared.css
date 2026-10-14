@@ -1,0 +1,82 @@
+/* Common surfaces and controls. Activity-specific dimensions stay in index.css. */
+[hidden] { display: none !important; }
+h1, h2, h3, .profile-name, .work-origin, .review-card strong { overflow-wrap: anywhere; }
+.profile-name { max-width: 100%; }
+
+.form-card, .detail-card, .avatar-options, .avatar-preview, .student-detail-header,
+.student-settings, .review-card, .teacher-work-card, .work-detail, .login-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-soft);
+}
+.form-card, .detail-card, .avatar-options, .student-settings, .login-card { padding: var(--card-padding); }
+.form-card { margin-top: 22px; }
+.form-card h1, .login-card h1, .work-detail h1 { font-size: var(--font-size-page); }
+.form-card > p:last-of-type, .teacher-page-heading p:last-child { max-width: 55ch; }
+.form-card input:not([type="checkbox"]):not([type="radio"]), .form-card textarea, .form-card select,
+.student-settings input, .teacher-filter select, .robot-title input,
+.research-board input, .research-board textarea {
+  width: 100%; min-height: var(--button-height); margin-top: 8px; padding: 12px 14px;
+  border: 1px solid var(--border); border-radius: var(--control-radius);
+  background: var(--surface); color: var(--text); font: 500 1rem/1.4 var(--font-body);
+}
+.form-card textarea { min-height: 120px; }
+.form-error, .form-feedback { color: var(--color-support); font-size: .95rem; }
+.form-feedback { margin: 12px 0; }
+.form-feedback:empty, .form-error:empty { margin: 0; min-height: 0; }
+.check-label { cursor: pointer; padding-block: 5px; }
+.check-label input { accent-color: var(--brand-pink-dark); flex-shrink: 0; }
+.student-checks { padding: 10px 16px; border-radius: var(--radius-small); background: var(--surface-muted); }
+.review-label { font: 700 .82rem/1.3 var(--font-body); color: var(--color-info); }
+.returned-note { border-left-color: var(--brand-pink); background: var(--brand-pink-wash); color: var(--text); }
+.empty-state, .completion-card { width: min(100%, 650px); padding: var(--card-padding); border-color: var(--border); border-radius: var(--radius-material); box-shadow: var(--shadow-soft); }
+.empty-state { min-height: 280px; margin: 0 auto; }
+.empty-illustration { width: 76px; height: 76px; margin-bottom: 20px; display: grid; place-items: center; border-radius: 24px; background: var(--brand-pink-wash); color: var(--brand-pink-dark); }
+.empty-illustration .icon { width: 34px; height: 34px; }
+.completion-card h1, .completion-card h2 { font-size: var(--font-size-page); }
+.option-pill, .stage-tile { transition: background 170ms ease, border-color 170ms ease, transform 170ms ease; }
+.option-pill:active, .stage-tile:active { transform: translateY(1px); }
+.compact-list > a { min-height: 44px; border-radius: 10px; }
+.compact-list > a:hover { background: var(--brand-pink-wash); color: var(--text); }
+.compact-list > a span { min-width: 0; overflow-wrap: anywhere; }
+.teacher-work-copy, .review-card > span, .teacher-student-row > strong { min-width: 0; overflow-wrap: anywhere; }
+.teacher-work-actions { flex-wrap: wrap; }
+.teacher-table-head { font-family: var(--font-body); text-transform: none; letter-spacing: 0; font-size: .85rem; }
+.teacher-observation { margin-bottom: 24px; }
+.teacher-summary article { border-radius: var(--radius-material); }
+.teacher-page-heading--class { padding-bottom: 24px; border-bottom-color: var(--border); }
+.teacher-table-card { border-radius: var(--radius-material); box-shadow: var(--shadow-soft); }
+.role-screen, .profile-screen, .login-screen { overflow-x: clip; }
+.role-grid { width: min(700px, calc(100vw - 48px)); }
+.role-card { border-radius: var(--radius-material); box-shadow: var(--shadow-soft); }
+.role-card strong { font-size: var(--font-size-section); font-weight: 600; }
+.role-icon--blue { color: var(--color-info); }
+.role-screen h1, .profile-screen h1 { font-size: var(--font-size-hero); }
+.page-heading > p:last-child, .teacher-page-heading p:last-child { margin-bottom: 0; }
+.teacher-work-actions .button { min-height: 44px; }
+.main-content > .text-link { min-height: 44px; }
+.robot-palette .button { min-height: var(--button-height); }
+.robot-workspace, .robot-editor { border-radius: var(--radius-material); }
+
+@media (max-width: 900px) {
+  .teacher-page-heading { align-items: start; flex-direction: column; }
+  .teacher-table-card { overflow: visible; }
+  .teacher-student-row { grid-template-columns: 36px minmax(0,1fr) 24px; }
+  .teacher-student-row > .avatar { grid-column: 1; grid-row: 1 / span 4; align-self: start; }
+  .teacher-student-row > strong { grid-column: 2; grid-row: 1; }
+  .teacher-student-row > .icon { grid-column: 3; grid-row: 1 / span 4; }
+}
+@media (max-width: 700px) {
+  .main-content { padding-top: 32px; }
+  .form-card, .avatar-options { padding: 22px; }
+  .form-actions { gap: 10px; }
+  .form-actions > .button { flex: 1 1 140px; }
+  .teacher-work-actions > .button { flex: 1 1 auto; }
+  .teacher-identity { margin-left: auto; }
+  .teacher-summary { width: 100%; display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; overflow: visible; }
+  .teacher-summary article { min-width: 0; padding: 20px 16px 20px 38px; }
+  .teacher-summary .summary-mark { left: 14px; width: 10px; }
+  .teacher-summary article > span:last-child { font-size: .85rem; }
+}
+@media (max-width: 620px) { :root { font-size: 16px; } }
+@media print { .form-card, .detail-card, .teacher-work-card, .work-detail { box-shadow: none; } }

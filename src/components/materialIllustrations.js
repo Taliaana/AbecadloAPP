@@ -63,7 +63,7 @@ const illustrations = {
 }
 
 export function materialIllustration(name, label = '') {
-  const drawing = illustrations[name] || illustrations.workshop
+  const drawing = illustrations[name === 'research-board' ? 'search' : name] || illustrations.workshop
   const accessibility = label ? `role="img" aria-label="${label}"` : 'aria-hidden="true"'
   return `<svg class="material-illustration" viewBox="0 0 200 190" ${accessibility}><g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">${drawing}</g></svg>`
 }

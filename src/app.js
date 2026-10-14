@@ -21,6 +21,7 @@ import { lessonFourView } from './lessons/lessonFour.js'
 import { mousePracticeView } from './modules/mousePractice.js'
 import { typewritingView } from './modules/typewriting.js'
 import { robotView, robotWorkView } from './modules/robot.js'
+import { researchBoardView } from './modules/researchBoard.js'
 import { getCurrentRole, getCurrentStudent, getStudentProgress, leaveRole, getAssignment, getWork } from './storage/studentStorage.js'
 import { getLesson } from './data/lessons.js'
 
@@ -54,7 +55,7 @@ export function startApp(root) {
       navigate(link.getAttribute('href').slice(1))
     })
     root.querySelector('[data-action="leave-role"]')?.addEventListener('click', () => { leaveRole(); navigate('/welcome') })
-    requestAnimationFrame(() => root.querySelector('#main-content')?.focus({ preventScroll: true }))
+    requestAnimationFrame(() => root.querySelector(view.focusTarget || '#main-content')?.focus({ preventScroll: true }))
   }
 
   function context(extra = {}) {
@@ -87,6 +88,7 @@ export function startApp(root) {
       '/tools/typewriting': typewritingView,
       '/tools/mouse': mousePracticeView,
       '/tools/robot': robotView,
+      '/tools/research': researchBoardView,
     }
     if (staticRoutes[route]) { renderView(staticRoutes[route](context())); return true }
     const lessonMatch = route.match(/^\/lesson\/(\d+)$/)
@@ -99,13 +101,17 @@ export function startApp(root) {
       renderView(lessonViews[id](context())); return true
     }
     const assignmentMatch = route.match(/^\/assignment\/([^/]+)$/)
-    if (assignmentMatch) { const view = getAssignment(assignmentMatch[1])?.tool === 'robot' ? robotWorkView : creativeWorkView; renderView(view(context({ assignmentId: assignmentMatch[1] }))); return true }
+    if (assignmentMatch) { const tool = getAssignment(assignmentMatch[1])?.tool; const view = tool === 'research-board' ? researchBoardView : tool === 'robot' ? robotWorkView : creativeWorkView; renderView(view(context({ assignmentId: assignmentMatch[1] }))); return true }
     const workMatch = route.match(/^\/work\/([^/]+)$/)
-    if (workMatch) { const view = getWork(workMatch[1])?.data.kind?.startsWith('robot-') ? robotWorkView : creativeWorkView; renderView(view(context({ workId: workMatch[1] }))); return true }
+    if (workMatch) { const kind = getWork(workMatch[1])?.data.kind; const view = kind === 'research-board' ? researchBoardView : kind?.startsWith('robot-') ? robotWorkView : creativeWorkView; renderView(view(context({ workId: workMatch[1] }))); return true }
     return false
   }
 
   function renderRoute() {
+    // Flush the departing view before the next view reads storage.
+    const dispose = cleanup
+    cleanup = null
+    dispose?.()
     const route = path()
     const role = getCurrentRole()
 

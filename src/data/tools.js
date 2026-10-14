@@ -1,4 +1,5 @@
 export const tools = [
+  { id: 'research-board', title: 'Tablica badawcza', description: 'Skały – zdjęcia z internetu.', icon: 'search', route: '/tools/research', available: true, completionType: 'teacher-review' },
   { id: 'mouse-practice', title: 'Ćwicz mysz', description: 'Klikaj i przeciągaj spokojnie.', icon: 'mouse', route: '/tools/mouse', completionType: 'automatic' },
   { id: 'typewriting', title: 'Typewriting', description: 'Ćwicz klawisze F i J.', icon: 'keyboard', route: '/tools/typewriting', completionType: 'automatic' },
   { id: 'studio', title: 'Studio', description: 'Rysuj i twórz.', icon: 'brush', completionType: 'teacher-review' },

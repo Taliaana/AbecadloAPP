@@ -4,6 +4,7 @@ import { formatDate } from '../utils/dates.js'
 import { escapeHtml } from '../utils/html.js'
 import { workStatus } from '../components/workStatus.js'
 import { robotWorkPreview } from '../components/robotBoard.js'
+import { emptyState } from '../components/emptyState.js'
 
 function thumbnail(type, work) {
   if (type === 'robot') return robotWorkPreview(work)
@@ -18,5 +19,5 @@ export function worksView({ student }) {
   const content = `<section class="gallery-heading"><div><p class="eyebrow">Moja galeria</p><h1>Pomysły, które już powstały</h1></div><p>Każda praca ma tutaj swoje spokojne miejsce.</p></section>
     <div class="gallery-wall" aria-hidden="true"><span></span><span></span><span></span></div>
     <div class="works-grid">${works.map((work, index) => `<article class="work-card work-card--${(index % 3) + 1}"><div class="work-frame"><div class="work-thumbnail work-thumbnail--${escapeHtml(work.data.thumbnail)}" role="img" aria-label="Miniatura pracy ${escapeHtml(work.title)}">${thumbnail(work.data.thumbnail, work)}</div></div><div class="work-caption"><div>${workStatus(work.status)}<span>${escapeHtml(work.type)}</span></div><h2>${escapeHtml(work.title)}</h2><time datetime="${escapeHtml(work.updatedAt)}">${formatDate(work.updatedAt)}</time>${['draft', 'returned'].includes(work.status) ? `<a class="text-link" href="#/work/${escapeHtml(work.id)}">Kontynuuj</a>` : ''}</div></article>`).join('')}</div>`
-  return { html: appLayout(content, student, '/works') }
+  return { html: appLayout(content + (works.length ? '' : emptyState('Miejsce na Twoje prace', 'Twoje zapisane pomysły pojawią się tutaj.')), student, '/works') }
 }

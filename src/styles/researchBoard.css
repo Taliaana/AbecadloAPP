@@ -1,0 +1,42 @@
+.research-board { display: grid; gap: var(--grid-gap); min-width: 0; }
+.research-instructions { padding: var(--card-padding); background: var(--surface); border-radius: var(--radius); }
+.research-instructions summary { cursor: pointer; min-height: 44px; font-weight: 700; }
+.research-instructions li { margin-block: .6rem; }
+.research-instructions li p { margin: 8px 0 16px; }
+.research-instructions .icon { vertical-align: middle; margin-right: 10px; }
+.research-groups { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--grid-gap); }
+.research-groups > section { min-width: 0; }
+.research-groups h2 { font-size: 1.5rem; }
+.research-item { padding: 18px; margin-block: 18px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); min-width: 0; }
+.research-item h3 { margin: 0 0 16px; }
+.research-photo { width: 100%; aspect-ratio: 4 / 3; min-height: 160px; padding: 12px; display: grid; place-items: center; position: relative; background: var(--paper); color: var(--text-muted); border: 2px dashed var(--border); border-radius: var(--radius-small); overflow: hidden; transition: background 180ms, border-color 180ms; }
+button.research-photo { font: inherit; cursor: pointer; }
+.research-photo[aria-pressed="true"] { background: var(--brand-pink-wash); border-color: var(--brand-pink-dark); }
+.research-photo img { width: 100%; height: 100%; object-fit: contain; position: absolute; inset: 0; animation: research-image-in 180ms ease-out; }
+.research-photo-frame { position: relative; aspect-ratio: 4 / 3; min-height: 180px; }
+.research-photo-frame > button.research-photo { position: absolute; inset: 0; height: 100%; }
+.research-photo-frame .research-image-box { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); }
+.research-image-box img { width: 100%; height: 100%; position: absolute; inset: 0; object-fit: fill; cursor: pointer; animation: research-image-in 180ms ease-out; }
+.research-photo-frame .research-photo span { align-self: end; z-index: 2; pointer-events: none; font-size: .85rem; }
+.research-resize-handle { position: absolute; width: 44px; height: 44px; padding: 0; border: 0; background: transparent; touch-action: none; z-index: 3; }
+.research-resize-handle::after { content: ''; position: absolute; inset: 15px; border: 2px solid var(--brand-pink-dark); background: var(--surface); border-radius: 4px; }
+[data-resize-corner="nw"] { left: -22px; top: -22px; cursor: nwse-resize; }
+[data-resize-corner="ne"] { right: -22px; top: -22px; cursor: nesw-resize; }
+[data-resize-corner="sw"] { left: -22px; bottom: -22px; cursor: nesw-resize; }
+[data-resize-corner="se"] { right: -22px; bottom: -22px; cursor: nwse-resize; }
+.research-source-help { font-size: .85rem; color: var(--text-muted); margin-top: 10px; }
+.research-paste-button { margin-top: 10px; }
+.research-photo-menu { position: absolute; z-index: 5; bottom: 8px; right: 8px; max-width: calc(100% - 16px); padding: 6px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--control-radius); box-shadow: var(--shadow-soft); }
+.research-photo-menu .button { max-width: 100%; }
+.research-photo span { position: relative; background: var(--paper); padding: 8px 12px; border-radius: var(--control-radius); }
+.research-photo-actions { display: flex; flex-wrap: wrap; gap: 4px; margin-block: 8px; }
+.research-item label, .research-answer { display: grid; gap: 8px; }
+.research-item input, .research-answer textarea { width: 100%; min-width: 0; }
+.research-answer textarea { min-height: 120px; resize: vertical; }
+.research-answer { margin-block: 20px; }
+.research-groups p { overflow-wrap: anywhere; }
+[data-trial] { max-width: 560px; }
+[data-trial] .button { margin-top: 16px; }
+@keyframes research-image-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+@media (max-width: 1050px) { .research-groups { grid-template-columns: minmax(0, 1fr); } }
+@media (prefers-reduced-motion: reduce) { .research-photo, .research-photo img, .research-image-box img { animation: none; transition: none; } }

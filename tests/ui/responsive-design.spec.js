@@ -48,7 +48,7 @@ test('formularz i panel nauczyciela mieszczą się na małym ekranie', async ({ 
   const disabledSubmit = page.getByRole('button', { name: 'Dodaj ucznia' })
   await expect(disabledSubmit).toBeDisabled()
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy()
-  await testInfo.attach('teacher-student-form-small', { body: await page.screenshot({ fullPage: true }), contentType: 'image/png' })
+  if (!process.env.PINKTOWER_NO_SCREENSHOTS) await testInfo.attach('teacher-student-form-small', { body: await page.screenshot({ fullPage: true }), contentType: 'image/png' })
 })
 
 test('wizualny smoke: główne widoki tworzą stabilne zrzuty do raportu', async ({ page }, testInfo) => {
@@ -58,13 +58,13 @@ test('wizualny smoke: główne widoki tworzą stabilne zrzuty do raportu', async
     await page.goto(route)
     await page.locator('#main-content').focus()
     await page.waitForTimeout(240)
-    await testInfo.attach(name, { body: await page.screenshot({ fullPage: true }), contentType: 'image/png' })
+    if (!process.env.PINKTOWER_NO_SCREENSHOTS) await testInfo.attach(name, { body: await page.screenshot({ fullPage: true }), contentType: 'image/png' })
   }
   await enterTeacher(page)
   for (const [name, route] of [['class', '/#/teacher/class'], ['review', '/#/teacher/review']]) {
     await page.goto(route)
     await page.locator('#main-content').focus()
     await page.waitForTimeout(240)
-    await testInfo.attach(name, { body: await page.screenshot({ fullPage: true }), contentType: 'image/png' })
+    if (!process.env.PINKTOWER_NO_SCREENSHOTS) await testInfo.attach(name, { body: await page.screenshot({ fullPage: true }), contentType: 'image/png' })
   }
 })

@@ -7,6 +7,7 @@ import { getAssignment, getStudentById, getWork, reviewWork } from '../../storag
 import { escapeHtml } from '../../utils/html.js'
 import { robotWorkPreview } from '../../components/robotBoard.js'
 import { robotCommands } from '../../data/robotChallenges.js'
+import { researchPreview, mountResearchImages } from '../../components/researchPreview.js'
 
 export function teacherWorkDetailView({ workId, navigate }) {
   const work = getWork(workId)
@@ -15,17 +16,19 @@ export function teacherWorkDetailView({ workId, navigate }) {
   const assignment = work.assignmentId ? getAssignment(work.assignmentId) : null
   const content = `<a class="text-link no-print" href="#/teacher/works">${icon('back')} Wróć do prac</a>
     <article class="work-detail printable-work"><header><div>${workStatus(work.status)}<p class="eyebrow">${escapeHtml(work.type)}</p><h1>${escapeHtml(work.title)}</h1><p>${avatar(student.profile, 'small')} ${escapeHtml(student.profile.name)} · ${formatDate(work.updatedAt)}</p></div><div class="work-detail-tools no-print"><button class="button button-ghost" type="button" data-print>${icon('print')} Drukuj</button><button class="button button-ghost" type="button" data-download>${icon('download')} Pobierz</button></div></header>
-      <div class="work-document"><p class="eyebrow">${work.lessonId ? `Lekcja ${work.lessonId}` : assignment ? `Dodatkowe zadanie · ${escapeHtml(assignment.title)}` : 'Portfolio'}</p><h2>${escapeHtml(work.data.note || 'Praca wizualna ucznia')}</h2>${work.data.kind?.startsWith('robot-') ? `${robotWorkPreview(work)}<h3>Program ucznia</h3><p>${(work.data.program || []).map(block => typeof block === 'string' ? robotCommands[block]?.label : `Powtórz ${block.times} razy: ${(block.body || []).map(command => robotCommands[command]?.label).join(', ')}`).map(escapeHtml).join(' → ') || 'Program jeszcze powstaje.'}</p>` : work.data.selectedStages?.length ? `<div class="stage-preview">${work.data.selectedStages.map((stage, index) => `<span><b>${index + 1}</b>${escapeHtml(stage)}</span>`).join('')}</div>` : '<div class="work-placeholder">Podgląd pracy</div>'}</div>
-      ${work.status === 'waiting-review' && work.completionType === 'teacher-review' ? `<footer class="review-actions no-print"><div><p class="eyebrow">Wspólne obejrzenie</p><h2>Co dalej z tą pracą?</h2></div><button class="button button-secondary" type="button" data-decision="returned">Kontynuuj pracę</button><button class="button button-primary" type="button" data-decision="completed">Zakończ pracę</button></footer>` : ''}
+      <div class="work-document"><p class="eyebrow">${work.lessonId ? `Lekcja ${work.lessonId}` : assignment ? `Dodatkowe zadanie · ${escapeHtml(assignment.title)}` : 'Portfolio'}</p><h2>${escapeHtml(work.data.note || 'Praca wizualna ucznia')}</h2>${work.data.kind === 'research-board' ? researchPreview(work) : work.data.kind?.startsWith('robot-') ? `${robotWorkPreview(work)}<h3>Program ucznia</h3><p>${(work.data.program || []).map(block => typeof block === 'string' ? robotCommands[block]?.label : `Powtórz ${block.times} razy: ${(block.body || []).map(command => robotCommands[command]?.label).join(', ')}`).map(escapeHtml).join(' → ') || 'Program jeszcze powstaje.'}</p>` : work.data.selectedStages?.length ? `<div class="stage-preview">${work.data.selectedStages.map((stage, index) => `<span><b>${index + 1}</b>${escapeHtml(stage)}</span>`).join('')}</div>` : '<div class="work-placeholder">Podgląd pracy</div>'}</div>
+      ${work.status === 'waiting-review' && work.completionType === 'teacher-review' ? `<footer class="review-actions no-print"><div><p class="eyebrow">Wspólne obejrzenie</p><h2>Co dalej z tą pracą?</h2></div><button class="button button-secondary" type="button" data-decision="returned">${work.data.kind === 'research-board' ? 'Zaproś do dalszej pracy' : 'Kontynuuj pracę'}</button><button class="button button-primary" type="button" data-decision="completed">Zakończ pracę</button></footer>` : ''}
     </article>`
   return {
     html: teacherLayout(content, work.status === 'waiting-review' ? '/teacher/review' : '/teacher/works'),
     mount(root) {
+      const images = work.data.kind === 'research-board' ? mountResearchImages(root, work) : null
       root.querySelector('[data-print]').addEventListener('click', () => window.print())
       root.querySelector('[data-download]').addEventListener('click', () => downloadWork(work, student.profile.name))
       root.querySelectorAll('[data-decision]').forEach((button) => button.addEventListener('click', () => {
         reviewWork(work.id, button.dataset.decision); navigate('/teacher/review')
       }))
+      return () => images?.dispose()
     },
   }
 }

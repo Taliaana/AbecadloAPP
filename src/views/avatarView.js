@@ -13,7 +13,7 @@ const choices = {
 
 const labels = { face: 'Kształt twarzy', hair: 'Fryzura', hairColor: 'Kolor włosów', shirtColor: 'Koszulka', backgroundColor: 'Tło' }
 
-export function avatarView({ student, render, navigate }) {
+export function avatarView({ student, navigate }) {
   let config = { ...student.profile.avatarConfig }
 
   function current() {
@@ -31,7 +31,14 @@ export function avatarView({ student, render, navigate }) {
   function mount(root) {
     root.querySelectorAll('[data-trait]').forEach((button) => button.addEventListener('click', () => {
       config = { ...config, [button.dataset.trait]: button.dataset.value }
-      render(current())
+      const profile = { ...student.profile, avatarConfig: config }
+      root.querySelector('.avatar-preview [aria-live]').innerHTML = avatar(profile, 'xlarge')
+      root.querySelector('.profile-chip .avatar').outerHTML = avatar(profile, 'small')
+      root.querySelectorAll('[data-trait]').forEach(option => {
+        const selected = config[option.dataset.trait] === option.dataset.value
+        option.classList.toggle('is-selected', selected)
+        option.setAttribute('aria-pressed', String(selected))
+      })
     }))
     root.querySelector('[data-save-avatar]').addEventListener('click', () => { updateCurrentAvatar(config); navigate('/home') })
     root.querySelector('[data-switch-profile]').addEventListener('click', () => { clearCurrentStudent(); navigate('/profiles') })

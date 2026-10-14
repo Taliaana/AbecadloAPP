@@ -1,0 +1,73 @@
+import { test, expect } from '@playwright/test'
+import { resetApp, chooseStudent } from './helpers.js'
+test.beforeEach(async ({ page }) => { await resetApp(page); await chooseStudent(page) })
+async function project(page) { await page.goto('/#/tools/robot'); await page.locator('[data-create-route]').click() }
+
+test('powrót zapisuje szkic przed odczytem listy i portfolio, bez reloadu', async ({ page }) => {
+  await project(page)
+  await page.getByLabel('Nazwa trasy').fill('Moja nowa nazwa')
+  await page.getByRole('link', { name: 'Wróć do Robota', exact: true }).click()
+  await expect(page.getByRole('link', { name: 'Moja nowa nazwa', exact: true })).toBeVisible()
+  await page.getByRole('link', { name: 'Moja nowa nazwa', exact: true }).click()
+  await page.getByLabel('Nazwa trasy').fill('Nazwa w galerii')
+  await page.locator('.main-nav').getByRole('link', { name: 'Moje prace' }).click()
+  await expect(page.getByText('Nazwa w galerii', { exact: true })).toBeVisible()
+  await page.locator('.work-card').filter({ has: page.getByRole('heading', { name: 'Nazwa w galerii' }) }).getByRole('link', { name: 'Kontynuuj' }).click()
+  await expect(page.getByLabel('Nazwa trasy')).toHaveValue('Nazwa w galerii')
+})
+
+test('edycja natychmiast unieważnia wynik własnej trasy, Undo odtwarza program', async ({ page }) => {
+  await project(page)
+  await page.getByLabel('Nazwa trasy').fill('Trasa z próbą')
+  await page.getByRole('button', { name: 'Cel', exact: true }).click(); await page.locator('[data-cell="1,2"]').click()
+  await page.locator('[data-program-board]').click()
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Trasa z próbą')
+  await page.locator('[data-command="forward"]').click(); await page.locator('[data-command="forward"]').click()
+  await page.locator('[data-run]').click()
+  await expect(page.locator('[data-project-status]')).toHaveText('Twoja trasa prowadzi do celu.')
+  await page.locator('[data-command="right"]').click()
+  expect(await page.locator('[data-project-status]').textContent()).toBe('Sprawdź trasę, uruchamiając program.')
+  await expect(page.locator('[data-robot-complete]')).toBeHidden()
+  await page.locator('[data-undo]').click(); await expect(page.locator('.robot-block')).toHaveCount(2)
+  await page.locator('[data-clear]').click(); await expect(page.locator('.robot-block')).toHaveCount(0)
+  await page.locator('[data-undo]').click(); await expect(page.locator('.robot-block')).toHaveCount(2)
+  await page.getByRole('button', { name: 'Usuń polecenie 1', exact: true }).click()
+  await expect(page.locator('.robot-block')).toHaveCount(1)
+  await page.locator('[data-undo]').click(); await expect(page.locator('.robot-block')).toHaveCount(2)
+  await page.getByRole('button', { name: 'Kontynuuj później' }).click()
+  await page.getByRole('link', { name: /Kontynuuj/ }).first().click()
+  await expect(page.locator('.robot-block')).toHaveCount(2)
+})
+
+test('nowe przewidywanie natychmiast chowa wynik poprzedniego uruchomienia', async ({ page }) => {
+  await page.goto('/#/tools/robot?challenge=predict-turn')
+  await page.locator('[data-cell="2,3"]').click(); await page.locator('[data-run]').click()
+  await expect(page.locator('[data-robot-complete]')).toBeVisible()
+  await page.locator('[data-cell="1,1"]').click()
+  await expect(page.locator('[data-robot-complete]')).toBeHidden()
+  await expect(page.locator('[data-cell="1,1"]')).toHaveAttribute('aria-pressed', 'true')
+  await expect(page.locator('[data-run]')).toBeEnabled()
+})
+
+test('wnętrze pustej pętli ma czytelną strefę drop, undo działa w pętli', async ({ page }) => {
+  await page.goto('/#/tools/robot?challenge=repeat-steps')
+  await page.locator('[data-command="repeat"]').click()
+  expect((await page.locator('.robot-repeat-body').boundingBox()).height).toBeGreaterThanOrEqual(80)
+  await page.locator('[data-command="forward"]').dragTo(page.locator('.robot-repeat-body'))
+  await expect(page.locator('.robot-repeat-body .robot-block')).toHaveCount(1)
+  await page.locator('[data-undo]').click()
+  await expect(page.locator('.robot-repeat-body .robot-block')).toHaveCount(0)
+  await expect(page.locator('[data-run]')).toBeDisabled()
+})
+
+test('ruch animuje istniejącego robota i ostatni bloczek pozostaje czytelny przed zakończeniem', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' })
+  await page.goto('/#/tools/robot?challenge=two-steps')
+  await page.locator('[data-command="forward"]').click(); await page.locator('[data-command="forward"]').click()
+  await page.evaluate(() => { window.robotElement = document.querySelector('.robot-token') })
+  await page.locator('[data-run]').click()
+  await expect(page.locator('[data-path="1"]')).toHaveAttribute('aria-current', 'step')
+  expect(await page.evaluate(() => window.robotElement === document.querySelector('.robot-token'))).toBe(true)
+  await expect(page.locator('[data-robot-complete]')).toBeVisible()
+  await expect(page.locator('[aria-current="step"]')).toHaveCount(0)
+})

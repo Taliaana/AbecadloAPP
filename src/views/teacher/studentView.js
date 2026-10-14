@@ -4,9 +4,12 @@ import { workStatus } from '../../components/workStatus.js'
 import { implementedLessons, lessons } from '../../data/lessons.js'
 import { formatDate } from '../../utils/dates.js'
 import { escapeHtml } from '../../utils/html.js'
+import { restoreControlFocus } from '../../utils/focus.js'
 import { archiveStudent, getAssignmentsForStudent, getCurrentLesson, getStudentById, unlockLessonForStudent, unlockNextLessonForStudent, updateStudentProfile } from '../../storage/studentStorage.js'
 
 export function teacherStudentView({ studentId, render, navigate }) {
+  let settingsOpen = false
+  let saveMessage = ''
   function current() {
     const student = getStudentById(studentId)
     if (!student || student.archivedAt) return { html: teacherLayout('<section class="empty-state"><h1>Profil jest w archiwum</h1><a class="button button-primary" href="#/teacher/class">Wróć do klasy</a></section>', '/teacher/class') }
@@ -26,17 +29,22 @@ export function teacherStudentView({ studentId, render, navigate }) {
         <section class="detail-card"><p class="eyebrow">Portfolio</p><h2>${student.works.filter((work) => work.status === 'completed').length} prac</h2><div class="compact-list">${student.works.filter((work) => work.status === 'completed').slice(0, 3).map((work) => `<a href="#/teacher/work/${escapeHtml(work.id)}"><span>${escapeHtml(work.title)}</span><time>${formatDate(work.updatedAt)}</time></a>`).join('')}</div></section>
         <section class="detail-card"><p class="eyebrow">Dodatkowe zadania</p><h2>${assignments.length}</h2><div class="compact-list">${assignments.map((assignment) => `<span>${escapeHtml(assignment.title)}</span>`).join('') || '<p>Brak zadań.</p>'}</div></section>
       </div>
-      <details class="student-settings no-print"><summary>Edytuj profil ucznia</summary><form data-edit-student><label>Imię<input name="name" value="${escapeHtml(student.profile.name)}" required maxlength="40" /></label><label>Klasa<input name="className" value="${escapeHtml(student.className)}" required maxlength="12" /></label><div class="form-actions"><button class="button button-secondary" type="submit">Zapisz zmiany</button><button class="button button-danger" type="button" data-archive-student>Archiwizuj ucznia</button></div></form><p>Archiwizacja ukrywa profil na liście i zachowuje wszystkie prace.</p></details>`
+      <details class="student-settings no-print" ${settingsOpen ? 'open' : ''}><summary>Edytuj profil ucznia</summary><form data-edit-student><label>Imię<input name="name" value="${escapeHtml(student.profile.name)}" required maxlength="40" /></label><label>Klasa<input name="className" value="${escapeHtml(student.className)}" required maxlength="12" /></label><div class="form-actions"><button class="button button-secondary" type="submit">Zapisz zmiany</button><button class="button button-danger" type="button" data-archive-student>Archiwizuj ucznia</button></div><p class="form-feedback" data-profile-feedback role="status">${saveMessage}</p></form><p>Archiwizacja ukrywa profil na liście i zachowuje wszystkie prace.</p></details>`
     return { html: teacherLayout(content, '/teacher/class'), mount }
   }
   function mount(root) {
+    const settings = root.querySelector('.student-settings')
+    settings?.addEventListener('toggle', () => { settingsOpen = settings.open })
     root.querySelector('[data-unlock-next]')?.addEventListener('click', () => { unlockNextLessonForStudent(studentId); render(current()) })
     root.querySelector('[data-unlock-form]')?.addEventListener('submit', (event) => {
       event.preventDefault(); unlockLessonForStudent(studentId, Number(new FormData(event.currentTarget).get('lessonId'))); render(current())
     })
     root.querySelector('[data-edit-student]')?.addEventListener('submit', (event) => {
       event.preventDefault(); const data = new FormData(event.currentTarget)
-      updateStudentProfile(studentId, { name: data.get('name'), className: data.get('className') }); render(current())
+      const updated = updateStudentProfile(studentId, { name: data.get('name'), className: data.get('className') })
+      if (!updated) { root.querySelector('[data-profile-feedback]').textContent = 'Wpisz imię i klasę.'; return }
+      settingsOpen = true; saveMessage = 'Zmiany zapisane.'; render(current())
+      restoreControlFocus(root, '[data-edit-student] [type="submit"]')
     })
     root.querySelector('[data-archive-student]')?.addEventListener('click', (event) => {
       if (event.currentTarget.dataset.confirm !== 'true') { event.currentTarget.dataset.confirm = 'true'; event.currentTarget.textContent = 'Kliknij ponownie, aby archiwizować'; return }

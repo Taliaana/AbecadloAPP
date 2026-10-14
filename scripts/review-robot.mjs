@@ -9,8 +9,13 @@ await page.getByRole('button', { name: 'Uczeń' }).click()
 await page.getByRole('button', { name: /Zosia/ }).click()
 for (const [width, height] of [[1440, 900], [1366, 768], [1024, 768], [390, 844]]) {
   await page.setViewportSize({ width, height })
-  for (const [name, query] of [['library', ''], ['obstacles', '?challenge=around-stone'], ['repeat', '?challenge=repeat-steps'], ['home', null], ['workshop', null]]) {
+  for (const [name, query] of [['library', ''], ['obstacles', '?challenge=around-stone'], ['repeat', '?challenge=repeat-steps'], ['home', null], ['workshop', null], ['works', null], ['lesson', null], ['editor', null]]) {
     await page.goto(`http://127.0.0.1:4177/#/${query === null ? name : 'tools/robot' + query}`)
+    if (name === 'lesson') await page.goto('http://127.0.0.1:4177/#/lesson/1')
+    if (name === 'editor') {
+      await page.goto('http://127.0.0.1:4177/#/tools/robot')
+      await page.locator('[data-create-route]').click()
+    }
     if (name === 'repeat') {
       if (await page.locator('[data-clear]').isEnabled()) await page.locator('[data-clear]').click()
       await page.locator('[data-command="repeat"]').click()
@@ -65,4 +70,4 @@ await expect(page.locator('[data-robot-complete]')).toBeVisible()
 await expect(page.locator('[data-project-status]')).toHaveText('Twoja trasa prowadzi do celu.')
 console.log('Browser walkthrough completed: repeat and own board')
 await browser.close()
-console.log('Robot UI review: 23 screenshots, no horizontal overflow; five successful routes.')
+console.log('Robot UI review: 35 screenshots, no horizontal overflow; five successful routes.')

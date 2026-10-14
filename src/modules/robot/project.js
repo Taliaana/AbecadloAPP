@@ -14,6 +14,7 @@ export function robotProjectView(context, initialWork) {
   let mountedRoot = null
   const persist = () => { work = updateWork(work.id, { title: title.trim() || 'Moja trasa', data, status: 'draft' }) }
   function screen() {
+    data.board.title = title.trim() || 'Moja trasa'
     if (work.status === 'waiting-review') return { html: appLayout(waitingReviewScreen(), context.student, '/works') }
     if (work.status === 'completed') return { html: appLayout(`<section class="tool-header"><h1>${escapeHtml(work.title)}</h1><p>Twoja trasa jest w portfolio.</p></section>${robotWorkPreview(work)}<a class="button button-primary" href="#/tools/robot">Wróć do Robota</a>`, context.student, '/works') }
     const returned = work.status === 'returned' ? '<p class="returned-note" role="status">Możesz jeszcze popracować nad tą pracą.</p>' : ''
@@ -34,10 +35,11 @@ export function robotProjectView(context, initialWork) {
     return robotExerciseView(context, {
       board: data.board, work,
       onChange(program, solved = false) {
-        data.program = program; data.solved = solved; persist()
+        data.program = program; data.solved = solved
         const status = mountedRoot?.querySelector('[data-project-status]')
         if (status) status.textContent = solved ? 'Twoja trasa prowadzi do celu.' : 'Sprawdź trasę, uruchamiając program.'
       },
+      onSave() { persist() },
       extra: `${returned}<section class="robot-project-actions"><button type="button" class="button button-ghost" data-edit-board>Zmień planszę</button><p data-project-status role="status">${data.solved ? 'Twoja trasa prowadzi do celu.' : 'Sprawdź trasę, uruchamiając program.'}</p>${workActions()}</section>`,
       onMount(root, exercise) {
         mountedRoot = root
