@@ -4,6 +4,7 @@ import { escapeHtml } from '../utils/html.js'
 
 const navigation = [
   { route: '/home', label: 'Dom', icon: 'home' },
+  { route: '/path', label: 'Lekcje', icon: 'path' },
   { route: '/workshop', label: 'Pracownia', icon: 'shelf' },
   { route: '/works', label: 'Moje prace', icon: 'works' },
 ]

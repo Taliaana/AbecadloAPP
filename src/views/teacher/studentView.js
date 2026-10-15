@@ -5,7 +5,7 @@ import { implementedLessons, lessons } from '../../data/lessons.js'
 import { formatDate } from '../../utils/dates.js'
 import { escapeHtml } from '../../utils/html.js'
 import { restoreControlFocus } from '../../utils/focus.js'
-import { archiveStudent, getAssignmentsForStudent, getCurrentLesson, getStudentById, unlockLessonForStudent, unlockNextLessonForStudent, updateStudentProfile } from '../../storage/studentStorage.js'
+import { archiveStudent, deleteStudentProfile, getAssignmentsForStudent, getCurrentLesson, getStudentById, unlockLessonForStudent, unlockNextLessonForStudent, updateStudentProfile } from '../../storage/studentStorage.js'
 
 export function teacherStudentView({ studentId, render, navigate }) {
   let settingsOpen = false
@@ -29,7 +29,7 @@ export function teacherStudentView({ studentId, render, navigate }) {
         <section class="detail-card"><p class="eyebrow">Portfolio</p><h2>${student.works.filter((work) => work.status === 'completed').length} prac</h2><div class="compact-list">${student.works.filter((work) => work.status === 'completed').slice(0, 3).map((work) => `<a href="#/teacher/work/${escapeHtml(work.id)}"><span>${escapeHtml(work.title)}</span><time>${formatDate(work.updatedAt)}</time></a>`).join('')}</div></section>
         <section class="detail-card"><p class="eyebrow">Dodatkowe zadania</p><h2>${assignments.length}</h2><div class="compact-list">${assignments.map((assignment) => `<span>${escapeHtml(assignment.title)}</span>`).join('') || '<p>Brak zadań.</p>'}</div></section>
       </div>
-      <details class="student-settings no-print" ${settingsOpen ? 'open' : ''}><summary>Edytuj profil ucznia</summary><form data-edit-student><label>Imię<input name="name" value="${escapeHtml(student.profile.name)}" required maxlength="40" /></label><label>Klasa<input name="className" value="${escapeHtml(student.className)}" required maxlength="12" /></label><div class="form-actions"><button class="button button-secondary" type="submit">Zapisz zmiany</button><button class="button button-danger" type="button" data-archive-student>Archiwizuj ucznia</button></div><p class="form-feedback" data-profile-feedback role="status">${saveMessage}</p></form><p>Archiwizacja ukrywa profil na liście i zachowuje wszystkie prace.</p></details>`
+      <details class="student-settings no-print" ${settingsOpen ? 'open' : ''}><summary>Edytuj profil ucznia</summary><form data-edit-student><label>Imię<input name="name" value="${escapeHtml(student.profile.name)}" required maxlength="40" /></label><label>Klasa<input name="className" value="${escapeHtml(student.className)}" required maxlength="12" /></label><div class="form-actions"><button class="button button-secondary" type="submit">Zapisz zmiany</button><button class="button button-secondary" type="button" data-archive-student>Archiwizuj ucznia</button></div><p class="form-feedback" data-profile-feedback role="status">${saveMessage}</p></form><p>Archiwizacja ukrywa profil na liście i zachowuje wszystkie prace.</p><div class="student-delete"><p>Trwałe usunięcie obejmuje profil, postępy i wszystkie prace ucznia.</p><button class="button button-danger" type="button" data-delete-student>Usuń profil</button></div></details>`
     return { html: teacherLayout(content, '/teacher/class'), mount }
   }
   function mount(root) {
@@ -49,6 +49,21 @@ export function teacherStudentView({ studentId, render, navigate }) {
     root.querySelector('[data-archive-student]')?.addEventListener('click', (event) => {
       if (event.currentTarget.dataset.confirm !== 'true') { event.currentTarget.dataset.confirm = 'true'; event.currentTarget.textContent = 'Kliknij ponownie, aby archiwizować'; return }
       archiveStudent(studentId); navigate('/teacher/class')
+    })
+    root.querySelector('[data-delete-student]')?.addEventListener('click', async (event) => {
+      const name = getStudentById(studentId)?.profile.name
+      if (!window.confirm(`Usunąć profil: ${name}?\n\nUsunięte zostaną profil, postępy i zapisane prace tego ucznia. Tej operacji nie można cofnąć.`)) return
+      const button = event.currentTarget
+      button.disabled = true
+      button.setAttribute('aria-busy', 'true')
+      try {
+        await deleteStudentProfile(studentId)
+        navigate('/teacher/class')
+      } catch {
+        root.querySelector('[data-profile-feedback]').textContent = 'Nie udało się usunąć profilu. Spróbuj ponownie.'
+        button.disabled = false
+        button.removeAttribute('aria-busy')
+      }
     })
   }
   return current()

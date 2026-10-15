@@ -1,5 +1,5 @@
 const modules = [
-  ['Poznaję komputer', ['Budowa komputera', 'Obsługuję mysz', 'Poznaję klawiaturę', 'Typewriting – układam dłonie', 'Bezpieczne stanowisko']],
+  ['Poznaję komputer', ['Poznajemy sprzęt komputerowy', 'Obsługuję mysz', 'Poznaję klawiaturę', 'Typewriting – układam dłonie', 'Bezpieczne stanowisko']],
   ['Tworzę cyfrowo', ['Pierwszy rysunek', 'Kształty i kolory', 'Zmieniam swoją pracę', 'Piszę na komputerze', 'Tekst i obraz', 'Zapisuję i otwieram swoją pracę']],
   ['Myślę jak programista', ['Co było najpierw?', 'Tworzę instrukcję', 'Steruję robotem', 'Przewiduję działanie programu', 'Znajduję błąd', 'Szukam innego rozwiązania']],
   ['Internet i informacja', ['Poznaję przeglądarkę', 'Znajduję informację', 'Wybieram przydatne źródło', 'Czy to na pewno prawda?']],
@@ -9,7 +9,7 @@ const modules = [
 ]
 
 const descriptions = [
-  'Poznaj części zestawu komputerowego.', 'Poćwicz kliknięcie, dwuklik i przeciąganie.', 'Znajdź ważne klawisze i napisz krótki tekst.',
+  'Obejrzyj urządzenia, przepisz nazwy i przygotuj stanowisko.', 'Poćwicz kliknięcie, dwuklik i przeciąganie.', 'Znajdź ważne klawisze i napisz krótki tekst.',
   'Ułóż dłonie i poznaj klawisze F oraz J.', 'Przygotuj wygodne i bezpieczne miejsce pracy.',
 ]
 

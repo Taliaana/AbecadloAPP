@@ -31,6 +31,12 @@ Postęp, odblokowane narzędzia, wyniki Typewritingu i portfolio są przechowywa
 
 Rekord ucznia zawiera `id`, `className`, daty utworzenia i archiwizacji, profil z avatarem, `progress`, osobny `toolProgress` oraz `works`. `className` pozostaje prostym polem tekstowym, ale jest odseparowane od profilu wizualnego, aby później można je było zastąpić relacją do modelu `Class`.
 
+Dostęp do profili, postępów, prac i zadań przechodzi przez `studentStorage`; obrazy mają osobną warstwę `imageStorage` dla IndexedDB. Widoki nie odczytują `localStorage` bezpośrednio. Klucz `abecadlo-state-v3` i wersja schematu pozostają bez zmian. Zapisana lista uczniów v3 jest źródłem prawdy, także po usunięciu ostatniego profilu. Przykładowe profile powstają przy pierwszym uruchomieniu, a nie przy aktualizacji aplikacji. Dane lokalne pozostają związane z adresem (origin) przeglądarki; zmiana domeny nie przenosi ich automatycznie.
+
+„Usuń profil” w edycji ucznia wymaga wyraźnego potwierdzenia. `deleteStudentProfile(id)` usuwa rekord wraz z postępami i pracami, zdjęcia ucznia z IndexedDB oraz jego identyfikator z odbiorców zadań. Czyści również jego dane w zachowanych zapisach v1/v2. Pozostali uczniowie i zadania nauczyciela pozostają zachowane. Archiwizacja nadal tylko ukrywa profil. Identyfikatory uczniów są trwałe i nie zależą od imienia.
+
+Nawigacja ucznia: Dom, Lekcje, Pracownia, Moje prace. „Lekcje” wykorzystują istniejącą ścieżkę `#/path`, pokazują aktualną lekcję i pozwalają powtarzać ukończone. Stan ćwiczenia pozostaje lokalny dla widoku; `startLesson` zachowuje `completed`, a `completeLesson` nie cofa kolejnych lekcji ani wyników narzędzi. Testy zgodności i usuwania: `node --test tests/storage/*.test.mjs`.
+
 ## Model produktu
 
 Główna ścieżka lekcji pozostaje sekwencyjna. Pracownia przechowuje poznane narzędzia, ale postęp Typewritingu jest niezależny od numeru lekcji. Dodatkowe zadania nauczyciela również nie zmieniają miejsca ucznia w programie.

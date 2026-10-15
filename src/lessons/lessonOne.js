@@ -1,76 +1,135 @@
 import { lessonLayout } from '../components/layout.js'
 import { icon } from '../components/icons.js'
 import { completionScreen, createStepFlow } from '../components/lessonFlow.js'
-import { bindDragDrop } from '../components/activityBindings.js'
+import { equipmentImage, equipmentStation } from '../components/equipmentStation.js'
+import { bindSpeechButtons, speechButton } from '../components/speechButton.js'
+import { acceptsEquipment, equipment, matchesEquipmentName } from '../data/computerEquipment.js'
+import { getLesson } from '../data/lessons.js'
 import { completeLesson, startLesson } from '../storage/studentStorage.js'
-
-const parts = [
-  { id: 'monitor', name: 'Monitor', icon: 'monitor' },
-  { id: 'tower', name: 'Jednostka centralna', icon: 'tower' },
-  { id: 'keyboard', name: 'Klawiatura', icon: 'keyboard' },
-  { id: 'mouse', name: 'Mysz', icon: 'mouse' },
-  { id: 'headphones', name: 'Słuchawki', icon: 'headphones' },
-]
 
 export function lessonOneView({ render }) {
   startLesson(1)
-  const flow = createStepFlow(3)
+  const flow = createStepFlow(5)
+  const title = getLesson(1).title
   const placed = new Set()
-  let selected = null
-  let question = 0
-  const questions = [['Chcę wpisać swoje imię.', 'keyboard'], ['Chcę wskazać coś na ekranie.', 'mouse'], ['Chcę usłyszeć dźwięk.', 'headphones']]
+  let index = 0, selected = null, copied = false, matched = false
+  let observeUntil = null, arrangeStarted = null, modelUntil = null
+  const instruction = (text, symbol) => `<div class="equipment-instruction">${icon(symbol)}<h2>${text}</h2>${speechButton(text)}</div>`
+  const deviceName = item => `<div class="equipment-name"><h3>${item.name.toLocaleUpperCase('pl-PL')}</h3>${speechButton(`${item.name}.`, item.name)}</div>`
+  const next = `<button type="button" class="button button-primary" data-device-next>Dalej ${icon('arrow')}</button>`
 
-  function stepOne() {
-    return `<section class="lesson-task"><p class="eyebrow">Ustaw komputer</p><h2>Zbuduj stanowisko komputerowe.</h2><p>Przeciągnij każdy przedmiot na jego miejsce. Możesz też wybrać przedmiot, a potem miejsce.</p><div class="computer-activity">
-      <div class="parts-tray" aria-label="Części komputera">${parts.filter((part) => !placed.has(part.id)).map((part) => `<button class="computer-part ${selected === part.id ? 'is-selected' : ''}" type="button" draggable="true" data-part="${part.id}" aria-pressed="${selected === part.id}">${icon(part.icon)}<span>${part.name}</span></button>`).join('') || '<p class="tray-complete">Wszystko jest na miejscu.</p>'}</div>
-      <div class="desk-scene" aria-label="Biurko z miejscami na części komputera"><div class="desk-wall"></div><div class="desk-top"></div><div class="desk-leg desk-leg--left"></div><div class="desk-leg desk-leg--right"></div>${parts.map((part) => `<button type="button" class="drop-zone drop-zone--${part.id} ${placed.has(part.id) ? 'is-filled' : ''}" data-zone="${part.id}" aria-label="Miejsce: ${part.name}">${placed.has(part.id) ? `${icon(part.icon)}<span class="sr-only">${part.name} ustawiono</span>` : `<span>${part.name}</span>`}</button>`).join('')}</div>
-      </div><p class="gentle-hint" role="status">${placed.size ? `${placed.size} z 5 elementów jest na miejscu.` : 'Zacznij od monitora.'}</p></section>`
+  function learn() {
+    const item = equipment[index]
+    return `${instruction('Przyjrzyj się urządzeniu.', 'eye')}<p class="eyebrow">Poznaję · ${index + 1} z ${equipment.length}</p>${equipmentImage(item, 'equipment-portrait')}${deviceName(item)}${next}`
   }
-
-  function stepTwo() {
-    return `<section class="lesson-task lesson-task--center"><p class="eyebrow">Czego potrzebujesz?</p><h2>${questions[question][0]}</h2><div class="choice-grid">${parts.filter((part) => ['keyboard', 'mouse', 'headphones'].includes(part.id)).map((part) => `<button type="button" class="object-choice" data-answer="${part.id}">${icon(part.icon)}<span>${part.name}</span></button>`).join('')}</div><p class="gentle-hint" role="status">Pytanie ${question + 1} z 3</p></section>`
+  function copy() {
+    const item = equipment[index]
+    return `${instruction('Przepisz nazwę.', 'keyboard')}<p class="eyebrow">Przepisuję · ${index + 1} z ${equipment.length}</p>${equipmentImage(item, 'equipment-portrait equipment-portrait--small')}${deviceName(item)}<form data-copy-form class="equipment-copy"><label for="equipment-copy">Napisz tak jak we wzorze</label><input id="equipment-copy" data-copy-input autocomplete="off" spellcheck="false" autocapitalize="off" aria-describedby="equipment-copy-feedback" ${copied ? 'disabled' : ''} /><p id="equipment-copy-feedback" role="status" aria-live="polite">${copied ? 'Gotowe.' : ''}</p><button type="submit" class="button button-primary" ${copied ? 'hidden' : ''}>Sprawdź</button></form><div data-copy-next ${copied ? '' : 'hidden'}>${next}</div>`
   }
-
-  function stepThree() {
-    return `<section class="lesson-task lesson-task--center"><p class="eyebrow">Dobre stanowisko</p><h2>Jak usiąść przy komputerze?</h2><div class="posture-grid"><button type="button" class="posture-card" data-posture="wrong"><span class="posture-person posture-person--close" aria-hidden="true"><i></i><b></b></span><strong>Bardzo blisko ekranu</strong></button><button type="button" class="posture-card" data-posture="correct"><span class="posture-person posture-person--good" aria-hidden="true"><i></i><b></b></span><strong>Prosto, ze stopami na podłodze</strong></button><button type="button" class="posture-card" data-posture="wrong"><span class="posture-person posture-person--twist" aria-hidden="true"><i></i><b></b></span><strong>Bokiem do biurka</strong></button></div><p class="gentle-hint" role="status">Wybierz wygodne i bezpieczne ustawienie.</p></section>`
+  function observe() {
+    observeUntil ??= Date.now() + 18_000
+    return `${instruction('Przyjrzyj się uważnie. Za chwilę spróbujesz ułożyć sprzęt tak samo.', 'eye')}${equipmentStation(new Set(), true)}<button type="button" class="button button-primary" data-observed>Jestem gotowy</button>`
   }
-
+  function arrange() {
+    arrangeStarted ??= Date.now()
+    const preview = modelUntil && Date.now() < modelUntil
+    return `${instruction('Ułóż sprzęt tak jak we wzorze.', 'drag')}<p>Przeciągnij przedmiot. Możesz też wybrać obraz, a potem miejsce.</p><div ${preview ? 'inert' : ''}><div class="equipment-arrange">${equipmentStation(placed)}<div class="equipment-tray" aria-label="Sprzęt do ustawienia">${equipment.filter(item => !placed.has(item.id)).map(item => `<button type="button" class="equipment-piece ${selected === item.id ? 'is-selected' : ''}" draggable="true" data-part="${item.id}" aria-pressed="${selected === item.id}">${equipmentImage(item)}<span>${item.name}</span></button>`).join('')}</div></div><p class="gentle-hint" data-placement-status role="status" aria-live="polite">Wybierz przedmiot i jego miejsce.</p><button type="button" class="button button-secondary" data-show-model ${Date.now() - arrangeStarted >= 60_000 ? '' : 'hidden'}>${icon('eye')} Pokaż wzór</button></div>${preview ? `<section class="equipment-model-overlay" role="dialog" aria-modal="true" aria-label="Wzór stanowiska"><h2>Przyjrzyj się wzorowi.</h2>${speechButton('Przyjrzyj się wzorowi.')}${equipmentStation(new Set(), true)}<button type="button" class="button button-secondary" data-hide-model>Wróć do układania</button></section>` : ''}`
+  }
+  function match() {
+    const item = equipment[index]
+    return `${instruction('Połącz obraz z nazwą. Możesz posłuchać.', 'eye')}<p class="eyebrow">Obraz i nazwa · ${index + 1} z ${equipment.length}</p>${equipmentImage(item, 'equipment-portrait equipment-portrait--small')}${matched ? `${deviceName(item)}<p class="equipment-description">${item.description} ${speechButton(item.speechText, `Opis: ${item.name}`)}</p><p role="status">Gotowe.</p>${next}` : `<div class="equipment-name-choices">${[...equipment.slice(2), ...equipment.slice(0, 2)].map(choice => `<div><button type="button" class="button button-secondary" data-match="${choice.id}">${choice.name.toLocaleUpperCase('pl-PL')}</button>${speechButton(`${choice.name}.`, choice.name)}</div>`).join('')}</div><p class="gentle-hint" data-match-status role="status"></p>`}`
+  }
   function current() {
-    const activities = [stepOne, stepTwo, stepThree]
-    const content = flow.phase === 'complete'
-      ? completionScreen({ final: flow.isFinalStep, lessonTitle: 'Budowa komputera', nextLessonId: 2, nextUnlocked: flow.isFinalStep })
-      : activities[flow.currentStep - 1]()
-    return { html: lessonLayout(content, 'Budowa komputera', flow.currentStep, 3), mount }
+    const content = flow.phase === 'complete' ? completionScreen({ final: flow.isFinalStep, lessonTitle: `Lekcja „${title}”`, nextLessonId: 2, nextUnlocked: flow.isFinalStep, finalMessage: 'Sprzęt komputerowy już poznany. Możesz przejść do kolejnej lekcji.' }) : [learn, copy, observe, arrange, match][flow.currentStep - 1]()
+    return { html: lessonLayout(`<div class="equipment-lesson">${content}</div>`, title, flow.currentStep, 5), focusTarget: modelUntil && Date.now() < modelUntil ? '[data-hide-model]' : '#main-content', mount }
   }
-
   const rerender = () => render(current())
-  function finishStep() {
-    if (flow.isFinalStep) completeLesson(1)
-    flow.completeStep(); rerender()
-  }
-  function tryPlace(partId, zoneId) {
-    if (partId !== zoneId) { selected = null; rerender(); return }
-    placed.add(partId); selected = null
-    if (placed.size === parts.length) finishStep()
-    else rerender()
+  function finishStep() { if (flow.isFinalStep) completeLesson(1); flow.completeStep(); index = 0; copied = false; matched = false; rerender() }
+  function nextDevice() {
+    if ((flow.currentStep === 2 && !copied) || (flow.currentStep === 5 && !matched)) return
+    if (index === equipment.length - 1) finishStep()
+    else { index++; copied = false; matched = false; rerender() }
   }
   function mount(root) {
-    if (flow.phase === 'complete') {
-      root.querySelector('[data-step-continue]')?.addEventListener('click', () => { flow.continue(); rerender() })
-      return
-    }
-    if (flow.currentStep === 1) {
-      bindDragDrop(root, { sourceSelector: '[data-part]', zoneSelector: '[data-zone]', sourceAttribute: 'part', zoneAttribute: 'zone', onSelect: (id) => { selected = id; rerender() }, getSelected: () => selected, onDrop: tryPlace })
-    } else if (flow.currentStep === 2) {
-      root.querySelectorAll('[data-answer]').forEach((button) => button.addEventListener('click', () => {
-        if (button.dataset.answer !== questions[question][1]) return
-        question += 1
-        if (question === questions.length) finishStep()
-        else rerender()
+    const stopSpeech = bindSpeechButtons(root)
+    const timers = []
+    root.querySelectorAll('.equipment-image').forEach(img => img.addEventListener('error', () => {
+      img.hidden = true
+      const note = document.createElement('p'); note.className = 'equipment-asset-missing'; note.textContent = `Zdjęcie: ${img.alt} — materiał oczekuje na dodanie.`; img.after(note)
+    }, { once: true }))
+    if (flow.phase === 'complete') root.querySelector('[data-step-continue]')?.addEventListener('click', () => { flow.continue(); rerender() })
+    else {
+      root.querySelector('[data-device-next]')?.addEventListener('click', nextDevice)
+      root.querySelector('[data-copy-form]')?.addEventListener('submit', event => {
+        event.preventDefault()
+        const input = root.querySelector('[data-copy-input]')
+        copied = matchesEquipmentName(input.value, equipment[index].name)
+        root.querySelector('#equipment-copy-feedback').textContent = copied ? 'Gotowe.' : 'Spójrz jeszcze raz na wzór.'
+        input.setAttribute('aria-invalid', String(!copied))
+        if (copied) { input.disabled = true; event.currentTarget.querySelector('[type="submit"]').hidden = true; root.querySelector('[data-copy-next]').hidden = false; root.querySelector('[data-device-next]').focus() }
+        else input.focus()
+      })
+      if (flow.currentStep === 3) {
+        root.querySelector('[data-observed]').addEventListener('click', finishStep)
+        timers.push(setTimeout(finishStep, Math.max(0, observeUntil - Date.now())))
+      }
+      if (flow.currentStep === 4) {
+        const place = id => {
+          placed.add(id); selected = null
+          if (placed.size === equipment.length) { finishStep(); return }
+          // Keep the scene and its handlers mounted while the child manipulates it.
+          root.querySelector(`[data-part="${id}"]`)?.remove()
+          const template = document.createElement('template')
+          template.innerHTML = equipmentStation(placed)
+          root.querySelector('[data-station]').replaceChildren(...template.content.firstElementChild.childNodes)
+          root.querySelector('[data-placement-status]').textContent = 'Przedmiot jest na miejscu. Ułóż kolejny.'
+          root.querySelector('[data-part]')?.focus({ preventScroll: true })
+        }
+        const invalid = () => { root.querySelector('[data-placement-status]').textContent = 'Przyjrzyj się miejscu i spróbuj ponownie.' }
+        root.querySelectorAll('[data-part]').forEach(button => {
+          button.addEventListener('dragstart', event => { selected = button.dataset.part; event.dataTransfer.setData('text/plain', selected); event.dataTransfer.effectAllowed = 'move' })
+          button.addEventListener('click', () => {
+            selected = button.dataset.part
+            root.querySelectorAll('[data-part]').forEach(part => { part.classList.toggle('is-selected', part.dataset.part === selected); part.setAttribute('aria-pressed', String(part.dataset.part === selected)) })
+          })
+        })
+        const station = root.querySelector('[data-station]')
+        station.addEventListener('click', event => {
+          const zone = event.target.closest('[data-zone]')
+          if (!zone || !selected) return
+          if (selected === zone.dataset.zone) place(selected); else invalid()
+        })
+        station.addEventListener('dragover', event => event.preventDefault())
+        station.addEventListener('drop', event => {
+          event.preventDefault()
+          const id = event.dataTransfer.getData('text/plain'), rect = station.getBoundingClientRect()
+          if (!placed.has(id) && acceptsEquipment(id, (event.clientX - rect.left) / rect.width, (event.clientY - rect.top) / rect.height)) place(id)
+          else invalid()
+        })
+        const show = root.querySelector('[data-show-model]')
+        timers.push(setTimeout(() => { show.hidden = false }, Math.max(0, arrangeStarted + 60_000 - Date.now())))
+        show.addEventListener('click', () => { modelUntil = Date.now() + 5000; rerender() })
+        if (modelUntil && Date.now() < modelUntil) {
+          const close = () => { modelUntil = null; rerender() }
+          timers.push(setTimeout(close, modelUntil - Date.now()))
+          root.querySelector('[data-hide-model]').addEventListener('click', close)
+          root.querySelector('[role="dialog"]').addEventListener('keydown', event => {
+            if (event.key === 'Escape') { event.preventDefault(); close(); return }
+            if (event.key !== 'Tab') return
+            const buttons = [...event.currentTarget.querySelectorAll('button:not(:disabled)')]
+            const first = buttons[0], last = buttons.at(-1)
+            if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus() }
+            else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus() }
+          })
+          root.querySelector('[data-hide-model]').focus()
+        }
+      }
+      root.querySelectorAll('[data-match]').forEach(button => button.addEventListener('click', () => {
+        if (button.dataset.match !== equipment[index].id) { root.querySelector('[data-match-status]').textContent = 'Przyjrzyj się obrazowi. Posłuchaj nazw.'; return }
+        matched = true; rerender()
       }))
-    } else {
-      root.querySelectorAll('[data-posture]').forEach((button) => button.addEventListener('click', () => { if (button.dataset.posture === 'correct') finishStep() }))
     }
+    return () => { timers.forEach(clearTimeout); stopSpeech() }
   }
   return current()
 }

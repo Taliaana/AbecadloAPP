@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test:storage": "node scripts/storage-smoke.mjs",
+    "test:storage": "node scripts/storage-smoke.mjs && node --test tests/storage/*.test.mjs",
     "test:robot": "node --test tests/robot/*.test.mjs",
     "test:ui": "node scripts/run-ui-tests.mjs"
   },

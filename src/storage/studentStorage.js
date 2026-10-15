@@ -4,11 +4,15 @@ import { implementedLessons, lessons } from '../data/lessons.js'
 import { profiles, sampleWorks } from '../data/profiles.js'
 import { tools } from '../data/tools.js'
 import { isWorkStatus } from '../data/workModel.js'
+import { normalizeSpeechSettings } from '../data/speechSettings.js'
+import { deleteStudentImages } from './imageStorage.js'
 
 export const SCHEMA_VERSION = 3
 export const STORAGE_KEYS = { current: 'abecadlo-state-v3', previous: 'abecadlo-state-v2', legacy: 'abecadlo-state-v1' }
 const TEACHER_PIN = '1234'
 const DEFAULT_AVATAR = { face: 'round', hair: 'short', hairColor: 'brown', shirtColor: 'green', backgroundColor: 'mint' }
+const isRecord = value => value !== null && typeof value === 'object' && !Array.isArray(value)
+const lessonStatuses = new Set(['locked', 'available', 'in-progress', 'completed', 'review'])
 
 function createProgress() {
   return Object.fromEntries(lessons.map((lesson) => [lesson.id, lesson.id === 1 ? 'available' : 'locked']))
@@ -74,19 +78,19 @@ function normalizeStudent(source, id, fallbackProfile = {}) {
   const profile = normalizeProfile({ ...fallbackProfile, ...source?.profile, className: source?.className ?? source?.profile?.className ?? fallbackProfile.className }, id)
   return {
     id, className: profile.className, createdAt: source?.createdAt || fallbackProfile.createdAt || new Date().toISOString(), archivedAt: source?.archivedAt || null,
-    profile, progress: { ...createProgress(), ...source?.progress },
+    profile, progress: { ...createProgress(), ...Object.fromEntries(Object.entries(isRecord(source?.progress) ? source.progress : {}).filter(([, status]) => lessonStatuses.has(status))) },
     toolProgress: {
       ...source?.toolProgress,
-      unlockedTools: [...new Set(source?.toolProgress?.unlockedTools || source?.unlockedTools || [])],
-      typingResults: { ...(source?.toolProgress?.typingResults || source?.typingResults || {}) },
+      unlockedTools: [...new Set([source?.toolProgress?.unlockedTools, source?.unlockedTools].find(Array.isArray) || [])].filter(id => typeof id === 'string'),
+      typingResults: { ...([source?.toolProgress?.typingResults, source?.typingResults].find(isRecord) || {}) },
     },
-    works: (source?.works || []).map((work) => normalizeWork(work, id)),
+    works: (Array.isArray(source?.works) ? source.works : []).filter(isRecord).map((work) => normalizeWork(work, id)),
   }
 }
 
 function normalizeAssignment(assignment) {
   const tool = tools.find((item) => item.id === assignment.tool)
-  return { ...assignment, completionType: isCompletionType(assignment.completionType) ? assignment.completionType : tool?.completionType || 'teacher-review', studentIds: [...new Set(assignment.studentIds || [])], wholeClass: Boolean(assignment.wholeClass), addToCourse: Boolean(assignment.addToCourse) }
+  return { ...assignment, completionType: isCompletionType(assignment.completionType) ? assignment.completionType : tool?.completionType || 'teacher-review', studentIds: [...new Set(Array.isArray(assignment.studentIds) ? assignment.studentIds : [])].filter(id => typeof id === 'string'), wholeClass: Boolean(assignment.wholeClass), addToCourse: Boolean(assignment.addToCourse) }
 }
 
 function createInitialState() {
@@ -99,10 +103,13 @@ function createInitialState() {
 
 export function migrateState(oldState) {
   const next = createInitialState()
-  if (!oldState || typeof oldState !== 'object') return next
+  if (!isRecord(oldState)) return next
   next.teacher = { ...next.teacher, ...oldState.teacher }
-  next.assignments = Array.isArray(oldState.assignments) ? oldState.assignments.map(normalizeAssignment) : next.assignments
-  Object.entries(oldState.students || {}).forEach(([id, source]) => {
+  next.assignments = Array.isArray(oldState.assignments) ? oldState.assignments.filter(isRecord).map(normalizeAssignment) : next.assignments
+  // In v3 the saved roster is authoritative, including an intentionally empty class.
+  // Keep the original seed behavior only for legacy v1/v2 migration.
+  if ((oldState.schemaVersion ?? oldState.version) >= 3 && isRecord(oldState.students)) next.students = {}
+  Object.entries(isRecord(oldState.students) ? oldState.students : {}).filter(([, source]) => isRecord(source)).forEach(([id, source]) => {
     next.students[id] = normalizeStudent(source, id, profiles.find((profile) => profile.id === id) || { id })
   })
   next.currentStudentId = oldState.currentStudentId && next.students[oldState.currentStudentId] && !next.students[oldState.currentStudentId].archivedAt ? oldState.currentStudentId : null
@@ -121,6 +128,13 @@ function writeState(state) { localStorage.setItem(STORAGE_KEYS.current, JSON.str
 export function initializeStorage() { writeState(readState()) }
 export function getStateSnapshot() { return structuredClone(readState()) }
 export function getCurrentRole() { return readState().currentRole }
+export function getSpeechSettings() { return normalizeSpeechSettings(readState().teacher.speechSettings) }
+export function saveSpeechSettings(settings) {
+  const state = readState()
+  state.teacher.speechSettings = normalizeSpeechSettings(settings)
+  writeState(state)
+  return structuredClone(state.teacher.speechSettings)
+}
 export function selectRole(role) { if (!['student', 'teacher'].includes(role)) return false; const state = readState(); state.currentRole = role; if (role === 'teacher') state.currentStudentId = null; writeState(state); return true }
 export function enterTeacher(pin) { return String(pin) === TEACHER_PIN ? selectRole('teacher') : false }
 export function leaveRole() { const state = readState(); state.currentRole = null; state.currentStudentId = null; writeState(state) }
@@ -148,14 +162,34 @@ export function updateStudentProfile(studentId, changes) {
 }
 
 export function archiveStudent(studentId) { const state = readState(); const student = state.students[studentId]; if (!student) return false; student.archivedAt = new Date().toISOString(); if (state.currentStudentId === studentId) state.currentStudentId = null; writeState(state); return true }
+export async function deleteStudentProfile(studentId) {
+  if (!getStudentById(studentId)) return false
+  // Keep the profile if image cleanup fails, so the teacher can retry safely.
+  await deleteStudentImages(studentId)
+  const state = readState()
+  delete state.students[studentId]
+  state.assignments = state.assignments.map(assignment => ({ ...assignment, studentIds: assignment.studentIds.filter(id => id !== studentId) }))
+  if (state.currentStudentId === studentId) state.currentStudentId = null
+  // Migration retains old keys; remove this pupil there as well, not other pupils.
+  for (const key of [STORAGE_KEYS.previous, STORAGE_KEYS.legacy]) {
+    const legacy = parse(localStorage.getItem(key))
+    if (!isRecord(legacy)) continue
+    if (isRecord(legacy.students)) delete legacy.students[studentId]
+    if (Array.isArray(legacy.assignments)) legacy.assignments = legacy.assignments.map(assignment => isRecord(assignment) && Array.isArray(assignment.studentIds) ? { ...assignment, studentIds: assignment.studentIds.filter(id => id !== studentId) } : assignment)
+    if (legacy.currentStudentId === studentId) legacy.currentStudentId = null
+    localStorage.setItem(key, JSON.stringify(legacy))
+  }
+  writeState(state)
+  return true
+}
 export function updateCurrentAvatar(avatarConfig) { const state = readState(); const student = state.students[state.currentStudentId]; if (!student) return false; student.profile.avatarConfig = { ...student.profile.avatarConfig, ...avatarConfig }; writeState(state); return true }
 export function getStudentProgress(studentId = null) { const state = readState(); const id = studentId || state.currentStudentId; return state.students[id]?.progress || createProgress() }
 export function getCurrentLesson(studentId) { const progress = getStudentProgress(studentId); return implementedLessons.find((lesson) => ['available', 'in-progress'].includes(progress[lesson.id])) || [...implementedLessons].reverse().find((lesson) => progress[lesson.id] === 'completed') || implementedLessons[0] }
 
-export function startLesson(lessonId) { const state = readState(); const student = state.students[state.currentStudentId]; if (!student || student.progress[lessonId] === 'locked') return false; if (student.progress[lessonId] !== 'completed') student.progress[lessonId] = 'in-progress'; writeState(state); return true }
+export function startLesson(lessonId) { const state = readState(); const student = state.students[state.currentStudentId]; if (!student || !lessons.some(lesson => lesson.id === Number(lessonId) && lesson.implemented) || !lessonStatuses.has(student.progress[lessonId]) || student.progress[lessonId] === 'locked') return false; if (student.progress[lessonId] !== 'completed') student.progress[lessonId] = 'in-progress'; writeState(state); return true }
 export function completeLessonForStudent(studentId, lessonId) {
   const state = readState(); const student = state.students[studentId]
-  if (!student || student.progress[lessonId] === 'locked') return false
+  if (!student || !lessons.some(lesson => lesson.id === Number(lessonId) && lesson.implemented) || !lessonStatuses.has(student.progress[lessonId]) || student.progress[lessonId] === 'locked') return false
   student.progress[lessonId] = 'completed'
   const nextLesson = lessons.find((lesson) => lesson.id === Number(lessonId) + 1)
   if (nextLesson?.implemented && student.progress[nextLesson.id] === 'locked') student.progress[nextLesson.id] = 'available'

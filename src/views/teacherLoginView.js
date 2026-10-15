@@ -8,8 +8,8 @@ export function teacherLoginView({ navigate }) {
       <a class="text-link" href="#/welcome">${icon('back')} Wróć</a>
       <form class="login-card" data-teacher-form>
         <span class="role-icon role-icon--blue">${icon('teacher')}</span><p class="eyebrow">Panel nauczyciela</p>
-        <h1>Wpisz PIN</h1><p>Wersja testowa używa prostego kodu.</p>
-        <label class="pin-field"><span>PIN testowy: 1234</span><input type="password" inputmode="numeric" maxlength="4" autocomplete="off" data-pin aria-describedby="pin-error" /></label>
+        <h1>Wpisz PIN</h1><p>Otwórz panel nauczyciela swoim kodem.</p>
+        <label class="pin-field"><span>PIN nauczyciela</span><input type="password" inputmode="numeric" maxlength="4" autocomplete="off" data-pin aria-describedby="pin-error" /></label>
         <p class="form-error" id="pin-error" role="alert"></p>
         <button class="button button-primary" type="submit">Wejdź do panelu</button>
       </form>

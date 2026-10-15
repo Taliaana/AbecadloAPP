@@ -1,5 +1,6 @@
 /* Common surfaces and controls. Activity-specific dimensions stay in index.css. */
 [hidden] { display: none !important; }
+.speech-button[aria-pressed="true"] { background: var(--brand-pink-wash); border-color: var(--brand-pink-dark); }
 h1, h2, h3, .profile-name, .work-origin, .review-card strong { overflow-wrap: anywhere; }
 .profile-name { max-width: 100%; }
 
@@ -57,6 +58,9 @@ h1, h2, h3, .profile-name, .work-origin, .review-card strong { overflow-wrap: an
 .main-content > .text-link { min-height: 44px; }
 .robot-palette .button { min-height: var(--button-height); }
 .robot-workspace, .robot-editor { border-radius: var(--radius-material); }
+.student-delete { margin-top: var(--section-gap); padding-top: 16px; border-top: 1px solid var(--border); }
+.lesson-row[aria-current="step"] { box-shadow: var(--shadow-soft), 0 0 0 2px var(--brand-pink); }
+.lesson-row-action { display: inline-flex; align-items: center; gap: 6px; font-size: .9rem; font-weight: 700; }
 
 @media (max-width: 900px) {
   .teacher-page-heading { align-items: start; flex-direction: column; }
@@ -67,6 +71,9 @@ h1, h2, h3, .profile-name, .work-origin, .review-card strong { overflow-wrap: an
   .teacher-student-row > .icon { grid-column: 3; grid-row: 1 / span 4; }
 }
 @media (max-width: 700px) {
+  .main-nav:not(.teacher-nav) { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .lesson-row-action { grid-column: 2 / -1; }
+  .lesson-row { row-gap: 8px; }
   .main-content { padding-top: 32px; }
   .form-card, .avatar-options { padding: 22px; }
   .form-actions { gap: 10px; }
