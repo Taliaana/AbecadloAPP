@@ -9,8 +9,11 @@ const vite = spawn(process.execPath, ['node_modules/vite/bin/vite.js', '--host',
 
 async function waitForServer() {
   for (let attempt = 0; attempt < 60; attempt += 1) {
+    if (api.exitCode !== null) throw new Error('Testowy serwer API nie uruchomił się. Sprawdź, czy port 3001 jest wolny.')
     try {
-      const [response, apiResponse] = await Promise.all([fetch('http://127.0.0.1:4173'), fetch('http://127.0.0.1:4173/api/health')])
+      // Health alone also succeeds on the real backend. Require the isolated
+      // test endpoint before any test is allowed to reset or mutate data.
+      const [response, apiResponse] = await Promise.all([fetch('http://127.0.0.1:4173'), fetch('http://127.0.0.1:4173/__test/snapshot')])
       if (response.ok && apiResponse.ok) return
     } catch {}
     await new Promise((resolve) => setTimeout(resolve, 250))

@@ -35,13 +35,32 @@ export function startApp(root) {
   const status = document.createElement('aside')
   status.className = 'data-status no-print'; status.setAttribute('aria-live', 'polite'); status.hidden = true
   document.body.append(status)
+  let statusTimer
+  function clearStatusTimer() {
+    window.clearTimeout(statusTimer)
+    statusTimer = undefined
+  }
   function errorMessage(error) {
+    clearStatusTimer()
     status.hidden = false; status.replaceChildren(document.createTextNode(error.message || 'Nie udało się połączyć. Spróbuj ponownie.'))
     const retry = document.createElement('button'); retry.className = 'button button-secondary'; retry.textContent = 'Spróbuj ponownie'
     retry.onclick = () => retryPending().then(renderRoute).catch(errorMessage); status.append(retry)
   }
   window.addEventListener('unhandledrejection', event => { event.preventDefault(); errorMessage(event.reason) })
-  window.addEventListener('pinktower:data-status', event => { if (event.detail.failed) errorMessage(new Error(event.detail.message)); else { status.hidden = false; status.textContent = event.detail.message } })
+  window.addEventListener('pinktower:data-status', event => {
+    clearStatusTimer()
+    if (event.detail.failed) { errorMessage(new Error(event.detail.message)); return }
+    status.hidden = false
+    const saved = event.detail.message === 'Zapisano'
+    status.textContent = saved && hasUnsavedChanges() ? 'Zapisywanie…' : event.detail.message
+    if (saved && !hasUnsavedChanges()) {
+      statusTimer = window.setTimeout(() => {
+        status.hidden = true
+        status.textContent = ''
+        statusTimer = undefined
+      }, 2500)
+    }
+  })
 
   function path() {
     return (window.location.hash.slice(1).split('?')[0] || '/welcome').replace(/\/$/, '') || '/welcome'
