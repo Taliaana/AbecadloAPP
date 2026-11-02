@@ -5,6 +5,7 @@ import { verifyPin } from './auth.js'
 import { lessons } from '../src/data/lessons.js'
 import { tools } from '../src/data/tools.js'
 import { getRobotChallenge } from '../src/data/robotChallenges.js'
+import { robotStages, canOpenRobotChallenge, robotLearningState } from '../src/data/robotLearning.js'
 import { simulateRobot, routeSignature, validateBoard } from '../src/modules/robot/engine.js'
 import { getResearchBoard, isResearchComplete } from '../src/data/researchBoards.js'
 import { migration, canonical } from './migration.js'
@@ -117,6 +118,15 @@ export function createService(repository: Repository, files: Files) {
             const { lessonId } = inputs.unlock.parse(body)
             if (!lessons.some(item => item.id === lessonId && item.implemented)) fail('Lekcja jest niedostępna.')
             if (student.progress[lessonId] === 'locked') student.progress[lessonId] = 'available'
+          } else if (method === 'POST' && action === 'robot-access') {
+            const input = inputs.robotAccess.parse(body)
+            if (input.stageId && !robotStages.some(stage => stage.id === input.stageId)) fail('Nie znaleziono etapu.')
+            if (input.challengeId && !getRobotChallenge(input.challengeId)) fail('Nie znaleziono zadania.')
+            const access = student.toolProgress.robotAccess ||= { stages: [], challenges: [], customBoard: false }
+            if (input.stageId) access.stages = [...new Set([...(access.stages || []), input.stageId])]
+            if (input.challengeId) access.challenges = [...new Set([...(access.challenges || []), input.challengeId])]
+            if (input.customBoard !== undefined) access.customBoard = input.customBoard
+            result = access
           } else if (method === 'DELETE') {
             inputs.delete.parse(body)
             // The repository marks deletion before remote I/O; failure leaves records for retry.
@@ -165,6 +175,7 @@ export function createService(repository: Repository, files: Files) {
           const assignedWork = input.kind === 'robot-attempt' && input.workId ? workFor(state, session, input.workId) : null
           if (assignedWork && assignedWork.data.kind !== 'robot-assignment') fail('To nie jest zadanie Robota.')
           const challenge = assignedWork?.data.board || getRobotChallenge(input.challengeId) || fail('Nie znaleziono trasy.', 404)
+          if (!assignedWork && !canOpenRobotChallenge(input.challengeId, student.toolProgress.robot, student.toolProgress.robotAccess)) fail('Najpierw ukończ wcześniejsze zadania.', 409)
           const simulation = simulateRobot(challenge, input.program)
           if (input.kind === 'robot-attempt' && ['program','board'].includes(simulation.reason)) fail('Sprawdź polecenia.')
           student.toolProgress.robot ||= {}
@@ -185,7 +196,9 @@ export function createService(repository: Repository, files: Files) {
         } else if (method === 'POST' && !recordId) {
           const student = ownedStudent(state, session)
           const input = inputs.work.parse(body)
+          if (input.data?.kind === 'robot-project' && !robotLearningState(student.toolProgress.robot, student.toolProgress.robotAccess).customBoard) fail('Moja plansza będzie dostępna po sześciu etapach.', 409)
           const assignment = input.assignmentId ? state.assignments.find(item => item.id === input.assignmentId && assignmentFor(state, student, item)) || fail('Nie znaleziono zadania.', 403) : null
+          if (input.data?.kind === 'robot-assignment' && assignment?.tool !== 'robot') fail('Wybierz zadanie przydzielone przez nauczyciela.', 403)
           if (input.lessonId) lessonFor(student, input.lessonId)
           const existing = student.works.find((work: any) => assignment ? work.assignmentId === assignment.id : input.operationId && work.operationId === input.operationId)
           const completionType = assignment?.completionType || (input.lessonId ? lessons.find(item => item.id === input.lessonId)!.completionType : 'teacher-review')
@@ -209,6 +222,11 @@ export function createService(repository: Repository, files: Files) {
               fail('Praca jest już przekazana.', 409)
             }
             const data = { ...work.data, ...input.data }
+            if (data.kind === 'robot-assignment' && work.data.kind !== 'robot-assignment') fail('Wybierz zadanie przydzielone przez nauczyciela.', 403)
+            if (data.kind === 'robot-project' && work.data.kind !== 'robot-project') {
+              const student = state.students[work.studentId]
+              if (!robotLearningState(student.toolProgress.robot, student.toolProgress.robotAccess).customBoard) fail('Moja plansza będzie dostępna po sześciu etapach.', 409)
+            }
             if (work.data.kind === 'robot-assignment') { data.board = work.data.board; data.kind = work.data.kind }
             for (const entry of Object.values(data.entries || {}) as any[]) { const asset = state.assets.find(item => item.id === entry.imageId && item.workId === work.id); if (asset) asset.sourceUrl = String(entry.source || '').slice(0, 3000) }
             for (const entry of Object.values(data.entries || {}) as any[]) if (entry.imageId && !state.assets.some(asset => asset.id === entry.imageId && asset.workId === work.id && asset.studentId === work.studentId && asset.status === 'ready')) fail('Nie zapisano jeszcze zdjęcia.', 409)

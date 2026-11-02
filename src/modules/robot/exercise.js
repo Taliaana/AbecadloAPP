@@ -2,7 +2,8 @@ import { appLayout } from '../../components/layout.js'
 import { icon } from '../../components/icons.js'
 import { robotBoard, robotDrawing } from '../../components/robotBoard.js'
 import { robotCommands } from '../../data/robotChallenges.js'
-import { getRobotProgress, saveRobotAttempt, saveRobotProgram, updateWork } from '../../storage/studentStorage.js'
+import { getRobotProgress, getRobotAccess, saveRobotAttempt, saveRobotProgram, updateWork } from '../../storage/studentStorage.js'
+import { robotTaskPosition, nextRobotChallenge, canOpenRobotChallenge } from '../../data/robotLearning.js'
 import { createAutosave } from '../../utils/autosave.js'
 import { escapeHtml } from '../../utils/html.js'
 import { simulateRobot, sameCell, routeSignature, expandProgram, validateBoard } from './engine.js'
@@ -10,7 +11,7 @@ import { programHtml, sequenceAt } from './programView.js'
 
 export function robotExerciseView(context, { board, work = null, onChange = null, onSave = null, extra = '', onMount = null }) {
   const { student } = context
-  if (!validateBoard(board)) return { html: appLayout('<section class="tool-header"><h1>Ustaw start i cel.</h1><p>Wróć do swojej trasy i sprawdź planszę.</p><a class="button button-secondary" href="#/tools/robot">Wróć do Robota</a></section>', student, '/workshop') }
+  if (!validateBoard(board)) return { html: appLayout('<section class="tool-header"><h1>Ustaw start i cel.</h1><p>Wróć do swojej trasy i sprawdź planszę.</p><a class="button button-secondary" data-return-robot href="#/tools/robot">Wróć do Robota</a></section>', student, '/workshop') }
   let robot = { ...board.start, direction: board.startDirection }
   let program = structuredClone(work?.data.program ?? getRobotProgress()[board.id]?.program ?? board.initialProgram ?? [])
   let running = false, timer = null, disposed = false, prediction = null, runVersion = 0
@@ -18,13 +19,15 @@ export function robotExerciseView(context, { board, work = null, onChange = null
   let firstRoute = getRobotProgress()[board.id]?.routes?.[0] || null
   let lastProgram = structuredClone(program)
   const undo = []
-  const content = `<section class="robot-session"><section class="tool-header"><a class="text-link" href="#/tools/robot">${icon('back')} Wróć do Robota</a><p class="eyebrow">Robot · ${escapeHtml(board.title)}</p><h1>${escapeHtml(board.title)}</h1><p>${board.mode === 'predict' ? 'Gdzie zatrzyma się robot? Wskaż pole.' : board.mode === 'debug' ? 'Uruchom program. Obserwuj i popraw.' : 'Ułóż polecenia. Doprowadź robota do celu.'}</p></section>
+  const position = !work && robotTaskPosition(board.id)
+  const nextTask = !work && nextRobotChallenge(board.id)
+  const content = `<section class="robot-session"><section class="tool-header"><a class="text-link" href="#/tools/robot">${icon('back')} Wróć do Robota</a><p class="eyebrow">${position ? `Etap ${position.stageNumber} · Zadanie ${position.taskNumber}/${position.total}` : 'Robot'}</p><h1>${escapeHtml(board.title)}</h1><p>${board.mode === 'predict' ? 'Gdzie zatrzyma się robot? Wskaż pole.' : board.mode === 'debug' ? 'Uruchom program. Obserwuj i popraw.' : 'Doprowadź robota do kwiatu.'}</p></section>
     <section class="robot-workspace"><div class="robot-board-area">${robotBoard(board, { interactive: board.mode === 'predict' })}</div>
-    <div class="robot-program-panel"><h2>Twój program</h2><p id="robot-help">Kliknij lub przeciągnij polecenie.</p><div class="robot-palette" role="group" aria-label="Polecenia robota">${board.availableCommands.map(id => `<button type="button" class="button button-secondary" draggable="true" data-command="${id}"><span aria-hidden="true">${robotCommands[id].symbol}</span> ${robotCommands[id].label}</button>`).join('')}</div>
+    <div class="robot-program-panel"><h2>Mój program</h2><p id="robot-help">Obrót zmienia kierunek, bez ruchu na inne pole.</p><div class="robot-palette" role="group" aria-label="Polecenia robota">${board.availableCommands.map(id => `<button type="button" class="button button-secondary" draggable="true" data-command="${id}"><span aria-hidden="true">${robotCommands[id].symbol}</span> ${robotCommands[id].label}</button>`).join('')}</div>
     <ol class="robot-program" data-container="root" aria-label="Ułożony program" aria-describedby="robot-help" tabindex="0"></ol>
-    <div class="robot-actions"><button class="button button-primary" type="button" data-run disabled>Uruchom</button><button class="button button-secondary" type="button" data-stop disabled>Zatrzymaj</button><button class="button button-secondary" type="button" data-reset>Reset</button><button class="button button-ghost" type="button" data-undo disabled>Cofnij zmianę</button><button class="button button-ghost" type="button" data-clear disabled>Wyczyść program</button></div>
+    <div class="robot-actions"><button class="button button-primary" type="button" data-run disabled>Uruchom program</button><button class="button button-secondary" type="button" data-stop disabled>Zatrzymaj</button><button class="button button-secondary" type="button" data-reset>Spróbuj ponownie</button><button class="button button-ghost" type="button" data-undo disabled>Cofnij zmianę</button><button class="button button-ghost" type="button" data-remove-last disabled>Usuń ostatnie</button><button class="button button-ghost" type="button" data-clear disabled>Wyczyść program</button></div>
     <p class="robot-message" role="status" aria-live="polite"></p></div></section>
-    <section class="completion-card" data-robot-complete hidden><span class="completion-check">${icon('check')}</span><h2>Gotowe</h2><p data-completion-text>Robot dotarł do celu.</p>${board.mode === 'alternative' ? '<button class="button button-secondary" type="button" data-other-route>Czy znajdziesz inną drogę?</button>' : ''}<a class="button button-primary" href="#/tools/robot">Wróć do Robota</a></section>${extra}</section>`
+    <section class="completion-card" data-robot-complete hidden><span class="completion-check">${icon('check')}</span><h2>Gotowe</h2><p data-completion-text>Robot dotarł do celu.</p>${board.mode === 'alternative' ? '<button class="button button-secondary" type="button" data-other-route>Czy znajdziesz inną drogę?</button>' : ''}${nextTask ? `<a class="button button-primary" data-next-robot-task href="#/tools/robot?challenge=${nextTask}" hidden>Następne zadanie</a>` : ''}<a class="button button-secondary" data-return-robot href="#/tools/robot">Wróć do Robota</a></section>${extra}</section>`
 
   return { html: appLayout(content, student, '/workshop'), mount(root) {
     const list = root.querySelector('.robot-program'), message = root.querySelector('.robot-message'), complete = root.querySelector('[data-robot-complete]')
@@ -64,6 +67,7 @@ export function robotExerciseView(context, { board, work = null, onChange = null
       try { valid = expandProgram(program, board.availableCommands).length > 0 } catch { /* empty repeat awaits its contents */ }
       root.querySelector('[data-run]').disabled = running || !valid || (board.mode === 'predict' && !prediction)
       root.querySelector('[data-stop]').disabled = !running
+      root.querySelector('[data-remove-last]').disabled = running || readOnly || !program.length
       root.querySelector('[data-clear]').disabled = running || readOnly || !program.length
       root.querySelector('[data-undo]').disabled = running || readOnly || !undo.length
       root.querySelectorAll('[data-command]').forEach(button => { button.disabled = running || readOnly || program.length >= 30 })
@@ -140,6 +144,7 @@ export function robotExerciseView(context, { board, work = null, onChange = null
     root.querySelector('[data-reset]').addEventListener('click', reset)
     root.querySelector('[data-undo]').addEventListener('click', () => { if (running || readOnly || !undo.length) return; program = undo.pop(); changed(false) })
     root.querySelector('[data-stop]').addEventListener('click', () => { runVersion += 1; clearTimeout(timer); running = false; clearHighlight(); controls(); message.textContent = 'Robot zatrzymał się tutaj. Możesz sprawdzić program.' })
+    root.querySelector('[data-remove-last]').addEventListener('click', () => { if (running || readOnly || !program.length) return; program.pop(); changed() })
     root.querySelector('[data-clear]').addEventListener('click', () => { if (running || readOnly) return; program = []; changed() })
     root.querySelector('[data-other-route]')?.addEventListener('click', () => { reset(); program = []; changed(); root.querySelector('[data-command]').focus() })
     if (board.mode === 'predict') root.querySelector('.robot-board').addEventListener('click', event => {
@@ -174,6 +179,11 @@ export function robotExerciseView(context, { board, work = null, onChange = null
         const predictionMessage = board.mode === 'predict' ? (sameCell(prediction, result.finalState) ? 'Tak właśnie wykonał program.' : 'Robot dotarł gdzie indziej. Sprawdź, który krok to zmienił.') : ''
         if (result.success) {
           complete.hidden = false
+          const next = complete.querySelector('[data-next-robot-task]')
+          if (next) next.hidden = !canOpenRobotChallenge(nextTask, getRobotProgress(), getRobotAccess())
+          const back = complete.querySelector('[data-return-robot]')
+          back.classList.toggle('button-primary', !next || next.hidden)
+          back.classList.toggle('button-secondary', Boolean(next && !next.hidden))
           boardElement.classList.add('is-goal-reached')
           const another = firstRoute && firstRoute !== route
           root.querySelector('[data-completion-text]').textContent = predictionMessage || (board.mode === 'alternative' && another ? 'To inne rozwiązanie.' : 'Robot dotarł do celu.')

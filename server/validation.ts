@@ -7,6 +7,7 @@ export const json = z.record(z.string(), z.unknown()).refine(value => JSON.strin
 export const completion = z.enum(['automatic', 'self-check', 'teacher-review'])
 export const status = z.enum(['draft', 'returned', 'waiting-review', 'completed'])
 export const inputs = {
+  robotAccess: z.object({ stageId: id.optional(), challengeId: id.optional(), customBoard: z.boolean().optional() }).strict().refine(value => value.stageId || value.challengeId || value.customBoard !== undefined),
   login: z.object({ pin: z.string().regex(/^\d{4,12}$/) }).strict(),
   student: z.object({ name: text(40), className: text(12), operationId: z.uuid().optional() }).strict(),
   select: z.object({ studentId: id }).strict(),

@@ -1,10 +1,10 @@
 import { test, expect } from '@playwright/test'
-import { chooseStudent, resetApp, enterTeacher } from './helpers.js'
+import { chooseStudent, resetApp, enterTeacher, grantRobotSandbox } from './helpers.js'
 
-test.beforeEach(async ({ page }) => { await resetApp(page); await chooseStudent(page) })
+test.beforeEach(async ({ page }) => { await resetApp(page); await chooseStudent(page); await grantRobotSandbox(page) })
 async function task(page, id) { await page.goto(`/#/tools/robot?challenge=${id}`) }
 async function add(page, commands) { for (const command of commands) await page.locator(`[data-command="${command}"]`).click() }
-async function run(page) { await page.getByRole('button', { name: 'Uruchom', exact: true }).click() }
+async function run(page) { await page.getByRole('button', { name: 'Uruchom program', exact: true }).click() }
 async function done(page) { await expect(page.getByRole('heading', { name: 'Gotowe', exact: true })).toBeVisible() }
 
 test('przeszkoda i brzeg zatrzymują program przed polem', async ({ page }) => {
@@ -46,13 +46,13 @@ test('powtórz ma kontener, dziecko dodaje jego zawartość i uruchamia', async 
   await task(page, 'repeat-steps'); await add(page, ['repeat'])
   await expect(page.locator('[data-run]')).toBeDisabled()
   await page.locator('[data-repeat-times]').selectOption('3')
-  await page.getByRole('button', { name: 'Idź naprzód do powtórzenia 1', exact: true }).click()
+  await page.getByRole('button', { name: 'Prosto do powtórzenia 1', exact: true }).click()
   await expect(page.locator('.robot-repeat-body .robot-block')).toHaveCount(1)
   await run(page); await done(page)
 })
 
 test('własna trasa zapisuje planszę i program po reloadzie, trafia do nauczyciela', async ({ page }) => {
-  await page.goto('/#/tools/robot'); await page.getByRole('button', { name: /Stwórz trasę/ }).click()
+  await page.goto('/#/tools/robot'); await page.getByRole('button', { name: /Moja plansza/ }).click()
   await page.getByLabel('Nazwa trasy').fill('Trasa do kwiatu')
   await page.getByRole('button', { name: 'Cel', exact: true }).click(); await page.locator('[data-cell="1,2"]').click()
   await page.getByRole('button', { name: 'Przeszkoda', exact: true }).click(); await page.locator('[data-cell="3,3"]').click()
@@ -78,7 +78,7 @@ test('nauczyciel przydziela planszę i automatyczne rozwiązanie nie czeka na re
   await page.getByLabel('Narzędzie', { exact: true }).selectOption('robot')
   await page.getByLabel('Plansza Robota').selectOption('two-steps')
   await page.getByRole('button', { name: 'Utwórz zadanie' }).click()
-  await page.goto('/#/welcome'); await chooseStudent(page)
+  await page.goto('/#/welcome'); await chooseStudent(page); await grantRobotSandbox(page)
   await page.getByRole('link', { name: /Robot do kwiatu/ }).click()
   await add(page, ['forward', 'forward']); await run(page); await done(page)
   await page.goto('/#/home'); await expect(page.getByRole('link', { name: /Robot do kwiatu/ })).toHaveCount(0)
@@ -91,7 +91,7 @@ test('klawiatura dodaje i przestawia polecenia; plansze mieszczą się na breakp
   await page.locator('[data-command="forward"]').focus(); await page.keyboard.press('Enter')
   await page.locator('[data-command="right"]').focus(); await page.keyboard.press('Enter')
   await page.getByRole('button', { name: 'Przesuń polecenie 2 w górę', exact: true }).focus(); await page.keyboard.press('Enter')
-  await expect(page.locator('.robot-block').first()).toContainText('Skręć w prawo')
+  await expect(page.locator('.robot-block').first()).toContainText('Obróć w prawo')
   for (const [width, height] of [[1440, 900], [1366, 768], [1024, 768], [390, 844]]) {
     await page.setViewportSize({ width, height })
     expect(await page.evaluate(async () => document.documentElement.scrollWidth <= innerWidth)).toBe(true)

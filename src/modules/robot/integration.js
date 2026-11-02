@@ -13,6 +13,6 @@ export async function assignmentRobotWork(assignmentId, studentId) {
 }
 
 export function createRobotWork(studentId) {
-  return createWork({ studentId, title: 'Moja trasa', type: 'Robot — własna trasa', completionType: 'teacher-review',
+  return createWork({ studentId, title: 'Moja plansza', type: 'Robot — własna trasa', completionType: 'teacher-review',
     data: { kind: 'robot-project', board: createRobotBoard(), program: [], thumbnail: 'robot', editorMode: true, share: { scope: 'local', version: 1 } } })
 }

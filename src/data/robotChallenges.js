@@ -1,7 +1,7 @@
 export const robotCommands = {
-  forward: { label: 'Idź naprzód', symbol: '↑' },
-  left: { label: 'Skręć w lewo', symbol: '↶' },
-  right: { label: 'Skręć w prawo', symbol: '↷' },
+  forward: { label: 'Prosto', symbol: '↑' },
+  left: { label: 'Obróć w lewo', symbol: '↶' },
+  right: { label: 'Obróć w prawo', symbol: '↷' },
   repeat: { label: 'Powtórz', symbol: '↻' },
 }
 export const robotGroups = [
@@ -31,4 +31,4 @@ export const robotChallenges = [
   challenge('repeat-turns', 'Kroki i skręty', 'repeat', { x: 2, y: 3 }, { availableCommands: ['forward', 'left', 'right', 'repeat'], expectedSkills: ['powtarzanie sekwencji'] }),
 ]
 export const getRobotChallenge = id => robotChallenges.find(item => item.id === id)
-export const createRobotBoard = () => challenge('custom', 'Moja trasa', 'custom', { x: 3, y: 1 }, { mode: 'custom', completionType: 'teacher-review', expectedSkills: ['tworzenie zadania'], availableCommands: ['forward', 'left', 'right'] })
+export const createRobotBoard = () => challenge('custom', 'Moja plansza', 'custom', { x: 3, y: 1 }, { mode: 'custom', completionType: 'teacher-review', expectedSkills: ['tworzenie zadania'], availableCommands: ['forward', 'left', 'right'] })

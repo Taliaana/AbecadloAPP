@@ -1,4 +1,5 @@
 import { teacherLayout } from '../../components/layout.js'
+import { robotTeacherSettings, mountRobotTeacherSettings } from '../../components/robotTeacherSettings.js'
 import { avatar, icon } from '../../components/icons.js'
 import { workStatus } from '../../components/workStatus.js'
 import { implementedLessons, lessons } from '../../data/lessons.js'
@@ -30,9 +31,10 @@ export function teacherStudentView({ studentId, render, navigate }) {
         <section class="detail-card"><p class="eyebrow">Dodatkowe zadania</p><h2>${assignments.length}</h2><div class="compact-list">${assignments.map((assignment) => `<span>${escapeHtml(assignment.title)}</span>`).join('') || '<p>Brak zadań.</p>'}</div></section>
       </div>
       <details class="student-settings no-print" ${settingsOpen ? 'open' : ''}><summary>Edytuj profil ucznia</summary><form data-edit-student><label>Imię<input name="name" value="${escapeHtml(student.profile.name)}" required maxlength="40" /></label><label>Klasa<input name="className" value="${escapeHtml(student.className)}" required maxlength="12" /></label><div class="form-actions"><button class="button button-secondary" type="submit">Zapisz zmiany</button><button class="button button-secondary" type="button" data-archive-student>Archiwizuj ucznia</button></div><p class="form-feedback" data-profile-feedback role="status">${saveMessage}</p></form><p>Archiwizacja ukrywa profil na liście i zachowuje wszystkie prace.</p><div class="student-delete"><p>Trwałe usunięcie obejmuje profil, postępy i wszystkie prace ucznia.</p><button class="button button-danger" type="button" data-delete-student>Usuń profil</button></div></details>`
-    return { html: teacherLayout(content, '/teacher/class'), mount }
+    return { html: teacherLayout(content + robotTeacherSettings(student), '/teacher/class'), mount }
   }
   function mount(root) {
+    mountRobotTeacherSettings(root, studentId)
     const settings = root.querySelector('.student-settings')
     settings?.addEventListener('toggle', () => { settingsOpen = settings.open })
     root.querySelector('[data-unlock-next]')?.addEventListener('click', async () => { await unlockNextLessonForStudent(studentId); render(current()) })

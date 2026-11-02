@@ -1,6 +1,7 @@
 import '@fontsource-variable/nunito-sans'
 import './styles/index.css'
 import './styles/shared.css'
+import './styles/robotLearning.css'
 import './styles/researchBoard.css'
 import './styles/equipmentLesson.css'
 import './styles/typography.css'

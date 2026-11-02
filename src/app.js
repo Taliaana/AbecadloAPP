@@ -82,7 +82,9 @@ export function startApp(root) {
       await revalidate()
       // Refresh collections when another device changed them. Never replace an
       // active exercise/editor or steal focus merely because a GET completed.
-      if (hash === location.hash && version === routeVersion && before !== JSON.stringify(getStateSnapshot()) && ['/home','/path','/works','/workshop','/teacher/class','/teacher/review','/teacher/works'].includes(path())) renderRoute(false)
+      const canRefresh = ['/home','/path','/works','/workshop','/teacher/class','/teacher/review','/teacher/works'].includes(path())
+        || (path() === '/tools/robot' && root.querySelector('.robot-learning-hero'))
+      if (hash === location.hash && version === routeVersion && before !== JSON.stringify(getStateSnapshot()) && canRefresh) renderRoute(false)
     } catch (error) { errorMessage(error) }
   }
 

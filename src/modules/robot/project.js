@@ -12,14 +12,14 @@ export function robotProjectView(context, initialWork) {
   let data = structuredClone(work.data)
   let title = work.title
   let mountedRoot = null
-  const persist = async () => { work = await updateWork(work.id, { title: title.trim() || 'Moja trasa', data, status: 'draft' }) }
+  const persist = async () => { work = await updateWork(work.id, { title: title.trim() || 'Moja plansza', data, status: 'draft' }) }
   function screen() {
-    data.board.title = title.trim() || 'Moja trasa'
+    data.board.title = title.trim() || 'Moja plansza'
     if (work.status === 'waiting-review') return { html: appLayout(waitingReviewScreen(), context.student, '/works') }
     if (work.status === 'completed') return { html: appLayout(`<section class="tool-header"><h1>${escapeHtml(work.title)}</h1><p>Twoja trasa jest w portfolio.</p></section>${robotWorkPreview(work)}<a class="button button-primary" href="#/tools/robot">Wróć do Robota</a>`, context.student, '/works') }
     const returned = work.status === 'returned' ? '<p class="returned-note" role="status">Możesz jeszcze popracować nad tą pracą.</p>' : ''
     if (data.editorMode !== false) return {
-      html: appLayout(`<section class="tool-header"><a class="text-link" href="#/tools/robot">Wróć do Robota</a><p class="eyebrow">Moja trasa</p><h1>Stwórz własną trasę.</h1></section>${returned}${boardEditorHtml(data.board, title)}<p class="autosave-status" role="status">Zmiany zapisują się automatycznie.</p>`, context.student, '/workshop'),
+      html: appLayout(`<section class="tool-header"><a class="text-link" href="#/tools/robot">Wróć do Robota</a><p class="eyebrow">Moja plansza</p><h1>Stwórz własną planszę.</h1></section>${returned}${boardEditorHtml(data.board, title)}<p class="autosave-status" role="status">Zmiany zapisują się automatycznie.</p>`, context.student, '/workshop'),
       mount(root) {
         const autosave = createAutosave(persist)
         mountBoardEditor(root, data.board, {

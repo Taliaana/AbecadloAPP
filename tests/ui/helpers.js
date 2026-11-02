@@ -44,3 +44,13 @@ export async function seedTypewriting(page) {
     })()
   })
 }
+
+// Execution suites use an explicit custom-mode fixture. Progression itself is
+// tested without these grants in robot-progression.spec.js.
+export async function grantRobotSandbox(page) {
+  await page.evaluate(async () => {
+    const state = await (await fetch('/__test/snapshot')).json()
+    state.students.zosia.toolProgress.robotAccess = { stages: ['steps', 'turns', 'obstacles', 'prediction', 'debug', 'alternative'], challenges: ['repeat-steps', 'repeat-turns'], customBoard: true }
+    await fetch('/__test/seed', { method: 'POST', body: JSON.stringify(state) })
+  })
+}

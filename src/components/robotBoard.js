@@ -10,7 +10,8 @@ export function robotBoard(board, { interactive = false, preview = false } = {})
     const goal = sameCell(p, board.goal)
     const start = sameCell(p, board.start)
     const tag = interactive ? 'button' : 'div'
-    return `<${tag} ${interactive ? 'type="button"' : ''} class="robot-cell ${obstacle ? 'has-obstacle' : ''}" data-cell="${p.x},${p.y}" ${interactive ? `aria-label="Kolumna ${p.x + 1}, wiersz ${p.y + 1}${start ? ', start' : goal ? ', cel' : obstacle ? ', przeszkoda' : ''}"` : ''}>
+    return `<${tag} ${interactive ? 'type="button"' : ''} class="robot-cell ${obstacle ? 'has-obstacle' : ''} ${start ? 'is-start' : ''}" data-cell="${p.x},${p.y}" ${interactive ? `aria-label="Kolumna ${p.x + 1}, wiersz ${p.y + 1}${start ? ', start' : goal ? ', cel' : obstacle ? ', przeszkoda' : ''}"` : ''}>
+      ${start ? '<span class="robot-cell-label" aria-hidden="true">Start</span>' : goal ? '<span class="robot-cell-label" aria-hidden="true">Cel</span>' : ''}
       ${obstacle ? '<span class="robot-stone" aria-hidden="true"></span>' : ''}${goal ? `<span class="robot-goal" role="img" aria-label="Cel">${flower}</span>` : ''}
       ${preview && start ? `<span class="robot-token" style="transform:rotate(${board.startDirection * 90}deg)">${robotDrawing}</span>` : ''}</${tag}>`
   }).join('')

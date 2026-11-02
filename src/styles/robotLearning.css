@@ -1,0 +1,47 @@
+.robot-learning-hero { display: grid; grid-template-columns: minmax(0, 1fr) minmax(120px, 220px); gap: var(--grid-gap); align-items: center; padding: var(--card-padding); border-radius: var(--radius-material); background: var(--paper); box-shadow: var(--shadow-soft); margin-bottom: var(--section-gap); }
+.robot-learning-hero h2 { margin: 8px 0 12px; font-size: clamp(1.8rem, 3vw, 2.5rem); }
+.robot-learning-progress { display: flex; gap: 8px; align-items: center; color: var(--text-muted); margin: 20px 0; }
+.robot-learning-illustration { display: block; max-width: 220px; }
+.robot-learning-illustration svg { width: 100%; height: auto; }
+.robot-learning-path > ol { list-style: none; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--grid-gap); padding: 0; margin: 24px 0 var(--section-gap); }
+.robot-learning-path li { min-width: 0; }
+.robot-stage { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-small); overflow: hidden; }
+.robot-stage summary { display: flex; gap: 16px; align-items: center; padding: 20px; min-height: 88px; cursor: pointer; list-style: none; }
+.robot-stage summary::-webkit-details-marker { display: none; }
+.robot-stage summary > span:nth-child(2) { flex: 1; min-width: 0; }
+.robot-stage summary strong { display: block; font-family: var(--font-heading); font-size: 1.35rem; font-weight: 500; }
+.robot-stage summary small { display: block; margin-top: 6px; color: var(--text-muted); }
+.robot-stage-number { display: grid; place-items: center; flex: 0 0 44px; height: 44px; border-radius: 50%; background: var(--paper); font-size: 1.35rem; }
+.robot-stage-content { padding: 0 20px 20px; }
+.robot-stage-content .robot-task-list { flex-direction: column; align-items: stretch; }
+.robot-task-list .button small { margin-left: auto; font-weight: 400; }
+.robot-learning-extras { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--grid-gap); margin-bottom: var(--section-gap); }
+.robot-learning-extras .detail-card { display: flex; flex-direction: column; align-items: start; gap: 12px; }
+.robot-learning-extras .detail-card > p { margin: 0; }
+.robot-learning-extras .detail-card > .button, .robot-learning-extras .robot-task-list { margin-top: auto; }
+.robot-teacher-settings { margin-top: var(--section-gap); }
+.robot-teacher-settings form { display: grid; gap: 16px; max-width: 640px; }
+.robot-teacher-settings .checkbox-label { display: flex; align-items: center; gap: 12px; min-height: 44px; }
+.robot-teacher-settings input[type=checkbox] { width: 22px; height: 22px; min-height: 22px; }
+.robot-session .robot-palette .button { padding-inline: 12px; flex: 1 1 auto; }
+.robot-session .robot-actions .button { padding-inline: 14px; }
+.robot-session .robot-actions { gap: 8px; }
+.robot-session #robot-help { max-width: 48ch; line-height: 1.5; }
+.robot-cell-label { position: absolute; bottom: 1px; inset-inline: 0; text-align: center; font-size: .65rem; font-weight: 700; line-height: 1.2; pointer-events: none; color: var(--text); }
+.robot-cell.is-start { box-shadow: inset 0 0 0 1px var(--brand-pink-dark); }
+.work-thumbnail--robot .robot-cell-label { display: none; }
+@media (min-width: 1000px) and (max-height: 800px) {
+  .main-content:has(.robot-session) { padding-top: 20px; }
+  .robot-session .tool-header .text-link { margin-bottom: 0; }
+  .robot-session .robot-board { max-width: 420px; }
+  .robot-session .robot-program:not(:has(.robot-repeat)) { max-height: 150px; }
+  .robot-session .robot-workspace { padding: 20px; }
+  .robot-session .robot-palette .button { font-size: .95rem; padding-inline: 10px; }
+}
+@media (max-width: 760px) {
+  .robot-learning-hero { grid-template-columns: minmax(0, 1fr); }
+  .robot-learning-illustration { display: none; }
+  .robot-learning-path > ol, .robot-learning-extras { grid-template-columns: minmax(0, 1fr); }
+  .robot-stage summary { padding: 16px; gap: 12px; }
+  .robot-stage-content { padding-inline: 16px; }
+}

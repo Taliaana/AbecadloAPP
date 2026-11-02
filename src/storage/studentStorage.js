@@ -96,5 +96,7 @@ export async function getOrCreateAssignmentWork(assignmentId) {
 }
 export const saveTypingResult = (exerciseId, result) => mutation('tools', { kind: 'typing', exerciseId, result })
 export const getRobotProgress = (studentId = cache.currentStudentId) => cache.students[studentId]?.toolProgress?.robot || {}
+export const getRobotAccess = (studentId = cache.currentStudentId) => cache.students[studentId]?.toolProgress?.robotAccess || {}
+export const grantRobotAccess = (studentId, access) => mutation(`students/${studentId}/robot-access`, access)
 export const saveRobotProgram = (challengeId, program) => mutation('tools', { kind: 'robot-program', challengeId, program })
 export const saveRobotAttempt = (challengeId, { program, workId }) => mutation('tools', { kind: 'robot-attempt', challengeId, program, ...(workId ? { workId } : {}) })

@@ -920,7 +920,7 @@ a.lesson-row:hover { background: #f7f1e5; transform: translateX(3px); }
 .robot-session .tool-header h1 { margin-bottom: 0; }
 .robot-session h1 { font-size: clamp(2rem, 3vw, 2.8rem); line-height: 1.15; }
 .robot-session .tool-header > p:last-child { font-size: 1.15rem; max-width: 36ch; margin: 0; align-self: center; }
-.robot-session .robot-board { max-width: 480px; width: 100%; box-shadow: none; }
+.robot-session .robot-board { max-width: 460px; width: 100%; box-shadow: none; }
 .robot-program-panel { padding-top: 0; }
 .robot-program-panel h2 { font-size: 1.7rem; margin-bottom: 10px; }
 .robot-program-panel > p { color: var(--text-muted); }

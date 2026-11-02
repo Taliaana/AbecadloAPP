@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test'
-import { resetApp, chooseStudent, enterTeacher } from './helpers.js'
+import { resetApp, chooseStudent, enterTeacher, grantRobotSandbox } from './helpers.js'
 
-test.beforeEach(async ({ page }) => { await resetApp(page); await chooseStudent(page) })
+test.beforeEach(async ({ page }) => { await resetApp(page); await chooseStudent(page); await grantRobotSandbox(page) })
 async function open(page, id = 'two-steps') { await page.goto(`/#/tools/robot?challenge=${id}`) }
 async function add(page, commands) { for (const id of commands) await page.locator(`[data-command="${id}"]`).click() }
 
@@ -72,7 +72,7 @@ test('szkic programu przeżywa reload, Reset i zmianę widoku; drag oraz klawiat
   await page.locator('[data-command="forward"]').focus(); await page.keyboard.press('Enter')
   await page.goto('/#/home'); await open(page)
   await expect(page.locator('.robot-block')).toHaveCount(1)
-  await expect(page.locator('.robot-block')).toContainText('Idź naprzód')
+  await expect(page.locator('.robot-block')).toContainText('Prosto')
 })
 
 test('ukończone zadanie nauczyciela pozostaje ukończone i chronione przed edycją', async ({ page }) => {
@@ -81,7 +81,7 @@ test('ukończone zadanie nauczyciela pozostaje ukończone i chronione przed edyc
     const storage = await import('/src/storage/studentStorage.js')
     return (await storage.createAssignment({ title: 'Trasa', instruction: 'Robot', tool: 'robot', wholeClass: true, robotTask: { challengeId: 'two-steps' } })).id
   })
-  await page.goto('/#/welcome'); await chooseStudent(page)
+  await page.goto('/#/welcome'); await chooseStudent(page); await grantRobotSandbox(page)
   await page.goto(`/#/assignment/${id}`); await add(page, ['forward', 'forward']); await page.locator('[data-run]').click()
   await expect(page.getByRole('heading', { name: 'Gotowe', exact: true })).toBeVisible()
   await expect(page.locator('[data-command="forward"]')).toBeDisabled()
@@ -130,8 +130,8 @@ test('drag przestawia bloczki także w programie z maksymalną liczbą poleceń'
   await page.locator('[data-path="0"]').dispatchEvent('dragstart', { dataTransfer: transfer })
   await page.locator('[data-path="2"]').dispatchEvent('drop', { dataTransfer: transfer })
   await expect(page.locator('.robot-block')).toHaveCount(30)
-  await expect(page.locator('[data-path="0"]')).toContainText('Idź naprzód')
-  await expect(page.locator('[data-path="1"]')).toContainText('Skręć w prawo')
+  await expect(page.locator('[data-path="0"]')).toContainText('Prosto')
+  await expect(page.locator('[data-path="1"]')).toContainText('Obróć w prawo')
   await page.reload()
-  await expect(page.locator('[data-path="1"]')).toContainText('Skręć w prawo')
+  await expect(page.locator('[data-path="1"]')).toContainText('Obróć w prawo')
 })

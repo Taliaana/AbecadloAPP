@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test'
-import { resetApp, chooseStudent } from './helpers.js'
-test.beforeEach(async ({ page }) => { await resetApp(page); await chooseStudent(page) })
+import { resetApp, chooseStudent, grantRobotSandbox } from './helpers.js'
+test.beforeEach(async ({ page }) => { await resetApp(page); await chooseStudent(page); await grantRobotSandbox(page) })
 async function project(page) { await page.goto('/#/tools/robot'); await page.locator('[data-create-route]').click() }
 
 test('powrót zapisuje szkic przed odczytem listy i portfolio, bez reloadu', async ({ page }) => {
