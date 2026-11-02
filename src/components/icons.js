@@ -1,4 +1,5 @@
 const paths = {
+  play: '<path d="m8 4 12 8-12 8Z"/>',
   sound: '<path d="M4 9h4l5-4v14l-5-4H4zM16 8c3 2 3 6 0 8m3-11c5 4 5 10 0 14"/>',
   drag: '<path d="m8 12 0-6a2 2 0 0 1 4 0v7-4a2 2 0 0 1 4 0v4-2a2 2 0 0 1 4 0v5l-3 5H9l-6-7a2 2 0 0 1 3-2l2 2"/>',
   home: '<path d="M4 11.5 12 5l8 6.5V20a1 1 0 0 1-1 1h-5v-6h-4v6H5a1 1 0 0 1-1-1Z"/>',

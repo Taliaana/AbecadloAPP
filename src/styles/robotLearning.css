@@ -23,10 +23,54 @@
 .robot-teacher-settings form { display: grid; gap: 16px; max-width: 640px; }
 .robot-teacher-settings .checkbox-label { display: flex; align-items: center; gap: 12px; min-height: 44px; }
 .robot-teacher-settings input[type=checkbox] { width: 22px; height: 22px; min-height: 22px; }
-.robot-session .robot-palette .button { padding-inline: 12px; flex: 1 1 auto; }
+.robot-session .robot-palette { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.robot-session .robot-palette .button { flex-direction: column; padding: 10px 8px; width: 100%; min-height: 76px; border-radius: var(--radius-small); gap: 2px; }
+.robot-session .robot-palette .button > span { font-size: 1.8rem; line-height: 1.1; color: var(--brand-pink-dark); }
+.robot-session .robot-palette:has(.button:only-child) { grid-template-columns: minmax(100px, 150px); }
+.robot-session .robot-palette:has(.button:nth-child(4)) { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.robot-session .robot-actions, .robot-run-actions, .robot-edit-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .robot-session .robot-actions .button { padding-inline: 14px; }
-.robot-session .robot-actions { gap: 8px; }
+.robot-session .robot-actions { flex-direction: column; align-items: start; }
+.robot-session .robot-edit-actions .button { font-size: .95rem; padding-inline: 10px; }
+.robot-session .robot-palette[hidden], .robot-edit-actions[hidden] { display: none; }
 .robot-session #robot-help { max-width: 48ch; line-height: 1.5; }
+.robot-session .tool-header { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 8px var(--grid-gap); margin-bottom: 20px; }
+.robot-session .tool-header .text-link { margin-bottom: 12px; }
+.robot-task-meta { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 20px; margin-bottom: 4px; }
+.robot-task-meta .eyebrow { margin: 0; }
+.robot-task-progress { display: flex; align-items: center; gap: 10px; font-size: .85rem; color: var(--text-muted); }
+.robot-task-progress progress { appearance: none; width: 110px; height: 8px; border: 0; border-radius: 8px; overflow: hidden; background: var(--surface-muted); accent-color: var(--brand-pink-dark); }
+.robot-task-progress progress::-webkit-progress-bar { background: var(--surface-muted); border-radius: 8px; }
+.robot-task-progress progress::-webkit-progress-value { background: var(--brand-pink-dark); border-radius: 8px; }
+.robot-task-progress progress::-moz-progress-bar { background: var(--brand-pink-dark); border-radius: 8px; }
+.robot-session .tool-header h1 { margin-bottom: 0; }
+.robot-session .tool-header > p:last-child { max-width: none; font-size: 1.15rem; }
+.robot-session .robot-workspace { border-radius: var(--radius-material); grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); }
+.robot-session .robot-program { max-height: min(32vh, 272px); }
+.robot-session .robot-board { max-width: 480px; }
+.robot-session .robot-board .robot-cell { box-shadow: inset 0 0 0 1px var(--border); }
+.robot-session .robot-board .robot-cell.is-start { box-shadow: inset 0 0 0 2px var(--brand-pink-dark); }
+.robot-board { position: relative; isolation: isolate; }
+.robot-token--moving { top: 0; left: 0; z-index: 3; }
+.robot-token--moving svg { transition: none; }
+.robot-command-symbol { display: inline-grid; place-items: center; width: 32px; height: 32px; flex-shrink: 0; border-radius: 50%; background: var(--brand-pink-wash); color: var(--brand-pink-dark); font-size: 1.25rem; }
+.robot-block-label { display: inline-flex; align-items: center; gap: 8px; }
+.robot-session--prediction .robot-block { cursor: default; min-height: 62px; }
+.robot-session--prediction .robot-program { max-height: 330px; }
+.robot-session .robot-message { min-height: 0; margin: 12px 0 0; }
+.robot-completion { padding: 0; border: 0; border-radius: var(--radius-material); color: var(--text); background: var(--paper); width: min(650px, calc(100vw - 32px)); max-width: calc(100vw - 32px); max-height: calc(100dvh - 32px); overflow-y: auto; box-shadow: var(--shadow-soft); }
+.robot-completion::backdrop { background: rgb(55 47 48 / .24); }
+.robot-completion[open] { animation: robot-completion-in 180ms ease-out; }
+.robot-completion .completion-card { position: relative; width: 100%; min-height: 0; margin: 0; padding: clamp(28px, 5vw, 48px); border: 0; box-shadow: none; }
+.robot-completion .completion-check { margin: 0 0 16px; }
+.robot-completion .completion-card h2 { margin: 0 0 16px; }
+.robot-completion .completion-card > p { margin: 0 0 20px; }
+.robot-completion .completion-card > p:empty { display: none; }
+.robot-completion .robot-completion-close { position: absolute; top: 8px; right: 8px; }
+.robot-completion .completion-actions { width: 100%; margin: 4px 0 12px; }
+.robot-completion [data-other-route] { margin-bottom: 8px; }
+.robot-completion-note { font-size: .95rem; }
+@keyframes robot-completion-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 .robot-cell-label { position: absolute; bottom: 1px; inset-inline: 0; text-align: center; font-size: .65rem; font-weight: 700; line-height: 1.2; pointer-events: none; color: var(--text); }
 .robot-cell.is-start { box-shadow: inset 0 0 0 1px var(--brand-pink-dark); }
 .work-thumbnail--robot .robot-cell-label { display: none; }
@@ -34,9 +78,13 @@
   .main-content:has(.robot-session) { padding-top: 20px; }
   .robot-session .tool-header .text-link { margin-bottom: 0; }
   .robot-session .robot-board { max-width: 420px; }
-  .robot-session .robot-program:not(:has(.robot-repeat)) { max-height: 150px; }
+  .robot-session .robot-program:not(:has(.robot-repeat)) { min-height: 140px; max-height: 250px; }
+  .robot-session .robot-program:has(.robot-repeat) { max-height: 248px; }
   .robot-session .robot-workspace { padding: 20px; }
   .robot-session .robot-palette .button { font-size: .95rem; padding-inline: 10px; }
+  .robot-session .robot-palette .button { min-height: 66px; }
+  .robot-task-meta { margin-block: 0; }
+  .robot-session .robot-run-actions .button { font-size: 1rem; padding-inline: 12px; }
 }
 @media (max-width: 760px) {
   .robot-learning-hero { grid-template-columns: minmax(0, 1fr); }
@@ -44,4 +92,15 @@
   .robot-learning-path > ol, .robot-learning-extras { grid-template-columns: minmax(0, 1fr); }
   .robot-stage summary { padding: 16px; gap: 12px; }
   .robot-stage-content { padding-inline: 16px; }
+  .robot-session .robot-workspace { grid-template-columns: minmax(0, 1fr); }
+  .robot-session .robot-board { max-width: 480px; }
+  .robot-session .tool-header { grid-template-columns: minmax(0, 1fr); }
+  .robot-session .robot-program:not(:has(.robot-repeat)) { min-height: 150px; max-height: 320px; }
+  .robot-task-meta { align-items: start; flex-direction: column; }
+  .robot-task-progress progress { width: 90px; }
+  .robot-run-actions, .robot-edit-actions { width: 100%; }
+  .robot-run-actions [data-run] { flex-basis: 100%; }
+  .robot-run-actions [data-reset], .robot-run-actions [data-stop] { flex: 1 1 110px; }
+  .robot-completion .completion-card { padding-top: 44px; }
 }
+@media (prefers-reduced-motion: reduce) { .robot-completion[open] { animation: none; } }

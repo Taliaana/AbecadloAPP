@@ -180,7 +180,7 @@ export function createService(repository: Repository, files: Files) {
           if (input.kind === 'robot-attempt' && ['program','board'].includes(simulation.reason)) fail('Sprawdź polecenia.')
           student.toolProgress.robot ||= {}
           const progressId = assignedWork ? `assignment-${assignedWork.id}` : input.challengeId
-          const old = student.toolProgress.robot[progressId] || { runs: 0, completed: false, routes: [] }
+          const old = { runs: 0, completed: false, routes: [], ...student.toolProgress.robot[progressId] }
           result = { ...old, program: input.program, updatedAt: now() }
           if (input.kind === 'robot-attempt') {
             const routes = [...new Set([...old.routes, ...(simulation.success ? [routeSignature(simulation)] : [])])].slice(0, 2)

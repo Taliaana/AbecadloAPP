@@ -24,7 +24,7 @@ test('first success immediately opens the next stage and next task, including af
   await page.reload()
   await expect(page.locator('.robot-block')).toHaveCount(2)
   await page.locator('[data-reset]').click()
-  await expect(page.locator('[data-cell="1,4"] .robot-token')).toBeVisible()
+  await expect(page.locator('.robot-board')).toHaveAttribute('data-robot-position', '1,4')
   await expect(page.locator('.robot-block')).toHaveCount(2)
   await page.goto('/#/tools/robot')
   await expect(page.locator('.robot-learning-progress')).toContainText('1 z 6')

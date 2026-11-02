@@ -1,14 +1,14 @@
 import { robotCommands } from '../../data/robotChallenges.js'
 
-export function programHtml(program, parent = null) {
+export function programHtml(program, parent = null, editable = true) {
   return program.map((block, index) => {
     const path = parent === null ? `${index}` : `${parent}.${index}`
     const number = path.split('.').map(value => Number(value) + 1).join('-')
     const repeat = block?.type === 'repeat'
     const command = robotCommands[repeat ? 'repeat' : block]
     const label = repeat ? 'Powtórz' : command.label
-    return `<li class="robot-block ${repeat ? 'robot-repeat' : ''}" draggable="true" data-index="${index}" data-path="${path}">${repeat ? '<div class="robot-loop-header">' : ''}<span><span aria-hidden="true">${command.symbol}</span> ${index + 1}. ${label}</span>
-      <div><button class="button button-icon" type="button" data-move="-1" aria-label="Przesuń polecenie ${number} w górę" ${index === 0 ? 'disabled' : ''}>↑</button><button class="button button-icon" type="button" data-move="1" aria-label="Przesuń polecenie ${number} w dół" ${index === program.length - 1 ? 'disabled' : ''}>↓</button><button class="button button-icon" type="button" data-remove aria-label="Usuń polecenie ${number}">×</button></div>
+    return `<li class="robot-block ${repeat ? 'robot-repeat' : ''}" ${editable ? 'draggable="true"' : ''} data-index="${index}" data-path="${path}">${repeat ? '<div class="robot-loop-header">' : ''}<span class="robot-block-label"><span class="robot-command-symbol" aria-hidden="true">${command.symbol}</span> ${index + 1}. ${label}</span>
+      ${editable ? `<div><button class="button button-icon" type="button" data-move="-1" aria-label="Przesuń polecenie ${number} w górę" ${index === 0 ? 'disabled' : ''}>↑</button><button class="button button-icon" type="button" data-move="1" aria-label="Przesuń polecenie ${number} w dół" ${index === program.length - 1 ? 'disabled' : ''}>↓</button><button class="button button-icon" type="button" data-remove aria-label="Usuń polecenie ${number}">×</button></div>` : ''}
       ${repeat ? `<label>Liczba powtórzeń<select data-repeat-times aria-label="Liczba powtórzeń bloczka ${index + 1}">${[2, 3, 4].map(times => `<option value="${times}" ${times === block.times ? 'selected' : ''}>${times} razy</option>`).join('')}</select></label></div><ol class="robot-repeat-body" data-container="${index}" aria-label="Polecenia powtarzane"><li class="robot-loop-hint" aria-hidden="true">W środku: polecenia do powtarzania</li>${programHtml(block.body, path)}</ol><div class="robot-repeat-add" role="group" aria-label="Dodaj do powtórzenia ${index + 1}">${['forward', 'left', 'right'].map(id => `<button class="button button-secondary" type="button" data-add-child="${id}" aria-label="${robotCommands[id].label} do powtórzenia ${index + 1}">${robotCommands[id].symbol} ${robotCommands[id].label}</button>`).join('')}</div>` : ''}</li>`
   }).join('')
 }

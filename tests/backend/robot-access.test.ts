@@ -52,6 +52,21 @@ test('six completed stages allow custom work, and historical programs keep their
   assert.deepEqual(repo.state.students.zosia.toolProgress.robot.original.routes, ['old'])
 })
 
+test('a partial historical Robot save can be resumed without losing history or requiring migration', async () => {
+  repo.state.students.zosia.toolProgress.robot = { 'predict-turn': { runs: 2, completed: false, program: ['forward'], legacyNote: 'preserved' } }
+  const lessonsBefore = structuredClone(repo.state.students.zosia.progress)
+  const otherBefore = structuredClone(repo.state.students.antek)
+  await run('POST', 'tools', { kind: 'robot-program', challengeId: 'predict-turn', program: ['forward', 'right', 'forward'] }, student)
+  await run('POST', 'tools', { kind: 'robot-attempt', challengeId: 'predict-turn', program: ['forward', 'right', 'forward'] }, student)
+  const progress = repo.state.students.zosia.toolProgress.robot['predict-turn']
+  assert.equal(progress.runs, 3)
+  assert.equal(progress.completed, true)
+  assert.equal(progress.routes.length, 1)
+  assert.equal(progress.legacyNote, 'preserved')
+  assert.deepEqual(repo.state.students.zosia.progress, lessonsBefore)
+  assert.deepEqual(repo.state.students.antek, otherBefore)
+})
+
 test('a teacher-assigned route works independently without unlocking or completing the main path', async () => {
   const assignment = (await run('POST', 'assignments', { title: 'Trasa nauczyciela', instruction: 'Obserwuj robota.', tool: 'robot', wholeClass: false, studentIds: ['zosia'], robotTask: { challengeId: 'first-turn' } }, teacher)).value
   const work = (await run('POST', 'works', { title: assignment.title, type: 'Robot', assignmentId: assignment.id, completionType: 'automatic', data: {} }, student)).value

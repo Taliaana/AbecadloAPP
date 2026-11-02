@@ -4,13 +4,13 @@ import { chooseStudent, resetApp, enterTeacher, grantRobotSandbox } from './help
 test.beforeEach(async ({ page }) => { await resetApp(page); await chooseStudent(page); await grantRobotSandbox(page) })
 async function task(page, id) { await page.goto(`/#/tools/robot?challenge=${id}`) }
 async function add(page, commands) { for (const command of commands) await page.locator(`[data-command="${command}"]`).click() }
-async function run(page) { await page.getByRole('button', { name: 'Uruchom program', exact: true }).click() }
+async function run(page) { await page.locator('[data-run]').click() }
 async function done(page) { await expect(page.getByRole('heading', { name: 'Gotowe', exact: true })).toBeVisible() }
 
 test('przeszkoda i brzeg zatrzymują program przed polem', async ({ page }) => {
   await task(page, 'around-stone'); await add(page, ['forward', 'right']); await run(page)
   await expect(page.getByRole('status')).toHaveText('Robot zatrzymał się przed przeszkodą. Sprawdź swój program.')
-  await expect(page.locator('[data-cell="1,4"] .robot-token')).toBeVisible()
+  await expect(page.locator('.robot-board')).toHaveAttribute('data-robot-position', '1,4')
   await task(page, 'original'); await add(page, ['left', 'forward', 'forward']); await run(page)
   await expect(page.getByRole('status')).toHaveText('Robot dotarł do brzegu planszy. Sprawdź program.')
 })
@@ -20,7 +20,7 @@ test('przewidywanie jest wymagane i porównuje rzeczywisty wynik', async ({ page
   await expect(page.locator('[data-run]')).toBeDisabled()
   await page.locator('[data-cell="1,2"]').click(); await run(page); await done(page)
   await expect(page.locator('[data-completion-text]')).toHaveText('Robot dotarł gdzie indziej. Sprawdź, który krok to zmienił.')
-  await page.locator('[data-reset]').click(); await page.locator('[data-cell="2,3"]').click(); await run(page); await done(page)
+  await page.locator('[data-repeat-program]').click(); await page.locator('[data-cell="2,3"]').click(); await run(page); await done(page)
   await expect(page.locator('[data-completion-text]')).toHaveText('Tak właśnie wykonał program.')
 })
 
@@ -64,6 +64,7 @@ test('własna trasa zapisuje planszę i program po reloadzie, trafia do nauczyci
   await expect(page.locator('.robot-block')).toHaveCount(2)
   await run(page); await done(page)
   await expect(page.locator('[data-project-status]')).toHaveText('Twoja trasa prowadzi do celu.')
+  await page.getByRole('button', { name: 'Wróć do programu', exact: true }).click()
   await page.getByRole('button', { name: /Pokaż nauczycielowi/ }).click()
   await expect(page.getByText('Praca czeka na nauczyciela.')).toBeVisible()
   await enterTeacher(page); await page.getByRole('link', { name: /Do obejrzenia/ }).click()
