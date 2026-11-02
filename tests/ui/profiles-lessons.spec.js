@@ -2,15 +2,15 @@ import { test, expect } from '@playwright/test'
 import { chooseStudent, enterTeacher, resetApp } from './helpers.js'
 import { reachEquipmentStage, finishEquipmentMatching } from './equipmentHelpers.js'
 
-const snapshot = page => page.evaluate(() => JSON.parse(localStorage.getItem('abecadlo-state-v3')))
+const snapshot = page => page.evaluate(async () => { const state = await (await fetch('/__test/snapshot')).json(); return { students: state.students, assignments: state.assignments } })
 
 test('Lekcje show statuses; repeating a completed lesson and refreshing preserve all progress', async ({ page }) => {
   await resetApp(page); await chooseStudent(page)
   await page.evaluate(async () => {
-    const storage = await import('/src/storage/studentStorage.js')
-    storage.completeLesson(1); storage.startLesson(2)
-    storage.unlockLessonForStudent('zosia', 3)
-    storage.saveTypingResult('fj', { correct: 8, attempts: 8 })
+    const state = await (await fetch('/__test/snapshot')).json()
+    Object.assign(state.students.zosia.progress, {1:'completed',2:'in-progress',3:'available'})
+    state.students.zosia.toolProgress.typingResults.fj = {correct:8,attempts:8}
+    await fetch('/__test/seed', {method:'POST',body:JSON.stringify(state)})
   })
   await page.getByRole('navigation', { name: 'Główna nawigacja' }).getByRole('link', { name: 'Lekcje', exact: true }).click()
   await expect(page.getByRole('heading', { name: 'Lekcje', exact: true })).toBeVisible()
@@ -48,16 +48,10 @@ test('teacher PIN stays hidden; cancelling deletion preserves data, confirming r
   await expect(page.getByLabel('PIN nauczyciela')).toHaveAttribute('type', 'password')
   await page.getByLabel('PIN nauczyciela').fill('1234')
   await page.getByRole('button', { name: 'Wejdź do panelu' }).click()
-  const imageIds = await page.evaluate(async () => {
-    const storage = await import('/src/storage/studentStorage.js')
-    const images = await import('/src/storage/imageStorage.js')
-    const work = storage.createWork({ studentId: 'zosia', title: 'Zdjęcia', type: 'Tablica badawcza' })
-    const own = await images.storeImage(new Blob(['photo'], { type: 'image/png' }), { studentId: 'zosia', workId: work.id })
-    const other = await images.storeImage(new Blob(['photo'], { type: 'image/png' }), { studentId: 'antek', workId: 'antek-work' })
-    storage.updateWork(work.id, { data: { imageId: own } })
-    storage.createAssignment({ title: 'Wspólne zadanie', instruction: 'Pracuj.', studentIds: ['zosia', 'antek'], wholeClass: false })
-    return { own, other, workId: work.id }
-  })
+  await page.getByRole('link', { name: /Nowe zadanie/ }).click()
+  await page.getByLabel('Tytuł').fill('Wspólne zadanie')
+  await page.getByLabel('Polecenie').fill('Pracuj.')
+  await page.getByRole('button', {name:'Utwórz zadanie'}).click()
   await page.locator('.teacher-student-row').filter({ hasText: 'Zosia' }).click()
   await page.locator('.student-settings summary').click()
   const before = await snapshot(page)
@@ -76,19 +70,13 @@ test('teacher PIN stays hidden; cancelling deletion preserves data, confirming r
   expect(after.students.zosia).toBeUndefined()
   expect(after.students.antek).toEqual(before.students.antek)
   expect(after.assignments.every(item => !item.studentIds.includes('zosia'))).toBe(true)
-  expect(await page.evaluate(async ({ own, other }) => {
-    const request = indexedDB.open('pinktower-images', 1)
-    const db = await new Promise((resolve, reject) => { request.onsuccess = () => resolve(request.result); request.onerror = () => reject(request.error) })
-    try {
-      const store = db.transaction('images', 'readonly').objectStore('images')
-      const read = id => new Promise(resolve => { const req = store.get(id); req.onsuccess = () => resolve(Boolean(req.result)) })
-      return await Promise.all([read(own), read(other)])
-    } finally { db.close() }
-  }, imageIds)).toEqual([false, true])
+  expect(await page.evaluate(async () => (await (await fetch('/__test/snapshot')).json()).assets.some(asset => asset.studentId === 'zosia'))).toBe(false)
   await page.reload()
   await expect(page.locator('.teacher-student-row')).toHaveCount(2)
   await page.getByRole('button', { name: 'Zmień rolę' }).click()
   await page.getByRole('button', { name: 'Uczeń' }).click()
+  await page.getByLabel('PIN nauczyciela').fill('1234')
+  await page.getByRole('button', {name:'Wejdź do panelu'}).click()
   await expect(page.getByRole('button', { name: /Zosia/ })).toHaveCount(0)
   await expect(page.getByRole('button', { name: /Antek/ })).toBeVisible()
 })
@@ -100,7 +88,7 @@ test('four student navigation items and lesson actions fit existing breakpoints'
     await page.getByRole('navigation').getByRole('link', { name: 'Lekcje', exact: true }).click()
     const navigation = page.getByRole('navigation', { name: 'Główna nawigacja' })
     await expect(navigation.getByRole('link')).toHaveCount(4)
-    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+    expect(await page.evaluate(async () => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
     for (const link of await navigation.getByRole('link').all()) {
       const rect = await link.boundingBox()
       expect(rect.x).toBeGreaterThanOrEqual(0)

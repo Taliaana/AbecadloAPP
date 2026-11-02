@@ -40,8 +40,8 @@ export function avatarView({ student, navigate }) {
         option.setAttribute('aria-pressed', String(selected))
       })
     }))
-    root.querySelector('[data-save-avatar]').addEventListener('click', () => { updateCurrentAvatar(config); navigate('/home') })
-    root.querySelector('[data-switch-profile]').addEventListener('click', () => { clearCurrentStudent(); navigate('/profiles') })
+    root.querySelector('[data-save-avatar]').addEventListener('click', async () => { await updateCurrentAvatar(config); navigate('/home') })
+    root.querySelector('[data-switch-profile]').addEventListener('click', async () => { await clearCurrentStudent(); navigate('/teacher-login?prepare=student') })
   }
   return current()
 }

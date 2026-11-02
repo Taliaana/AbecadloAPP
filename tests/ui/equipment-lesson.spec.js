@@ -9,9 +9,9 @@ test('oglądanie, dobrowolny polski odsłuch i przepisywanie ze spokojną korekt
     Object.defineProperty(window, 'speechSynthesis', { value: { cancel() {}, getVoices: () => [{ lang: 'pl-PL' }], speak: message => window.spoken.push({ text: message.text, lang: message.lang }) } })
   })
   await resetApp(page); await chooseStudent(page); await page.goto('/#/lesson/1')
-  expect(await page.evaluate(() => window.spoken)).toEqual([])
+  expect(await page.evaluate(async () => window.spoken)).toEqual([])
   await page.getByRole('button', { name: 'Posłuchaj: Monitor', exact: true }).click()
-  expect(await page.evaluate(() => window.spoken)).toEqual([{ text: 'Monitor.', lang: 'pl-PL' }])
+  expect(await page.evaluate(async () => window.spoken)).toEqual([{ text: 'Monitor.', lang: 'pl-PL' }])
   await reachEquipmentStage(page, 2)
   await page.locator('[data-copy-input]').fill('monitr')
   await page.getByRole('button', { name: 'Sprawdź', exact: true }).click()
@@ -50,7 +50,7 @@ test('strefy tolerują przesunięcie; wzór po minucie nie resetuje ułożonego 
   await expect(page.locator('[data-part="monitor"]')).toHaveCount(0)
   for (const [width, height] of [[1440, 900], [1366, 768], [1024, 768], [390, 844]]) {
     await page.setViewportSize({ width, height })
-    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBeTruthy()
+    expect(await page.evaluate(async () => document.documentElement.scrollWidth <= innerWidth)).toBeTruthy()
     for (const zone of await page.locator('[data-zone]').all()) {
       const bounds = await zone.boundingBox()
       expect(bounds.width).toBeGreaterThanOrEqual(44); expect(bounds.height).toBeGreaterThanOrEqual(44)
@@ -85,7 +85,7 @@ test('brak głosu nie blokuje pięciu etapów; obserwacja kończy się po 18 sek
 
 test('typografia używa rzeczywistych lokalnych fontów dla polskich tekstów', async ({ page }, testInfo) => {
   await resetApp(page); await chooseStudent(page)
-  await page.evaluate(() => document.fonts.ready)
+  await page.evaluate(async () => document.fonts.ready)
   const cdp = await page.context().newCDPSession(page)
   await cdp.send('DOM.enable')
   await cdp.send('CSS.enable')
@@ -98,7 +98,9 @@ test('typografia używa rzeczywistych lokalnych fontów dla polskich tekstów', 
     expect(report[label].some(font => font.familyName.includes(family) && font.isCustomFont)).toBeTruthy()
     expect(report[label].every(font => !/Segoe|system-ui/.test(font.familyName))).toBeTruthy()
   }
-  await page.goto('/#/lesson/1'); await page.evaluate(() => document.fonts.ready)
+  await page.goto('/#/lesson/1')
+  await expect(page.locator('.lesson-header h1')).toBeVisible()
+  await page.evaluate(async () => document.fonts.ready)
   const lessonDocument = await cdp.send('DOM.getDocument')
   const { nodeId } = await cdp.send('DOM.querySelector', { nodeId: lessonDocument.root.nodeId, selector: '.lesson-header h1' })
   report.lessonTitle = (await cdp.send('CSS.getPlatformFontsForNode', { nodeId })).fonts.filter(font => font.glyphCount > 0)

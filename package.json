@@ -4,18 +4,34 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "node scripts/dev.mjs",
     "build": "vite build",
     "preview": "vite preview",
     "test:storage": "node scripts/storage-smoke.mjs && node --test tests/storage/*.test.mjs",
     "test:robot": "node --test tests/robot/*.test.mjs",
-    "test:ui": "node scripts/run-ui-tests.mjs"
+    "test:ui": "node scripts/run-ui-tests.mjs",
+    "test:backend": "node --import tsx --test tests/backend/*.test.ts",
+    "test:supabase": "node --env-file-if-exists=.env --import tsx --test tests/integration/*.test.ts",
+    "typecheck:server": "tsc -p tsconfig.server.json",
+    "hash-pin": "node --import tsx scripts/hash-pin.ts",
+    "db:generate": "node --env-file-if-exists=.env node_modules/drizzle-kit/bin.cjs generate",
+    "db:migrate": "node --env-file-if-exists=.env --import tsx scripts/migrate-db.ts",
+    "storage:setup": "node --env-file-if-exists=.env --import tsx scripts/setup-storage.ts"
   },
   "devDependencies": {
     "@playwright/test": "^1.64.0",
+    "@types/node": "^26.6.5",
+    "drizzle-kit": "^0.31.11",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
     "vite": "^8.3.0"
   },
   "dependencies": {
-    "@fontsource-variable/nunito-sans": "^5.3.0"
+    "@fontsource-variable/nunito-sans": "^5.3.0",
+    "@supabase/supabase-js": "^2.118.0",
+    "drizzle-orm": "^0.45.4",
+    "jose": "^6.2.12",
+    "postgres": "^3.4.9",
+    "zod": "^4.6.7"
   }
 }

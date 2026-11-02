@@ -96,7 +96,7 @@ for (const [width,height] of [[1440,900],[1366,768],[1024,768],[390,844]]) {
     for (const route of ['home','path','workshop','works','avatar','lesson/1','tools/robot?challenge=first-turn']) {
       await page.goto(`/#/${route}`)
       await expect(page.locator('h1').first()).toBeVisible()
-      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+      expect(await page.evaluate(async () => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
       for (const button of await page.locator('button:visible, a.button:visible').all()) {
         const r = await button.boundingBox()
         expect(r.x).toBeGreaterThanOrEqual(-1); expect(r.x+r.width).toBeLessThanOrEqual(width+1)
@@ -106,7 +106,7 @@ for (const [width,height] of [[1440,900],[1366,768],[1024,768],[390,844]]) {
     for (const route of ['teacher/class','teacher/review','teacher/works','teacher/assignments/new','teacher/students/new']) {
       await page.goto(`/#/${route}`)
       await expect(page.locator('h1').first()).toBeVisible()
-      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+      expect(await page.evaluate(async () => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
       if (width === 390 && route === 'teacher/class') {
         for (const card of await page.locator('.teacher-summary article').all()) {
           const r = await card.boundingBox(); expect(r.x+r.width).toBeLessThanOrEqual(width)

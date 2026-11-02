@@ -7,8 +7,8 @@ import { escapeHtml } from '../utils/html.js'
 
 const stages = ['jajo', 'gąsienica', 'poczwarka', 'motyl']
 
-export function creativeWorkView({ student, workId = null, assignmentId = null, render, navigate }) {
-  let work = workId ? getWork(workId) : getOrCreateAssignmentWork(assignmentId)
+export async function creativeWorkView({ student, workId = null, assignmentId = null, render, navigate }) {
+  let work = workId ? getWork(workId) : await getOrCreateAssignmentWork(assignmentId)
   const assignment = getAssignment(work?.assignmentId || assignmentId)
   if (!work || work.studentId !== student.profile.id) {
     return { html: appLayout('<section class="empty-state"><h1>Nie znaleziono pracy</h1><a class="button button-primary" href="#/home">Wróć do domu</a></section>', student, '/home') }
@@ -30,8 +30,8 @@ export function creativeWorkView({ student, workId = null, assignmentId = null, 
 
   function mount(root) {
     let status = root.querySelector('[data-autosave-status]')
-    const autosave = createAutosave((nextData) => {
-      work = updateWork(work.id, { status: 'draft', data: nextData })
+    const autosave = createAutosave(async (nextData) => {
+      work = await updateWork(work.id, { status: 'draft', data: nextData })
       if (status?.isConnected) status.textContent = 'Zapisano automatycznie.'
     })
     const schedule = () => {
@@ -44,9 +44,9 @@ export function creativeWorkView({ student, workId = null, assignmentId = null, 
       data.selectedStages = data.selectedStages.includes(stage) ? data.selectedStages.filter((item) => item !== stage) : [...data.selectedStages, stage]
       schedule(); render(current())
     }))
-    root.querySelector('[data-work-action="draft"]')?.addEventListener('click', () => { autosave.flush(); updateWork(work.id, { status: 'draft', data }); navigate('/home') })
-    root.querySelector('[data-work-action="waiting-review"]')?.addEventListener('click', () => {
-      autosave.flush(); work = updateWork(work.id, { status: 'waiting-review', data }); showWaiting = true; render(current())
+    root.querySelector('[data-work-action="draft"]')?.addEventListener('click', async () => { autosave.flush(); await updateWork(work.id, { status: 'draft', data }); navigate('/home') })
+    root.querySelector('[data-work-action="waiting-review"]')?.addEventListener('click', async () => {
+      autosave.flush(); work = await updateWork(work.id, { status: 'waiting-review', data }); showWaiting = true; render(current())
     })
     return () => autosave.flush()
   }

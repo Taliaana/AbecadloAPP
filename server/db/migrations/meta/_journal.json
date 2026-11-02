@@ -1,0 +1,14 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1792101814810,
+      "tag": "0000_cooing_kronos",
+      "breakpoints": true
+    },
+    { "idx": 1, "version": "7", "when": 1792101814811, "tag": "0001_private_tables", "breakpoints": false }
+  ]
+}

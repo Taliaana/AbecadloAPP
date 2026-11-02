@@ -48,5 +48,5 @@ test('reset zatrzymuje wykonywanie i mały ekran nie ma overflow', async ({ page
   await page.waitForTimeout(650)
   await expect(page.locator('[data-cell="1,4"] .robot-token')).toBeVisible()
   await expect(page.locator('.robot-block')).toHaveCount(4)
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+  expect(await page.evaluate(async () => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
 })

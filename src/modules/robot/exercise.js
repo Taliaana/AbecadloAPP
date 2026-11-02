@@ -13,7 +13,7 @@ export function robotExerciseView(context, { board, work = null, onChange = null
   if (!validateBoard(board)) return { html: appLayout('<section class="tool-header"><h1>Ustaw start i cel.</h1><p>Wróć do swojej trasy i sprawdź planszę.</p><a class="button button-secondary" href="#/tools/robot">Wróć do Robota</a></section>', student, '/workshop') }
   let robot = { ...board.start, direction: board.startDirection }
   let program = structuredClone(work?.data.program ?? getRobotProgress()[board.id]?.program ?? board.initialProgram ?? [])
-  let running = false, timer = null, disposed = false, prediction = null
+  let running = false, timer = null, disposed = false, prediction = null, runVersion = 0
   let readOnly = work && ['waiting-review', 'completed'].includes(work.status)
   let firstRoute = getRobotProgress()[board.id]?.routes?.[0] || null
   let lastProgram = structuredClone(program)
@@ -32,10 +32,10 @@ export function robotExerciseView(context, { board, work = null, onChange = null
       if (event.target.closest('[draggable="true"]')) list.getAnimations({ subtree: true }).forEach(animation => animation.cancel())
     }
     root.addEventListener('pointerdown', stabilizeDropZone)
-    const autosave = createAutosave(nextProgram => {
-      if (onSave) onSave(nextProgram)
-      else if (work && !readOnly) work = updateWork(work.id, { data: { program: nextProgram }, status: 'draft' })
-      else if (!work) saveRobotProgram(board.id, nextProgram)
+    const autosave = createAutosave(async nextProgram => {
+      if (onSave) await onSave(nextProgram)
+      else if (work && !readOnly) work = await updateWork(work.id, { data: { program: nextProgram }, status: 'draft' })
+      else if (!work) await saveRobotProgram(board.id, nextProgram)
     })
     const token = document.createElement('span'); token.className = 'robot-token'; token.setAttribute('role', 'img'); token.innerHTML = robotDrawing
     const boardElement = root.querySelector('.robot-board')
@@ -95,7 +95,7 @@ export function robotExerciseView(context, { board, work = null, onChange = null
       boardElement.classList.remove('is-goal-reached')
     }
     function add(id) { if (running || readOnly || !board.availableCommands.includes(id) || program.length >= 30) return; program.push(id === 'repeat' ? { type: 'repeat', times: 2, body: [] } : id); changed() }
-    function reset() { clearTimeout(timer); running = false; robot = { ...board.start, direction: board.startDirection }; complete.hidden = true; boardElement.classList.remove('is-goal-reached'); message.textContent = ''; drawRobot(); clearHighlight(); controls() }
+    function reset() { runVersion += 1; clearTimeout(timer); running = false; robot = { ...board.start, direction: board.startDirection }; complete.hidden = true; boardElement.classList.remove('is-goal-reached'); message.textContent = ''; drawRobot(); clearHighlight(); controls() }
     root.querySelectorAll('[data-command]').forEach(button => {
       button.addEventListener('click', () => add(button.dataset.command))
       button.addEventListener('dragstart', event => { if (running || readOnly) { event.preventDefault(); return }; event.dataTransfer.setData('text/plain', `command:${button.dataset.command}`) })
@@ -139,7 +139,7 @@ export function robotExerciseView(context, { board, work = null, onChange = null
     list.addEventListener('change', event => { if (running || readOnly || !event.target.matches('[data-repeat-times]')) return; const index = Number(event.target.closest('[data-path]').dataset.path); program[index].times = Number(event.target.value); changed(); list.querySelector(`[data-path="${index}"] [data-repeat-times]`).focus({ preventScroll: true }) })
     root.querySelector('[data-reset]').addEventListener('click', reset)
     root.querySelector('[data-undo]').addEventListener('click', () => { if (running || readOnly || !undo.length) return; program = undo.pop(); changed(false) })
-    root.querySelector('[data-stop]').addEventListener('click', () => { clearTimeout(timer); running = false; clearHighlight(); controls(); message.textContent = 'Robot zatrzymał się tutaj. Możesz sprawdzić program.' })
+    root.querySelector('[data-stop]').addEventListener('click', () => { runVersion += 1; clearTimeout(timer); running = false; clearHighlight(); controls(); message.textContent = 'Robot zatrzymał się tutaj. Możesz sprawdzić program.' })
     root.querySelector('[data-clear]').addEventListener('click', () => { if (running || readOnly) return; program = []; changed() })
     root.querySelector('[data-other-route]')?.addEventListener('click', () => { reset(); program = []; changed(); root.querySelector('[data-command]').focus() })
     if (board.mode === 'predict') root.querySelector('.robot-board').addEventListener('click', event => {
@@ -151,17 +151,25 @@ export function robotExerciseView(context, { board, work = null, onChange = null
     })
     root.querySelector('[data-run]').addEventListener('click', () => {
       if (running || !program.length || (board.mode === 'predict' && !prediction)) return
-      autosave.flush(); reset(); const result = simulateRobot(board, program)
+      autosave.flush(); reset(); const runProgram = structuredClone(program), version = runVersion
+      const current = () => !disposed && version === runVersion
+      const result = simulateRobot(board, runProgram)
       if (!result.executed.length) { message.textContent = 'Dodaj polecenia do programu i do bloczka Powtórz.'; return }
       running = true; controls(); let index = 0
-      function finish() {
-        running = false; clearHighlight()
+      async function finish() {
+        clearHighlight()
         const route = routeSignature(result)
-        if (!readOnly && !work?.data.kind?.includes('project')) saveRobotAttempt(board.id, { success: result.success, route, program })
-        if (result.success && work?.completionType === 'automatic' && !readOnly) work = updateWork(work.id, { status: 'completed', data: { program, solved: true } })
+        try {
+          if (!readOnly && !work?.data.kind?.includes('project')) await saveRobotAttempt(board.id, { success: result.success, route, program: runProgram, workId: work?.id })
+          if (!current()) return
+          if (result.success && work?.completionType === 'automatic' && !readOnly) work = await updateWork(work.id, { status: 'completed', data: { program: runProgram, solved: true } })
+          if (!current()) return
+          onChange?.(runProgram, result.success)
+          await onSave?.(runProgram)
+          if (!current()) return
+        } catch (error) { if (current()) { running = false; controls() } throw error }
+        running = false
         readOnly = work && ['waiting-review', 'completed'].includes(work.status)
-        onChange?.(structuredClone(program), result.success)
-        onSave?.(structuredClone(program))
         controls()
         const predictionMessage = board.mode === 'predict' ? (sameCell(prediction, result.finalState) ? 'Tak właśnie wykonał program.' : 'Robot dotarł gdzie indziej. Sprawdź, który krok to zmienił.') : ''
         if (result.success) {

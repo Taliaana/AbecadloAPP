@@ -62,7 +62,7 @@ test('szczegółowa instrukcja, uchwyty, Shift i wklejenie źródła', async ({ 
   await handle.focus(); await page.keyboard.press('Shift+ArrowLeft')
   expect((await box.boundingBox()).width).toBeLessThan(proportional.width)
   // A text paste in Source must not replace the selected picture.
-  await page.evaluate(() => {
+  await page.evaluate(async () => {
     const input = document.createElement('input'); input.value = 'https://example.org/granit'; document.body.append(input); input.focus(); input.select()
   })
   await page.keyboard.press('Control+C')
@@ -96,23 +96,15 @@ test('Ctrl+V, wybrane pole, zmiana/usunięcie oraz odtworzenie zdjęć i odpowie
   await expect(page.locator('[data-research-image="bazalt"]')).toBeVisible()
   await expect(page.locator('[data-source="bazalt"]')).toHaveValue('https://example.org/bazalt')
   await expect.poll(() => page.locator('[data-research-image="bazalt"]').evaluate(img => img.naturalWidth)).toBe(32)
-  const imageCount = await page.evaluate(() => new Promise((resolve, reject) => {
-    const request = indexedDB.open('pinktower-images', 1)
-    request.onsuccess = () => {
-      const db = request.result, count = db.transaction('images', 'readonly').objectStore('images').count()
-      count.onsuccess = () => { resolve(count.result); db.close() }
-      count.onerror = () => reject(count.error)
-    }
-    request.onerror = () => reject(request.error)
-  }))
+  const imageCount = await page.evaluate(async () => (await (await fetch('/__test/snapshot')).json()).assets.length)
   expect(imageCount).toBe(1) // Replacements/removals do not accumulate unused Blobs.
-  const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('abecadlo-state-v3')).students.zosia.works.find(work => work.data.kind === 'research-board'))
+  const stored = await page.evaluate(async () => (await (await fetch('/__test/snapshot')).json()).students.zosia.works.find(work => work.data.kind === 'research-board'))
   expect(stored.data.entries.bazalt.imageId).toBeTruthy()
   expect(JSON.stringify(stored)).not.toContain('data:image')
   expect(stored.data.entries.granit).toBeUndefined()
   for (const viewport of [{ width: 1440, height: 900 }, { width: 1366, height: 768 }, { width: 1024, height: 768 }, { width: 390, height: 844 }]) {
     await page.setViewportSize(viewport)
-    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBeTruthy()
+    expect(await page.evaluate(async () => document.documentElement.scrollWidth <= innerWidth)).toBeTruthy()
     expect((await page.locator('[data-photo="granit"]').boundingBox()).height).toBeGreaterThanOrEqual(44)
   }
   // Debounced edits must also flush before switching to a different route.
@@ -123,7 +115,7 @@ test('Ctrl+V, wybrane pole, zmiana/usunięcie oraz odtworzenie zdjęć i odpowie
   // The other profile cannot see or open this work.
   await page.goto('/#/welcome'); await chooseStudent(page, 'Lena')
   await page.goto(`/#/work/${stored.id}`)
-  await expect(page.getByText('Nie znaleziono pracy.')).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Nie znaleziono pracy' })).toBeVisible()
 })
 
 test('kompletność, refleksja i istniejący teacher-review bez reloadu', async ({ page }) => {
@@ -139,7 +131,7 @@ test('kompletność, refleksja i istniejący teacher-review bez reloadu', async 
   await expect(page.locator('[data-answer="0"]')).toHaveValue('Granit ma widoczne ziarna.')
   await expect(page.locator('[data-research-image]:visible')).toHaveCount(6)
   await expect(page.getByRole('button', { name: /Pokaż nauczycielowi/ })).toBeEnabled()
-  const workId = await page.evaluate(() => JSON.parse(localStorage.getItem('abecadlo-state-v3')).students.zosia.works.find(work => work.data.kind === 'research-board').id)
+  const workId = await page.evaluate(async () => (await (await fetch('/__test/snapshot')).json()).students.zosia.works.find(work => work.data.kind === 'research-board').id)
   await page.getByRole('button', { name: /Pokaż nauczycielowi/ }).click()
   await expect(page.getByRole('heading', { name: 'Praca czeka na nauczyciela.' })).toBeVisible()
   await enterTeacher(page)
@@ -205,7 +197,7 @@ test('Clipboard API: przycisk i własne menu wklejają do wybranego pola', async
 test('odmowa Clipboard API pozwala użyć Ctrl+V; tekst nie staje się obrazem', async ({ page }) => {
   await begin(page)
   await copyPhoto(page)
-  await page.evaluate(() => Object.defineProperty(navigator.clipboard, 'read', { configurable: true, value: async () => { throw new DOMException('Permission denied', 'NotAllowedError') } }))
+  await page.evaluate(async () => Object.defineProperty(navigator.clipboard, 'read', { configurable: true, value: async () => { throw new DOMException('Permission denied', 'NotAllowedError') } }))
   await page.locator('[data-photo="granit"]').click()
   await page.locator('[data-paste-photo="granit"]').click()
   await expect(page.locator('[data-research-status]')).toContainText('użyj Ctrl + V')
@@ -215,7 +207,7 @@ test('odmowa Clipboard API pozwala użyć Ctrl+V; tekst nie staje się obrazem',
   await page.keyboard.press('Control+V')
   await expect(page.locator('[data-research-image="granit"]')).toBeVisible()
   await expect(page.locator('[data-photo="granit"]')).toBeEnabled()
-  await page.evaluate(() => { delete navigator.clipboard.read; return navigator.clipboard.writeText('https://example.org/only-a-link') })
+  await page.evaluate(async () => { delete navigator.clipboard.read; return navigator.clipboard.writeText('https://example.org/only-a-link') })
   await page.locator('[data-photo="bazalt"]').click({ button: 'right' })
   await page.getByRole('menuitem', { name: 'Wklej obraz' }).click()
   await expect(page.locator('[data-research-status]')).toContainText('W schowku nie ma zdjęcia')
@@ -233,5 +225,5 @@ test('przydział tablicy korzysta z istniejących zadań i nie duplikuje pracy',
   await expect(page.getByRole('heading', { name: 'Nasze skały' })).toBeVisible()
   await page.getByRole('link', { name: 'Dom', exact: true }).click()
   await page.goto('/#/home')
-  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('abecadlo-state-v3')).students.zosia.works.filter(work => work.title === 'Nasze skały').length)).toBe(1)
+  expect(await page.evaluate(async () => (await (await fetch('/__test/snapshot')).json()).students.zosia.works.filter(work => work.title === 'Nasze skały').length)).toBe(1)
 })

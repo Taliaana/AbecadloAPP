@@ -1,7 +1,7 @@
 import { createWork, getAssignmentsForStudent, getStudentWorks } from '../../storage/studentStorage.js'
 import { createRobotBoard, getRobotChallenge } from '../../data/robotChallenges.js'
 
-export function assignmentRobotWork(assignmentId, studentId) {
+export async function assignmentRobotWork(assignmentId, studentId) {
   const assignment = getAssignmentsForStudent(studentId).find(item => item.id === assignmentId && item.tool === 'robot')
   if (!assignment) return null
   const existing = getStudentWorks(studentId).find(item => item.assignmentId === assignmentId)

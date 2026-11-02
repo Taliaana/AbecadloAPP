@@ -7,5 +7,13 @@ import './styles/typography.css'
 import { startApp } from './app.js'
 import { initializeStorage } from './storage/studentStorage.js'
 
-initializeStorage()
-startApp(document.querySelector('#app'))
+const root = document.querySelector('#app')
+async function boot() {
+  root.innerHTML = '<main class="main-content" role="status">Ładowanie PinkTower…</main>'
+  try { await initializeStorage(); startApp(root) }
+  catch {
+    root.innerHTML = '<main class="main-content"><p role="alert">Nie udało się połączyć. Spróbuj ponownie.</p><button class="button button-primary">Spróbuj ponownie</button></main>'
+    root.querySelector('button').onclick = boot
+  }
+}
+boot()

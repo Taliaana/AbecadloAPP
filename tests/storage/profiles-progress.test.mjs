@@ -6,7 +6,7 @@ globalThis.localStorage = {
   getItem(key) { return this.data[key] ?? null },
   setItem(key, value) { this.data[key] = value },
 }
-const storage = await import('../../src/storage/studentStorage.js')
+const storage = await import('../support/legacyStorage.js')
 beforeEach(() => { localStorage.data = {} })
 
 // Saved v3 shape from before profile deletion/Lekcje; no use of today's initializer.

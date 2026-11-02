@@ -8,11 +8,11 @@ import { createAutosave } from '../utils/autosave.js'
 import { escapeHtml } from '../utils/html.js'
 import { mountImageResizing } from '../utils/researchImageResize.js'
 
-export function researchBoardView({ student, workId, assignmentId, navigate }) {
+export async function researchBoardView({ student, workId, assignmentId, navigate }) {
   const assignment = assignmentId ? getAssignmentsForStudent(student.id).find(item => item.id === assignmentId) : null
   let work = workId ? getWork(workId) : getStudentWorks(student.id).find(item => item.data.kind === 'research-board' && (assignmentId ? item.assignmentId === assignmentId : !item.assignmentId && item.status !== 'completed'))
   if (assignmentId && (!assignment || getAssignment(assignmentId)?.tool !== 'research-board')) work = null
-  if (!work && !workId && (!assignmentId || assignment)) work = createWork({ studentId: student.id, title: assignment?.title || getResearchBoard().title, type: 'Tablica badawcza', assignmentId: assignment?.id, completionType: 'teacher-review', data: { kind: 'research-board', boardId: 'rocks', entries: {}, answers: [] } })
+  if (!work && !workId && (!assignmentId || assignment)) work = await createWork({ studentId: student.id, title: assignment?.title || getResearchBoard().title, type: 'Tablica badawcza', assignmentId: assignment?.id, completionType: 'teacher-review', data: { kind: 'research-board', boardId: 'rocks', entries: {}, answers: [] } })
   if (!work || work.studentId !== student.id || work.data.kind !== 'research-board') return { html: appLayout('<p>Nie znaleziono pracy.</p>', student, '/works') }
   const board = getResearchBoard(work.data.boardId)
   if (!board) return { html: appLayout('<p>Nie znaleziono tablicy.</p>', student, '/works') }
@@ -112,7 +112,7 @@ export function researchBoardView({ student, workId, assignmentId, navigate }) {
           data.entries[target] = { ...data.entries[target], imageId }; delete data.entries[target].imageSize
           if (!data.sourceReminderShown) { data.sourceReminderShown = true; status(board.criticalThinkingPrompt || 'Przyjrzyj się zdjęciu i stronie, z której pochodzi.') }
           else status('Zdjęcie zapisane.')
-          autosave.flush(); save() // Commit lightweight reference immediately, after the Blob transaction.
+          autosave.flush(); await save() // Commit lightweight reference immediately, after the Blob transaction.
           if (!disposed) {
             if (urls.has(target)) URL.revokeObjectURL(urls.get(target))
             const url = URL.createObjectURL(blob); urls.set(target, url)
@@ -165,9 +165,9 @@ export function researchBoardView({ student, workId, assignmentId, navigate }) {
     document.addEventListener('pointerdown', dismiss)
     document.addEventListener('keydown', menuKeys)
     document.addEventListener('paste', paste)
-    root.querySelectorAll('[data-work-action]').forEach(button => button.addEventListener('click', () => {
+    root.querySelectorAll('[data-work-action]').forEach(button => button.addEventListener('click', async () => {
       if (busy || (button.dataset.workAction === 'waiting-review' && (imagesUnavailable || !isResearchComplete(board, data.entries)))) return
-      autosave.flush(); save(); updateWork(work.id, { status: button.dataset.workAction })
+      autosave.flush(); await save(); await updateWork(work.id, { status: button.dataset.workAction })
       if (button.dataset.workAction === 'draft') navigate('/home')
       else navigate(`/work/${work.id}`)
     }))

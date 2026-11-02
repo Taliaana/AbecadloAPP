@@ -1,9 +1,31 @@
 import { test, expect } from '@playwright/test'
-import { resetApp, chooseStudent } from './helpers.js'
+import { resetApp, chooseStudent, enterTeacher } from './helpers.js'
 
 test.beforeEach(async ({ page }) => { await resetApp(page); await chooseStudent(page) })
 async function open(page, id = 'two-steps') { await page.goto(`/#/tools/robot?challenge=${id}`) }
 async function add(page, commands) { for (const id of commands) await page.locator(`[data-command="${id}"]`).click() }
+
+test('Stop during the final server save cancels late completion and keeps the edited program', async ({ page }) => {
+  await open(page); await add(page, ['forward', 'forward'])
+  let release, entered
+  const saving = new Promise(resolve => { entered = resolve })
+  const held = new Promise(resolve => { release = resolve })
+  await page.route('**/api/tools', async route => {
+    if (route.request().postDataJSON()?.kind === 'robot-attempt') { entered(); await held }
+    await route.continue()
+  })
+  await page.locator('[data-run]').click()
+  await saving
+  await expect(page.locator('[data-run]')).toBeDisabled()
+  await expect(page.locator('[data-command="forward"]')).toBeDisabled()
+  await page.locator('[data-stop]').click()
+  await page.locator('[data-command="forward"]').click()
+  const acknowledged = page.waitForResponse(response => response.url().endsWith('/api/tools') && response.request().postDataJSON()?.kind === 'robot-attempt')
+  release(); await acknowledged
+  await expect(page.locator('[data-robot-complete]')).toBeHidden()
+  await expect(page.locator('.robot-block')).toHaveCount(3)
+  await expect(page.locator('[data-run]')).toBeEnabled()
+})
 
 test('robot wykonuje cały program, także instrukcje po wejściu na cel', async ({ page }) => {
   await open(page); await add(page, ['forward', 'forward', 'forward']); await page.locator('[data-run]').click()
@@ -31,7 +53,7 @@ test('Stop anuluje ruchy, highlight i timer; ponowne uruchomienie ma jedną sekw
   await expect(page.getByRole('status')).toContainText('Robot nie dotarł do celu')
   await expect(page.locator('[data-cell="3,3"] .robot-token')).toBeVisible()
   await expect(page.locator('[data-stop]')).toBeDisabled()
-  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('abecadlo-state-v3')).students.zosia.toolProgress.robot.original.runs)).toBe(1)
+  expect(await page.evaluate(async () => (await (await fetch('/__test/snapshot')).json()).students.zosia.toolProgress.robot.original.runs)).toBe(1)
 })
 
 test('szkic programu przeżywa reload, Reset i zmianę widoku; drag oraz klawiatura nadal działają', async ({ page }) => {
@@ -54,17 +76,19 @@ test('szkic programu przeżywa reload, Reset i zmianę widoku; drag oraz klawiat
 })
 
 test('ukończone zadanie nauczyciela pozostaje ukończone i chronione przed edycją', async ({ page }) => {
+  await enterTeacher(page)
   const id = await page.evaluate(async () => {
     const storage = await import('/src/storage/studentStorage.js')
-    return storage.createAssignment({ title: 'Trasa', instruction: 'Robot', tool: 'robot', wholeClass: true, robotTask: { challengeId: 'two-steps' } }).id
+    return (await storage.createAssignment({ title: 'Trasa', instruction: 'Robot', tool: 'robot', wholeClass: true, robotTask: { challengeId: 'two-steps' } })).id
   })
+  await page.goto('/#/welcome'); await chooseStudent(page)
   await page.goto(`/#/assignment/${id}`); await add(page, ['forward', 'forward']); await page.locator('[data-run]').click()
   await expect(page.getByRole('heading', { name: 'Gotowe', exact: true })).toBeVisible()
   await expect(page.locator('[data-command="forward"]')).toBeDisabled()
   await expect(page.locator('[data-clear]')).toBeDisabled()
   await page.locator('[data-reset]').click(); await page.reload()
   await expect(page.locator('[data-command="forward"]')).toBeDisabled()
-  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('abecadlo-state-v3')).students.zosia.works.at(-1).status)).toBe('completed')
+  expect(await page.evaluate(async () => (await (await fetch('/__test/snapshot')).json()).students.zosia.works.at(-1).status)).toBe('completed')
 })
 
 test('Powtórz nie kończy się przed wykonaniem wszystkich powtórzeń', async ({ page }) => {
@@ -79,8 +103,8 @@ test('plansza, przyciski i mobilna nawigacja pozostają w szerokości ekranu', a
   await open(page, 'repeat-steps'); await add(page, ['repeat']); await page.locator('[data-add-child="forward"]').click()
   for (const [width, height] of [[1440,900],[1366,768],[1024,768],[390,844]]) {
     await page.setViewportSize({ width, height })
-    await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }))
-    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+    await page.evaluate(async () => window.scrollTo({ top: 0, behavior: 'instant' }))
+    expect(await page.evaluate(async () => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
     const nav = await page.locator('.main-nav').boundingBox()
     expect(nav.y).toBeGreaterThanOrEqual(0)
     expect(nav.y + nav.height).toBeLessThanOrEqual(height)

@@ -17,9 +17,9 @@ export function teacherLoginView({ navigate }) {
     mount(root) {
       const form = root.querySelector('[data-teacher-form]')
       const input = root.querySelector('[data-pin]')
-      form.addEventListener('submit', (event) => {
+      form.addEventListener('submit', async (event) => {
         event.preventDefault()
-        if (enterTeacher(input.value)) navigate('/teacher/class')
+        if (await enterTeacher(input.value)) navigate(location.hash.includes('prepare=student') ? '/profiles' : '/teacher/class')
         else root.querySelector('#pin-error').textContent = 'Sprawdź PIN i spróbuj ponownie.'
       })
       input.focus()

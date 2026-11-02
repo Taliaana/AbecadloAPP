@@ -38,14 +38,14 @@ export function typewritingView({ student, render, navigate }) {
     root.querySelector('.accuracy').textContent = `Dokładność: ${correct}/${attempts}`
   }
 
-  function press(key, root) {
+  async function press(key, root) {
     if (finished || !['f', 'j'].includes(key)) return
     attempts += 1
     if (key === exercise.sequence[position]) { correct += 1; position += 1 }
     if (position === exercise.sequence.length) {
       finished = true
       const minutes = Math.max((Date.now() - startedAt) / 60000, 0.1)
-      saveTypingResult(exercise.id, { correct, attempts, wpm: Math.round((position / 5) / minutes) })
+      await saveTypingResult(exercise.id, { correct, attempts, wpm: Math.round((position / 5) / minutes) })
       render(screen())
       return
     }

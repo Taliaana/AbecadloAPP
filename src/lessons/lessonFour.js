@@ -3,8 +3,8 @@ import { icon } from '../components/icons.js'
 import { completionScreen, createStepFlow } from '../components/lessonFlow.js'
 import { completeLesson, startLesson } from '../storage/studentStorage.js'
 
-export function lessonFourView({ render }) {
-  startLesson(4)
+export async function lessonFourView({ render }) {
+  await startLesson(4)
   const flow = createStepFlow(3)
   const found = new Set()
   let position = 0
@@ -22,7 +22,7 @@ export function lessonFourView({ render }) {
     return { html: lessonLayout(content, 'Typewriting – układam dłonie', flow.currentStep, 3), mount }
   }
   const rerender = () => render(current())
-  function finishStep() { if (flow.isFinalStep) completeLesson(4); flow.completeStep(); rerender() }
+  async function finishStep() { if (flow.isFinalStep) await completeLesson(4); flow.completeStep(); rerender() }
   function press(key) { if (key !== sequence[position]) return; position += 1; if (position === sequence.length) finishStep(); else rerender() }
   function mount(root) {
     if (flow.phase === 'complete') { root.querySelector('[data-step-continue]')?.addEventListener('click', () => { flow.continue(); rerender() }); return }

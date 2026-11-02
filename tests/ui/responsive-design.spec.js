@@ -16,7 +16,7 @@ for (const viewport of viewports) {
     for (const route of ['/#/home', '/#/workshop', '/#/works', '/#/lesson/1']) {
       await page.goto(route)
       await expect(page.locator('#main-content')).toBeVisible()
-      expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy()
+      expect(await page.evaluate(async () => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy()
     }
   })
 }
@@ -34,7 +34,7 @@ test('design system zapewnia kontener, nawigację, focus i przyciski 44px', asyn
   await expect(page.getByRole('navigation', { name: 'Główna nawigacja' })).toBeVisible()
   await page.goto('/#/lesson/3')
   await page.goto('/#/home')
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy()
+  expect(await page.evaluate(async () => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy()
 })
 
 test('formularz i panel nauczyciela mieszczą się na małym ekranie', async ({ page }, testInfo) => {
@@ -42,12 +42,12 @@ test('formularz i panel nauczyciela mieszczą się na małym ekranie', async ({ 
   await resetApp(page)
   await enterTeacher(page)
   await expect(page.getByRole('navigation', { name: 'Panel nauczyciela' })).toBeVisible()
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy()
+  expect(await page.evaluate(async () => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy()
   await page.getByRole('link', { name: /Dodaj ucznia/ }).click()
   await expect(page.locator('.form-card')).toBeVisible()
   const disabledSubmit = page.getByRole('button', { name: 'Dodaj ucznia' })
   await expect(disabledSubmit).toBeDisabled()
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy()
+  expect(await page.evaluate(async () => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy()
   if (!process.env.PINKTOWER_NO_SCREENSHOTS) await testInfo.attach('teacher-student-form-small', { body: await page.screenshot({ fullPage: true }), contentType: 'image/png' })
 })
 

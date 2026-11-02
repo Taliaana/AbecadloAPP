@@ -7,8 +7,8 @@ import { acceptsEquipment, equipment, matchesEquipmentName } from '../data/compu
 import { getLesson } from '../data/lessons.js'
 import { completeLesson, startLesson } from '../storage/studentStorage.js'
 
-export function lessonOneView({ render }) {
-  startLesson(1)
+export async function lessonOneView({ render }) {
+  await startLesson(1)
   const flow = createStepFlow(5)
   const title = getLesson(1).title
   const placed = new Set()
@@ -44,7 +44,7 @@ export function lessonOneView({ render }) {
     return { html: lessonLayout(`<div class="equipment-lesson">${content}</div>`, title, flow.currentStep, 5), focusTarget: modelUntil && Date.now() < modelUntil ? '[data-hide-model]' : '#main-content', mount }
   }
   const rerender = () => render(current())
-  function finishStep() { if (flow.isFinalStep) completeLesson(1); flow.completeStep(); index = 0; copied = false; matched = false; rerender() }
+  async function finishStep() { if (flow.isFinalStep) await completeLesson(1); flow.completeStep(); index = 0; copied = false; matched = false; rerender() }
   function nextDevice() {
     if ((flow.currentStep === 2 && !copied) || (flow.currentStep === 5 && !matched)) return
     if (index === equipment.length - 1) finishStep()

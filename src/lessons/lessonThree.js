@@ -3,8 +3,8 @@ import { icon } from '../components/icons.js'
 import { completionScreen, createStepFlow } from '../components/lessonFlow.js'
 import { completeLesson, startLesson } from '../storage/studentStorage.js'
 
-export function lessonThreeView({ render }) {
-  startLesson(3)
+export async function lessonThreeView({ render }) {
+  await startLesson(3)
   const flow = createStepFlow(4)
   const found = new Set()
   let usedSpace = false
@@ -21,7 +21,7 @@ export function lessonThreeView({ render }) {
     return { html: lessonLayout(content, 'Poznaję klawiaturę', flow.currentStep, 4), mount }
   }
   const rerender = () => render(current())
-  function finishStep() { if (flow.isFinalStep) completeLesson(3); flow.completeStep(); rerender() }
+  async function finishStep() { if (flow.isFinalStep) await completeLesson(3); flow.completeStep(); rerender() }
   function mount(root) {
     if (flow.phase === 'complete') { root.querySelector('[data-step-continue]')?.addEventListener('click', () => { flow.continue(); rerender() }); return }
     if (flow.currentStep === 1) {

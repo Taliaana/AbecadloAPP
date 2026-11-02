@@ -22,16 +22,17 @@ export function robotView(context) {
     ${!repetitionKnown ? '<p>Powtarzanie poznasz po trzech pierwszych trasach.</p>' : ''}
     ${projects.length ? `<section class="robot-task-group"><h2>Moje trasy</h2><div class="robot-task-list">${projects.map(work => `<a class="button button-secondary" href="#/work/${escapeHtml(work.id)}">${escapeHtml(work.title)}</a>`).join('')}</div></section>` : ''}`
   return { html: appLayout(content, context.student, '/workshop'), mount(root) {
-    root.querySelector('[data-create-route]').addEventListener('click', () => {
-      const work = createRobotWork(context.student.id); context.navigate(`/work/${work.id}`)
+    root.querySelector('[data-create-route]').addEventListener('click', async event => {
+      event.currentTarget.disabled = true
+      const work = await createRobotWork(context.student.id); context.navigate(`/work/${work.id}`)
     })
     const group = query.get('group')
     if (robotGroups.some(([id]) => id === group)) root.querySelector(`#robot-group-${group}`)?.scrollIntoView({ block: 'start' })
   } }
 }
 
-export function robotWorkView(context) {
-  const work = context.workId ? getWork(context.workId) : assignmentRobotWork(context.assignmentId, context.student.id)
+export async function robotWorkView(context) {
+  const work = context.workId ? getWork(context.workId) : await assignmentRobotWork(context.assignmentId, context.student.id)
   if (!work || work.studentId !== context.student.id) return { html: appLayout('<h1>To zadanie jeszcze czeka</h1><a class="button button-primary" href="#/home">Wróć do domu</a>', context.student, '/home') }
   if (work.data.kind === 'robot-project') return robotProjectView(context, work)
   const assignment = getAssignment(work.assignmentId)

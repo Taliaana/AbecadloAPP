@@ -4,8 +4,8 @@ import { completionScreen, createStepFlow } from '../components/lessonFlow.js'
 import { bindDoubleClick, bindDragDrop } from '../components/activityBindings.js'
 import { completeLesson, startLesson } from '../storage/studentStorage.js'
 
-export function lessonTwoView({ render }) {
-  startLesson(2)
+export async function lessonTwoView({ render }) {
+  await startLesson(2)
   const flow = createStepFlow(4)
   let selected = false
   const placed = new Set()
@@ -21,7 +21,7 @@ export function lessonTwoView({ render }) {
     return { html: lessonLayout(content, 'Obsługuję mysz', flow.currentStep, 4), mount }
   }
   const rerender = () => render(current())
-  function finishStep() { if (flow.isFinalStep) completeLesson(2); flow.completeStep(); rerender() }
+  async function finishStep() { if (flow.isFinalStep) await completeLesson(2); flow.completeStep(); rerender() }
   function place(id, slot) {
     if (String(id) !== String(slot)) return
     placed.add(Number(id)); selected = false

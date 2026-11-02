@@ -15,10 +15,10 @@ export function teacherStudentFormView({ navigate }) {
       const submit = form.querySelector('[type="submit"]')
       const validate = () => { submit.disabled = !form.elements.namedItem('name').value.trim() || !form.elements.namedItem('className').value.trim() }
       form.addEventListener('input', validate)
-      form.addEventListener('submit', (event) => {
+      form.addEventListener('submit', async (event) => {
         event.preventDefault()
         const data = new FormData(event.currentTarget)
-        const student = createStudentProfile({ name: data.get('name'), className: data.get('className') })
+        const student = await createStudentProfile({ name: data.get('name'), className: data.get('className') })
         if (!student) { root.querySelector('[data-form-error]').textContent = 'Wpisz imię i klasę.'; return }
         navigate(`/teacher/student/${student.id}`)
       })

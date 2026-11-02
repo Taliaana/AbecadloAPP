@@ -1,68 +1,60 @@
-# Abecadło
+# PinkTower
 
-Minimalistyczna aplikacja edukacyjna dla uczniów klasy 1 i ich nauczycieli, zbudowana w Vanilla JavaScript i Vite.
+Spokojne środowisko edukacyjne dla dzieci i nauczycieli: Vanilla JavaScript, Vite, lekcje, Pracownia, Robot, Tablica badawcza i portfolio.
 
-## Uruchomienie
+## Dane centralne i uruchomienie
 
-```bash
-npm install
-npm run dev
-```
+Frontend korzysta z `/api`, backend z TypeScript/Vercel Functions, PostgreSQL (Supabase) i prywatnego Supabase Storage. Dane ucznia są centralne. `studentStorage` udostępnia widokom projekcję ostatniej odpowiedzi serwera w pamięci; mutacje są asynchroniczne. Nie ma lokalnego fallbacku zapisu.
 
-Kontrola przed wydaniem:
+**[Konfiguracja, endpointy, model danych, migracja i checklista wdrożenia](docs/backend.md)** opisują wymagane zmienne środowiskowe oraz granice lokalnej weryfikacji. Sam build nie konfiguruje bazy ani bucketu.
 
-```bash
-npm run test:storage
-npm run test:ui
-npm run build
-```
+1. Zainstaluj zależności: `npm install` (Node 24).
+2. Skopiuj `.env.example` do `.env` i uzupełnij sekrety backendu.
+3. Wygeneruj hash własnego PIN-u: `npm run hash-pin -- TWÓJ_PIN`.
+4. Wykonaj `npm run db:migrate` oraz `npm run storage:setup`.
+5. Uruchom `npm run dev` (Vite + lokalne API).
+
+Nie umieszczaj sekretów w zmiennych `VITE_*`. Nowa baza jest pusta. Nauczyciel dodaje uczniów lub świadomie importuje dane istniejącej instalacji. Uczeń nie wybiera samodzielnie innego profilu; urządzenie przygotowuje nauczyciel.
+
+Stare zapisy `abecadlo-state-v1/v2/v3` i obrazy IndexedDB są czytane wyłącznie przez narzędzie migracji nauczyciela. Import wymaga podglądu, zachowuje lokalne kopie i można go wznowić po przerwanym uploadzie. Wykonaj go na dotychczasowej domenie i komputerze zawierającym dane, zanim zmienisz adres instalacji.
 
 ## Struktura
 
-- `src/data` – profile, katalog 30 lekcji i dane narzędzi,
-- `src/storage` – migracje i jedyne miejsce komunikujące się z `localStorage`,
-- `src/components` – współdzielony układ, ikony SVG, aktywności, completion screens i review flow,
-- `src/views` – role, profile, dom, ścieżka, Pracownia, portfolio i panel nauczyciela,
-- `src/lessons` – interaktywne lekcje 1–4,
-- `src/modules` – Typewriting oraz swobodne ćwiczenie myszy,
-- `src/styles` – design system i układy responsywne.
-
-Postęp, odblokowane narzędzia, wyniki Typewritingu i portfolio są przechowywane osobno dla każdego profilu. Warstwa storage ma małe API, dzięki czemu można ją później zastąpić klientem backendu bez przepisywania widoków. Schemat v3 automatycznie migruje dane zapisane pod kluczami `abecadlo-state-v1` i `abecadlo-state-v2`, zachowuje również profile dodane przez nauczyciela i nie usuwa starych zapisów.
-
-Rekord ucznia zawiera `id`, `className`, daty utworzenia i archiwizacji, profil z avatarem, `progress`, osobny `toolProgress` oraz `works`. `className` pozostaje prostym polem tekstowym, ale jest odseparowane od profilu wizualnego, aby później można je było zastąpić relacją do modelu `Class`.
-
-Dostęp do profili, postępów, prac i zadań przechodzi przez `studentStorage`; obrazy mają osobną warstwę `imageStorage` dla IndexedDB. Widoki nie odczytują `localStorage` bezpośrednio. Klucz `abecadlo-state-v3` i wersja schematu pozostają bez zmian. Zapisana lista uczniów v3 jest źródłem prawdy, także po usunięciu ostatniego profilu. Przykładowe profile powstają przy pierwszym uruchomieniu, a nie przy aktualizacji aplikacji. Dane lokalne pozostają związane z adresem (origin) przeglądarki; zmiana domeny nie przenosi ich automatycznie.
-
-„Usuń profil” w edycji ucznia wymaga wyraźnego potwierdzenia. `deleteStudentProfile(id)` usuwa rekord wraz z postępami i pracami, zdjęcia ucznia z IndexedDB oraz jego identyfikator z odbiorców zadań. Czyści również jego dane w zachowanych zapisach v1/v2. Pozostali uczniowie i zadania nauczyciela pozostają zachowane. Archiwizacja nadal tylko ukrywa profil. Identyfikatory uczniów są trwałe i nie zależą od imienia.
-
-Nawigacja ucznia: Dom, Lekcje, Pracownia, Moje prace. „Lekcje” wykorzystują istniejącą ścieżkę `#/path`, pokazują aktualną lekcję i pozwalają powtarzać ukończone. Stan ćwiczenia pozostaje lokalny dla widoku; `startLesson` zachowuje `completed`, a `completeLesson` nie cofa kolejnych lekcji ani wyników narzędzi. Testy zgodności i usuwania: `node --test tests/storage/*.test.mjs`.
+- `src/data`, `src/components`, `src/views`, `src/lessons`, `src/modules`, `src/styles` – istniejący interfejs i aktywności.
+- `src/storage` – klient API, obrazy i odczyt kopii legacy do migracji.
+- `server` – autoryzacja, walidacja, serwisy, repozytorium Drizzle, migracje SQL i prywatne pliki.
+- `api/[...route].ts` – wejście Vercel Functions.
+- `tests/backend`, `tests/storage`, `tests/ui` – domena/HTTP, transport i scenariusze przeglądarki.
 
 ## Model produktu
 
-Główna ścieżka lekcji pozostaje sekwencyjna. Pracownia przechowuje poznane narzędzia, ale postęp Typewritingu jest niezależny od numeru lekcji. Dodatkowe zadania nauczyciela również nie zmieniają miejsca ucznia w programie.
+Ścieżka lekcji jest sekwencyjna. Powtórka nie cofa ukończonej lekcji. Typewriting ma osobny `toolProgress`; dodatkowe zadania nie zmieniają aktualnej lekcji.
 
-Każda lekcja, aktywność, narzędzie i zadanie ma jawny `completionType`:
+- `automatic` – rezultat sprawdza aplikacja.
+- `self-check` – dziecko korzysta z kontroli błędu lub wzoru.
+- `teacher-review` – otwarta praca trafia do pedagogicznego obejrzenia.
 
-- `automatic` – aplikacja jednoznacznie sprawdza rezultat,
-- `self-check` – dziecko korzysta ze wzoru lub kontroli błędu i kończy samodzielnie,
-- `teacher-review` – otwarta praca twórcza trafia do pedagogicznego obejrzenia.
+Statusy prac to `draft`, `waiting-review`, `completed`, `returned`. Kolejka „Do obejrzenia” zawiera wyłącznie prace otwarte, bez ocen i porównywania dzieci. Autosave wysyła lekkie dane do API po debounce; błąd zapisu wymaga jawnego ponowienia i nie jest ukrywany jako zapis lokalny.
 
-Nauczyciel nie zatwierdza ćwiczeń automatycznych ani zadań z samokontrolą. Kolejka „Do obejrzenia” przyjmuje wyłącznie otwarte prace `teacher-review`; nie służy do oceniania i nie zawiera punktów, średnich ani porównań dzieci.
+## Weryfikacja
 
-Prace ucznia korzystają ze wspólnego modelu ze statusami:
+```bash
+npm run typecheck:server
+npm run test:backend
+npm run test:storage
+npm run test:robot
+node --test tests/lessons/*.test.mjs tests/research/*.test.mjs tests/speech/*.test.mjs
+npm run test:ui
+npm run build
+node --test tests/security/*.test.mjs
+git diff --check
+```
 
-- `draft` – praca w toku,
-- `waiting-review` – czeka na obejrzenie,
-- `completed` – zakończona przez nauczyciela,
-- `returned` – zwrócona uczniowi do kontynuowania.
+Testy UI uruchamiają jawny backend testowy w pamięci. Produkcyjne API nigdy go nie używa. Dla testów bez screenshotów ustaw `PINKTOWER_NO_SCREENSHOTS=1`. Rzeczywiste PostgreSQL, uprawnienia Supabase, upload i Vercel wymagają osobnej weryfikacji z credentials.
 
-Każda praca zawiera identyfikator ucznia, opcjonalną lekcję lub zadanie, daty i pole `data` zależne od narzędzia. Autosave zapisuje zmiany po krótkim debounce i wykonuje końcowy zapis przy opuszczeniu widoku.
+## Decyzje produktowe
 
-Panel nauczyciela w MVP używa testowego PIN-u `1234`. Uwierzytelnianie pozostaje celowo lokalne i zostanie zastąpione wraz z backendem.
-
-## Decyzje na przyszłość
-
-- Nie planujemy otwartego chatu AI dla dzieci z klasy 1. Zadania AI powinny używać gotowych pytań, ograniczonych wyborów i uczyć przede wszystkim sprawdzania informacji wygenerowanych przez AI.
-- Podstawowe lekcje nie wymagają sieci ani zewnętrznych zasobów. Architektura pozostaje gotowa na dodanie service workera, manifestu i strategii cache w przyszłym etapie PWA/offline.
-- Eksport prac korzysta obecnie z JSON i `window.print()`. Osobna warstwa eksportu pozwoli później dodać generowanie PDF.
-- Przyszłe Studio nie będzie zapisywać dużych obrazów PNG ani danych base64 w `localStorage`. Rysunki powinny być przechowywane jako lekkie dane wektorowe, np. punkty i pociągnięcia, a docelowe pliki binarne trafią do IndexedDB lub backendu.
+- Bez otwartego chatu AI dla klasy 1; gotowe pytania i sprawdzanie informacji.
+- Nie zapisujemy dużych PNG/base64 w localStorage. Obrazy trafiają do prywatnego Storage, a przyszłe Studio powinno używać lekkich danych rysowania.
+- Zasoby lekcji są lokalnymi assetami, ale zapis centralny wymaga sieci. PWA/cache i ewentualny bezpieczny tryb offline to osobny przyszły etap.
+- Eksport nauczyciela wykorzystuje JSON i druk; PDF pozostaje przyszłym rozszerzeniem.

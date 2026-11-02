@@ -1,7 +1,8 @@
 import { spawn } from 'node:child_process'
 import process from 'node:process'
 
-const vite = spawn(process.execPath, ['node_modules/vite/bin/vite.js', '--host', '127.0.0.1', '--port', '4173'], {
+const api = spawn(process.execPath, ['--import','tsx','tests/support/apiServer.ts'], { cwd: process.cwd(), stdio: 'inherit', env: { ...process.env, NODE_ENV: 'test' } })
+const vite = spawn(process.execPath, ['node_modules/vite/bin/vite.js', '--host', '127.0.0.1', '--port', '4173', '--strictPort'], {
   cwd: process.cwd(),
   stdio: 'ignore',
 })
@@ -9,8 +10,8 @@ const vite = spawn(process.execPath, ['node_modules/vite/bin/vite.js', '--host',
 async function waitForServer() {
   for (let attempt = 0; attempt < 60; attempt += 1) {
     try {
-      const response = await fetch('http://127.0.0.1:4173')
-      if (response.ok) return
+      const [response, apiResponse] = await Promise.all([fetch('http://127.0.0.1:4173'), fetch('http://127.0.0.1:4173/api/health')])
+      if (response.ok && apiResponse.ok) return
     } catch {}
     await new Promise((resolve) => setTimeout(resolve, 250))
   }
@@ -32,5 +33,5 @@ try {
   await waitForServer()
   process.exitCode = await runPlaywright()
 } finally {
-  vite.kill()
+  vite.kill(); api.kill()
 }

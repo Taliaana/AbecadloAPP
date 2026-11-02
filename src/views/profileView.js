@@ -21,8 +21,9 @@ export function profileView({ navigate }) {
       <a class="text-link profile-role-link" href="#/welcome">Zmień rolę</a>
     </main>`,
     mount(root) {
-      root.querySelectorAll('[data-profile]').forEach((button) => button.addEventListener('click', () => {
-        setCurrentStudent(button.dataset.profile)
+      root.querySelectorAll('[data-profile]').forEach((button) => button.addEventListener('click', async () => {
+        root.querySelectorAll('[data-profile]').forEach(control => { control.disabled = true })
+        await setCurrentStudent(button.dataset.profile)
         navigate('/home')
       }))
     },

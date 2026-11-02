@@ -1,0 +1,12 @@
+ALTER TABLE "students" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "lesson_progress" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "lesson_attempts" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "tool_progress" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "works" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "work_assets" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "assignments" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "assignment_targets" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "migration_imports" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "app_settings" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "login_attempts" ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON TABLE "students", "lesson_progress", "lesson_attempts", "tool_progress", "works", "work_assets", "assignments", "assignment_targets", "migration_imports", "app_settings", "login_attempts" FROM anon, authenticated;

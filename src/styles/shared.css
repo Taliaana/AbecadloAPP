@@ -1,5 +1,8 @@
 /* Common surfaces and controls. Activity-specific dimensions stay in index.css. */
 [hidden] { display: none !important; }
+.data-status { position: fixed; bottom: 90px; right: 16px; z-index: 90; max-width: min(480px, calc(100vw - 32px)); padding: 12px 18px; border: 1px solid var(--border); border-radius: var(--radius-small); background: var(--surface); color: var(--text); box-shadow: var(--shadow-soft); }
+.data-status { pointer-events: none; }
+.data-status .button { margin-left: 12px; pointer-events: auto; }
 .speech-button[aria-pressed="true"] { background: var(--brand-pink-wash); border-color: var(--brand-pink-dark); }
 h1, h2, h3, .profile-name, .work-origin, .review-card strong { overflow-wrap: anywhere; }
 .profile-name { max-width: 100%; }

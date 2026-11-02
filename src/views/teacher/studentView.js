@@ -35,20 +35,20 @@ export function teacherStudentView({ studentId, render, navigate }) {
   function mount(root) {
     const settings = root.querySelector('.student-settings')
     settings?.addEventListener('toggle', () => { settingsOpen = settings.open })
-    root.querySelector('[data-unlock-next]')?.addEventListener('click', () => { unlockNextLessonForStudent(studentId); render(current()) })
-    root.querySelector('[data-unlock-form]')?.addEventListener('submit', (event) => {
-      event.preventDefault(); unlockLessonForStudent(studentId, Number(new FormData(event.currentTarget).get('lessonId'))); render(current())
+    root.querySelector('[data-unlock-next]')?.addEventListener('click', async () => { await unlockNextLessonForStudent(studentId); render(current()) })
+    root.querySelector('[data-unlock-form]')?.addEventListener('submit', async (event) => {
+      event.preventDefault(); await unlockLessonForStudent(studentId, Number(new FormData(event.currentTarget).get('lessonId'))); render(current())
     })
-    root.querySelector('[data-edit-student]')?.addEventListener('submit', (event) => {
+    root.querySelector('[data-edit-student]')?.addEventListener('submit', async (event) => {
       event.preventDefault(); const data = new FormData(event.currentTarget)
-      const updated = updateStudentProfile(studentId, { name: data.get('name'), className: data.get('className') })
+      const updated = await updateStudentProfile(studentId, { name: data.get('name'), className: data.get('className') })
       if (!updated) { root.querySelector('[data-profile-feedback]').textContent = 'Wpisz imię i klasę.'; return }
       settingsOpen = true; saveMessage = 'Zmiany zapisane.'; render(current())
       restoreControlFocus(root, '[data-edit-student] [type="submit"]')
     })
-    root.querySelector('[data-archive-student]')?.addEventListener('click', (event) => {
+    root.querySelector('[data-archive-student]')?.addEventListener('click', async (event) => {
       if (event.currentTarget.dataset.confirm !== 'true') { event.currentTarget.dataset.confirm = 'true'; event.currentTarget.textContent = 'Kliknij ponownie, aby archiwizować'; return }
-      archiveStudent(studentId); navigate('/teacher/class')
+      await archiveStudent(studentId); navigate('/teacher/class')
     })
     root.querySelector('[data-delete-student]')?.addEventListener('click', async (event) => {
       const name = getStudentById(studentId)?.profile.name

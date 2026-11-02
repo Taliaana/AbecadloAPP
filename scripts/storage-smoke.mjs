@@ -27,7 +27,7 @@ localStorage.setItem('abecadlo-state-v1', JSON.stringify({
   },
 }))
 
-const storage = await import('../src/storage/studentStorage.js')
+const storage = await import('../tests/support/legacyStorage.js')
 const { implementedLessons, lessons } = await import('../src/data/lessons.js')
 const { createAutosave } = await import('../src/utils/autosave.js')
 const { createStepFlow, getCompletionModel } = await import('../src/components/lessonFlow.js')

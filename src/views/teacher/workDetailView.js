@@ -25,8 +25,9 @@ export function teacherWorkDetailView({ workId, navigate }) {
       const images = work.data.kind === 'research-board' ? mountResearchImages(root, work) : null
       root.querySelector('[data-print]').addEventListener('click', () => window.print())
       root.querySelector('[data-download]').addEventListener('click', () => downloadWork(work, student.profile.name))
-      root.querySelectorAll('[data-decision]').forEach((button) => button.addEventListener('click', () => {
-        reviewWork(work.id, button.dataset.decision); navigate('/teacher/review')
+      root.querySelectorAll('[data-decision]').forEach((button) => button.addEventListener('click', async () => {
+        root.querySelectorAll('[data-decision]').forEach(control => { control.disabled = true })
+        await reviewWork(work.id, button.dataset.decision); navigate('/teacher/review')
       }))
       return () => images?.dispose()
     },

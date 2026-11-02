@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 globalThis.localStorage = { data: {}, getItem(key) { return this.data[key] ?? null }, setItem(key, value) { this.data[key] = value } }
-const storage = await import('../../src/storage/studentStorage.js')
+const storage = await import('../support/legacyStorage.js')
 test('current production state survives new lesson and repeated initialization unchanged', () => {
   storage.initializeStorage()
   storage.setCurrentStudent('zosia'); storage.completeLesson(1); storage.completeLesson(2)

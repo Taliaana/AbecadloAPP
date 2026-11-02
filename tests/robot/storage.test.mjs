@@ -1,8 +1,22 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 globalThis.localStorage = { data: {}, getItem(key) { return this.data[key] || null }, setItem(key, value) { this.data[key] = value } }
-const storage = await import('../../src/storage/studentStorage.js')
+const storage = await import('../support/legacyStorage.js')
 const { assignmentRobotWork, createRobotWork } = await import('../../src/modules/robot/integration.js')
+const repository = await import('../../src/storage/studentStorage.js')
+// Transport fixture for testing the existing frontend Robot/repository wiring.
+// Real authorization and simulation are exercised in tests/backend/domain.test.ts.
+async function useApiFixture() {
+  globalThis.fetch = async (url, init) => {
+    const body = init.body ? JSON.parse(init.body) : {}
+    let value
+    if (url === '/api/works') value = storage.createWork({ ...body, studentId: storage.getCurrentStudent().id })
+    else if (/\/review$/.test(url)) value = storage.reviewWork(url.split('/')[3], body.decision)
+    else if (url.startsWith('/api/works/')) value = storage.updateWork(url.split('/')[3], body)
+    return { ok: true, json: async () => ({ value, snapshot: storage.getStateSnapshot() }) }
+  }
+  await repository.initializeStorage()
+}
 
 test('saving a robot draft preserves history and isolates students', () => {
   storage.initializeStorage(); storage.setCurrentStudent('zosia')
@@ -29,20 +43,22 @@ test('robot history persists independently and preserves original progress and t
   assert.deepEqual(storage.getStudentProgress(), before)
   storage.setCurrentStudent('antek'); assert.deepEqual(storage.getRobotProgress(), {})
 })
-test('robot assignment uses existing works and never enters teacher review', () => {
+test('robot assignment uses existing works and never enters teacher review', async () => {
   storage.setCurrentStudent('zosia')
   const assignment = storage.createAssignment({ title: 'Trasa', instruction: 'Ułóż program.', tool: 'robot', wholeClass: false, studentIds: ['zosia'], robotTask: { challengeId: 'two-steps' } })
-  const work = assignmentRobotWork(assignment.id, 'zosia')
+  await useApiFixture()
+  const work = await assignmentRobotWork(assignment.id, 'zosia')
   assert.equal(work.completionType, 'automatic'); assert.equal(work.data.board.id, 'two-steps')
-  assert.equal(assignmentRobotWork(assignment.id, 'antek'), null)
-  assert.equal(assignmentRobotWork(assignment.id, 'zosia').id, work.id)
-  assert.equal(storage.updateWork(work.id, { status: 'waiting-review' }), null)
-  storage.updateWork(work.id, { status: 'completed' })
+  assert.equal(await assignmentRobotWork(assignment.id, 'antek'), null)
+  assert.equal((await assignmentRobotWork(assignment.id, 'zosia')).id, work.id)
+  assert.equal(await repository.updateWork(work.id, { status: 'waiting-review' }), null)
+  await repository.updateWork(work.id, { status: 'completed', data: { program: ['forward', 'forward'] } })
   assert.equal(storage.getPendingWorks().some(item => item.id === work.id), false)
 })
-test('creative robot work keeps JSON and existing review lifecycle', () => {
-  const work = createRobotWork('zosia')
-  storage.updateWork(work.id, { data: { program: ['forward'] } })
+test('creative robot work keeps JSON and existing review lifecycle', async () => {
+  await useApiFixture()
+  const work = await createRobotWork('zosia')
+  await repository.updateWork(work.id, { data: { program: ['forward'] } })
   storage.initializeStorage(); assert.deepEqual(storage.getWork(work.id).data.program, ['forward'])
   storage.updateWork(work.id, { status: 'waiting-review' })
   assert.equal(storage.getPendingWorks().some(item => item.id === work.id), true)

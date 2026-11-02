@@ -12,7 +12,7 @@ export function robotProjectView(context, initialWork) {
   let data = structuredClone(work.data)
   let title = work.title
   let mountedRoot = null
-  const persist = () => { work = updateWork(work.id, { title: title.trim() || 'Moja trasa', data, status: 'draft' }) }
+  const persist = async () => { work = await updateWork(work.id, { title: title.trim() || 'Moja trasa', data, status: 'draft' }) }
   function screen() {
     data.board.title = title.trim() || 'Moja trasa'
     if (work.status === 'waiting-review') return { html: appLayout(waitingReviewScreen(), context.student, '/works') }
@@ -24,7 +24,7 @@ export function robotProjectView(context, initialWork) {
         const autosave = createAutosave(persist)
         mountBoardEditor(root, data.board, {
           change(nextTitle) { if (nextTitle !== undefined) title = nextTitle; data.solved = false; autosave.schedule(true) },
-          program() { autosave.flush(); data.editorMode = false; persist(); context.render(screen()) },
+          async program() { autosave.flush(); data.editorMode = false; await persist(); context.render(screen()) },
         })
         const flush = () => autosave.flush()
         const visibility = () => { if (document.visibilityState === 'hidden') flush() }
@@ -39,21 +39,21 @@ export function robotProjectView(context, initialWork) {
         const status = mountedRoot?.querySelector('[data-project-status]')
         if (status) status.textContent = solved ? 'Twoja trasa prowadzi do celu.' : 'Sprawdź trasę, uruchamiając program.'
       },
-      onSave() { persist() },
+      onSave() { return persist() },
       extra: `${returned}<section class="robot-project-actions"><button type="button" class="button button-ghost" data-edit-board>Zmień planszę</button><p data-project-status role="status">${data.solved ? 'Twoja trasa prowadzi do celu.' : 'Sprawdź trasę, uruchamiając program.'}</p>${workActions()}</section>`,
       onMount(root, exercise) {
         mountedRoot = root
-        root.querySelector('[data-edit-board]').addEventListener('click', () => {
+        root.querySelector('[data-edit-board]').addEventListener('click', async () => {
           if (exercise.running()) return
-          exercise.flush(); data.program = exercise.program(); data.editorMode = true; persist(); context.render(screen())
+          exercise.flush(); data.program = exercise.program(); data.editorMode = true; await persist(); context.render(screen())
         })
-        root.querySelector('[data-work-action="draft"]').addEventListener('click', () => {
-          exercise.flush(); data.program = exercise.program(); persist(); context.navigate('/home')
+        root.querySelector('[data-work-action="draft"]').addEventListener('click', async () => {
+          exercise.flush(); data.program = exercise.program(); await persist(); context.navigate('/home')
         })
-        root.querySelector('[data-work-action="waiting-review"]').addEventListener('click', () => {
+        root.querySelector('[data-work-action="waiting-review"]').addEventListener('click', async () => {
           if (exercise.running()) { root.querySelector('[data-project-status]').textContent = 'Poczekaj, aż robot zakończy program.'; return }
-          exercise.flush(); data.program = exercise.program(); persist()
-          work = updateWork(work.id, { status: 'waiting-review', data }); context.render(screen())
+          exercise.flush(); data.program = exercise.program(); await persist()
+          work = await updateWork(work.id, { status: 'waiting-review', data }); context.render(screen())
         })
       },
     })

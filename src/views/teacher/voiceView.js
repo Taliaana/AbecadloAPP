@@ -8,7 +8,7 @@ export function teacherVoiceView() {
   const draft = getSpeechSettings()
   const example = 'Dzień dobry. Przyjrzyj się obrazowi, a potem przepisz nazwę.'
   return {
-    html: teacherLayout(`<a class="text-link" href="#/teacher/class">${icon('back')} Wróć do klasy</a><section class="form-card"><p class="eyebrow">Odsłuch w PinkTower</p><h1>Głos i odsłuch</h1><p>Wybierz głos i tempo. Najpierw posłuchaj, potem zapisz. Ustawienia obowiązują w całym PinkTower w tej przeglądarce.</p><form data-voice-settings><label>Głos<select name="voice" aria-label="Głos" aria-describedby="voice-availability"><option value="">Automatyczny — polecany</option></select></label><p id="voice-availability" class="form-feedback" role="status"></p><label>Wariant czytania<select name="preset">${speechPresets.map(preset => `<option value="${preset.id}" ${preset.id === draft.preset ? 'selected' : ''}>${preset.label}</option>`).join('')}</select></label><p>Wariant zmienia tempo. Barwa zależy od wybranego głosu.</p><div class="form-actions"><button type="button" class="button button-secondary speech-button" data-voice-preview aria-pressed="false">${icon('sound')} <span>Odsłuchaj</span></button><button type="submit" class="button button-primary">Zapisz ustawienia</button></div><p class="form-feedback" data-voice-feedback role="status" aria-live="polite"></p></form></section>`, '/teacher/class'),
+    html: teacherLayout(`<a class="text-link" href="#/teacher/class">${icon('back')} Wróć do klasy</a><section class="form-card"><p class="eyebrow">Odsłuch w PinkTower</p><h1>Głos i odsłuch</h1><p>Wybierz głos i tempo. Najpierw posłuchaj, potem zapisz. Ustawienia obowiązują w całym PinkTower. Dostępność głosu zależy od komputera.</p><form data-voice-settings><label>Głos<select name="voice" aria-label="Głos" aria-describedby="voice-availability"><option value="">Automatyczny — polecany</option></select></label><p id="voice-availability" class="form-feedback" role="status"></p><label>Wariant czytania<select name="preset">${speechPresets.map(preset => `<option value="${preset.id}" ${preset.id === draft.preset ? 'selected' : ''}>${preset.label}</option>`).join('')}</select></label><p>Wariant zmienia tempo. Barwa zależy od wybranego głosu.</p><div class="form-actions"><button type="button" class="button button-secondary speech-button" data-voice-preview aria-pressed="false">${icon('sound')} <span>Odsłuchaj</span></button><button type="submit" class="button button-primary">Zapisz ustawienia</button></div><p class="form-feedback" data-voice-feedback role="status" aria-live="polite"></p></form></section>`, '/teacher/class'),
     mount(root) {
       const player = getSpeechPlayer()
       const form = root.querySelector('[data-voice-settings]'), select = form.elements.voice
@@ -46,9 +46,9 @@ export function teacherVoiceView() {
         if (player.activeOwner === preview) { player.stop(); return }
         if (!player.speak({ text: example, owner: preview, settings: draft })) feedback.textContent = 'Odsłuch jest teraz niedostępny. Spróbuj ponownie później.'
       })
-      form.addEventListener('submit', event => {
+      form.addEventListener('submit', async event => {
         event.preventDefault(); stopPreview()
-        try { Object.assign(draft, saveSpeechSettings(normalizeSpeechSettings(draft))); feedback.textContent = 'Zapisano ustawienia głosu.' }
+        try { Object.assign(draft, await saveSpeechSettings(normalizeSpeechSettings(draft))); feedback.textContent = 'Zapisano ustawienia głosu.' }
         catch { feedback.textContent = 'Nie udało się zapisać ustawień. Spróbuj ponownie.' }
       })
       return () => { unsubscribeVoices(); unsubscribe(); stopPreview() }

@@ -10,6 +10,7 @@ import { worksView } from './views/worksView.js'
 import { teacherAssignmentView } from './views/teacher/assignmentView.js'
 import { teacherClassView } from './views/teacher/classView.js'
 import { teacherVoiceView } from './views/teacher/voiceView.js'
+import { teacherMigrationView } from './views/teacher/migrationView.js'
 import { teacherReviewView } from './views/teacher/reviewView.js'
 import { teacherStudentView } from './views/teacher/studentView.js'
 import { teacherStudentFormView } from './views/teacher/studentFormView.js'
@@ -23,50 +24,86 @@ import { mousePracticeView } from './modules/mousePractice.js'
 import { typewritingView } from './modules/typewriting.js'
 import { robotView, robotWorkView } from './modules/robot.js'
 import { researchBoardView } from './modules/researchBoard.js'
-import { getCurrentRole, getCurrentStudent, getStudentProgress, leaveRole, getAssignment, getWork } from './storage/studentStorage.js'
+import { getCurrentRole, getCurrentStudent, getStudentProgress, leaveRole, getAssignment, getWork, revalidate, retryPending, getStateSnapshot, mustWaitForSave, hasUnsavedChanges, flushData } from './storage/studentStorage.js'
+import { flushAutosaves } from './utils/autosave.js'
 import { getLesson } from './data/lessons.js'
 
 export function startApp(root) {
   let cleanup = null
   let expectedHashChange = null
+  let routeVersion = 0
+  const status = document.createElement('aside')
+  status.className = 'data-status no-print'; status.setAttribute('aria-live', 'polite'); status.hidden = true
+  document.body.append(status)
+  function errorMessage(error) {
+    status.hidden = false; status.replaceChildren(document.createTextNode(error.message || 'Nie udało się połączyć. Spróbuj ponownie.'))
+    const retry = document.createElement('button'); retry.className = 'button button-secondary'; retry.textContent = 'Spróbuj ponownie'
+    retry.onclick = () => retryPending().then(renderRoute).catch(errorMessage); status.append(retry)
+  }
+  window.addEventListener('unhandledrejection', event => { event.preventDefault(); errorMessage(event.reason) })
+  window.addEventListener('pinktower:data-status', event => { if (event.detail.failed) errorMessage(new Error(event.detail.message)); else { status.hidden = false; status.textContent = event.detail.message } })
 
   function path() {
     return (window.location.hash.slice(1).split('?')[0] || '/welcome').replace(/\/$/, '') || '/welcome'
   }
 
   function navigate(route) {
-    if (window.location.hash === `#${route}`) renderRoute()
+    if (window.location.hash === `#${route}`) renderRoute(false)
     else {
       expectedHashChange = `#${route}`
       window.location.hash = route
-      renderRoute()
+      renderRoute(false)
     }
+    refreshProjection()
+  }
+
+  async function refreshProjection() {
+    const before = JSON.stringify(getStateSnapshot()), hash = location.hash, version = routeVersion
+    try {
+      await revalidate()
+      // Refresh collections when another device changed them. Never replace an
+      // active exercise/editor or steal focus merely because a GET completed.
+      if (hash === location.hash && version === routeVersion && before !== JSON.stringify(getStateSnapshot()) && ['/home','/path','/works','/workshop','/teacher/class','/teacher/review','/teacher/works'].includes(path())) renderRoute(false)
+    } catch (error) { errorMessage(error) }
   }
 
   function renderView(view) {
+    if (view?.then) { const hash = location.hash, version = routeVersion; view.then(result => { if (hash === location.hash && version === routeVersion) renderView(result) }).catch(errorMessage); return }
     cleanup?.()
     cleanup = null
     root.innerHTML = view.html
     root.firstElementChild?.classList.add('view-enter')
     cleanup = view.mount?.(root) || null
+    root.firstElementChild?.addEventListener('submit', event => {
+      const button = event.submitter
+      if (!button) return
+      queueMicrotask(() => {
+        button.disabled = true; button.setAttribute('aria-busy', 'true')
+        flushData().catch(() => {}).finally(() => { button.disabled = false; button.removeAttribute('aria-busy') })
+      })
+    }, { capture: true })
     root.firstElementChild?.addEventListener('click', (event) => {
       const link = event.target.closest('a[href^="#/"]')
       if (!link || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
       event.preventDefault()
       navigate(link.getAttribute('href').slice(1))
     })
-    root.querySelector('[data-action="leave-role"]')?.addEventListener('click', () => { leaveRole(); navigate('/welcome') })
+    root.querySelector('[data-action="leave-role"]')?.addEventListener('click', async () => { await leaveRole(); navigate('/welcome') })
     requestAnimationFrame(() => root.querySelector(view.focusTarget || '#main-content')?.focus({ preventScroll: true }))
   }
 
   function context(extra = {}) {
-    return { student: getCurrentStudent(), navigate, render: renderView, ...extra }
+    const hash = location.hash, version = routeVersion
+    const current = () => hash === location.hash && version === routeVersion
+    return { student: getCurrentStudent(), navigate: route => { if (current()) navigate(route) }, render: view => { if (current()) renderView(view) }, ...extra }
   }
 
   function renderTeacherRoute(route) {
     const staticRoutes = {
       '/teacher/class': teacherClassView,
       '/teacher/voice': teacherVoiceView,
+      '/teacher/migration': teacherMigrationView,
+      '/profiles': profileView,
       '/teacher/review': teacherReviewView,
       '/teacher/works': teacherWorksView,
       '/teacher/assignments/new': teacherAssignmentView,
@@ -109,11 +146,21 @@ export function startApp(root) {
     return false
   }
 
-  function renderRoute() {
+  async function renderRoute(refresh = true) {
+    const version = ++routeVersion
     // Flush the departing view before the next view reads storage.
     const dispose = cleanup
     cleanup = null
     dispose?.()
+    // Internal navigation uses the last acknowledged server projection immediately.
+    // Waiting for a redundant GET here leaves the old screen visible without its
+    // listeners and loses keyboard input after a link click. Reloads, external hash
+    // changes and explicit refresh still validate the session against the server.
+    try {
+      if (refresh) await revalidate()
+      else if (hasUnsavedChanges()) await flushData()
+    } catch (error) { errorMessage(error); return }
+    if (version !== routeVersion) return
     const route = path()
     const role = getCurrentRole()
 
@@ -129,8 +176,7 @@ export function startApp(root) {
 
     const student = getCurrentStudent()
     if (!student) {
-      if (route !== '/profiles') window.history.replaceState(null, '', '#/profiles')
-      renderView(profileView(context())); return
+      navigate('/teacher-login?prepare=student'); return
     }
     if (route === '/profiles') { navigate('/home'); return }
     if (route === '/free-work') { navigate('/workshop'); return }
@@ -142,5 +188,7 @@ export function startApp(root) {
     expectedHashChange = null
     renderRoute()
   })
+  window.addEventListener('focus', refreshProjection)
+  window.addEventListener('beforeunload', event => { flushAutosaves(); if (mustWaitForSave()) { event.preventDefault(); event.returnValue = '' } })
   renderRoute()
 }

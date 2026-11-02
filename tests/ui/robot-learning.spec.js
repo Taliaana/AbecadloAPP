@@ -38,7 +38,7 @@ test('dwie różne trasy są akceptowane bez ocen', async ({ page }) => {
   await page.locator('[data-other-route]').click()
   await add(page, ['right', 'forward', 'forward', 'left', 'forward', 'forward']); await run(page); await done(page)
   await expect(page.locator('[data-completion-text]')).toHaveText('To inne rozwiązanie.')
-  const history = await page.evaluate(() => JSON.parse(localStorage.getItem('abecadlo-state-v3')).students.zosia.toolProgress.robot['another-way'])
+  const history = await page.evaluate(async () => (await (await fetch('/__test/snapshot')).json()).students.zosia.toolProgress.robot['another-way'])
   expect(history.alternative).toBe(true)
 })
 
@@ -94,7 +94,7 @@ test('klawiatura dodaje i przestawia polecenia; plansze mieszczą się na breakp
   await expect(page.locator('.robot-block').first()).toContainText('Skręć w prawo')
   for (const [width, height] of [[1440, 900], [1366, 768], [1024, 768], [390, 844]]) {
     await page.setViewportSize({ width, height })
-    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+    expect(await page.evaluate(async () => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
     await expect(page.locator('[data-run]')).toBeVisible()
   }
 })
