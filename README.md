@@ -23,7 +23,7 @@ Stare zapisy `abecadlo-state-v1/v2/v3` i obrazy IndexedDB są czytane wyłączni
 - `src/data`, `src/components`, `src/views`, `src/lessons`, `src/modules`, `src/styles` – istniejący interfejs i aktywności.
 - `src/storage` – klient API, obrazy i odczyt kopii legacy do migracji.
 - `server` – autoryzacja, walidacja, serwisy, repozytorium Drizzle, migracje SQL i prywatne pliki.
-- `api/[...route].ts` – wejście Vercel Functions.
+- `api/index.ts` – jedno wejście Vercel Functions; rewrite obejmuje także zagnieżdżone ścieżki API.
 - `tests/backend`, `tests/storage`, `tests/ui` – domena/HTTP, transport i scenariusze przeglądarki.
 
 ## Model produktu
