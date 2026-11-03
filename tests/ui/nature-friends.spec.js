@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test'
-import { chooseStudent, enterTeacher, resetApp } from './helpers.js'
+import { chooseStudent, enterTeacher, resetApp, selectNatureFriend } from './helpers.js'
+import { natureFriends } from '../../src/data/natureFriends.js'
 
 const preview=page=>page.locator('[data-avatar-preview] .nature-avatar')
 const state=async page=>(await(await page.request.get('/__test/snapshot')).json())
@@ -43,9 +44,9 @@ test('pięć gatunków ma działające cechy, miniatury, losowanie, cofanie, res
   await resetApp(page);await chooseStudent(page)
   const before=(await state(page)).students
   await page.getByRole('link',{name:/Edytuj avatar/}).click()
-  await expect(page.locator('.friend-species button')).toHaveCount(5)
+  await expect(page.locator('.friend-species-grid button')).toHaveCount(5)
   for(const species of ['roe-deer','owl','turtle','frog','clownfish']) {
-    await page.locator(`button[data-species="${species}"]`).click()
+    await selectNatureFriend(page,species)
     await expect(preview(page)).toHaveAttribute('data-species',species)
     for(const category of ['colors','face','parts','accessory','background']) {
       await page.locator(`[data-category="${category}"]`).click()
@@ -69,7 +70,7 @@ test('pięć gatunków ma działające cechy, miniatury, losowanie, cofanie, res
   expect(await preview(page).evaluate(el=>el.outerHTML)).toBe(old)
   await page.locator('[data-reset-avatar]').click()
   await expect(page.locator('[data-avatar-preview] .avatar-skin')).toHaveCount(1)
-  await page.locator('button[data-species="owl"]').click()
+  await selectNatureFriend(page,'owl')
   await page.getByRole('button',{name:'Anuluj',exact:true}).click()
   expect((await state(page)).students).toEqual(before)
   await expect(page.locator('.profile-chip .avatar-skin')).toHaveCount(1)
@@ -79,7 +80,7 @@ test('zapis awatara przetrwa nową sesję i jest identyczny u ucznia, nauczyciel
   await resetApp(page);await chooseStudent(page)
   const before=structuredClone((await state(page)).students)
   await page.getByRole('link',{name:/Edytuj avatar/}).click()
-  await page.locator('button[data-species="frog"]').click()
+  await selectNatureFriend(page,'frog')
   await page.locator('[data-trait="body"][data-value="mint"]').click()
   await page.locator('[data-category="parts"]').click()
   const legs=page.locator('[data-trait="part"][data-value="stretch"] .nature-avatar')
@@ -132,7 +133,7 @@ test('przerwany zapis zachowuje podgląd i można go ponowić bez utraty zmian',
   await resetApp(page);await chooseStudent(page)
   const saved=(await state(page)).students.zosia.profile.avatarConfig
   await page.getByRole('link',{name:/Edytuj avatar/}).click()
-  await page.locator('button[data-species="owl"]').click()
+  await selectNatureFriend(page,'owl')
   const drawing=await preview(page).innerHTML()
   await page.route('**/api/avatar',route=>route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({error:'Nie udało się połączyć.'})}))
   await page.locator('[data-save-avatar]').click()
@@ -168,4 +169,45 @@ test('kreator i oba etapy wyboru profilu mieszczą się na czterech szerokościa
       }
     }
   }
+})
+
+test('25 przyjaciół w pięciu grupach: warianty, cofanie między grupami i zapis nowego gatunku',async({page})=>{
+  test.setTimeout(60000)
+  await resetApp(page);await chooseStudent(page)
+  await page.getByRole('link',{name:/Edytuj avatar/}).click()
+  const seen=new Set()
+  for(const group of ['Ssaki','Ptaki','Gady','Płazy','Ryby']) {
+    await page.locator(`[data-animal-group="${group}"]`).click()
+    await expect(page.locator('.friend-species-grid button')).toHaveCount(5)
+    for(const friend of natureFriends.filter(item=>item.group===group)) {
+      await page.locator(`button[data-species="${friend.id}"]`).click()
+      seen.add(friend.id)
+      await expect(preview(page)).toHaveAttribute('data-species',friend.id)
+      await page.locator('[data-category="parts"]').click()
+      const old=await preview(page).innerHTML()
+      await page.locator(`[data-trait="part"][data-value="${friend.parts[1][0]}"]`).click()
+      expect(await preview(page).innerHTML()).not.toBe(old)
+      await page.locator('[data-category="accessory"]').click()
+      await expect(page.locator('[data-trait="accessory"]')).toHaveCount(friend.accessories.length)
+      await page.locator('[data-trait="accessory"][data-value="glasses"]').click()
+    }
+  }
+  expect(seen.size).toBe(25)
+  // Changing only the group is browsing, not an edit to the avatar.
+  const drawing=await preview(page).innerHTML()
+  await page.locator('[data-animal-group="Ssaki"]').focus();await page.keyboard.press('Enter')
+  expect(await preview(page).innerHTML()).toBe(drawing)
+  await page.locator('button[data-species="fox"]').click()
+  await page.locator('[data-undo-avatar]').click()
+  await expect(page.locator('[data-animal-group="Ryby"]')).toHaveAttribute('aria-pressed','true')
+  await expect(preview(page)).toHaveAttribute('data-species','angelfish')
+  expect(await preview(page).innerHTML()).toBe(drawing)
+  await page.locator('[data-save-avatar]').click()
+  await expect(page.locator('.home-welcome')).toBeVisible()
+  await page.reload()
+  expect(await page.locator('.profile-chip .nature-avatar').innerHTML()).toBe(drawing)
+  await page.getByRole('link',{name:/Edytuj avatar/}).click()
+  await expect(page.locator('[data-animal-group="Ryby"]')).toHaveAttribute('aria-pressed','true')
+  await expect(page.locator('button[data-species="angelfish"]')).toHaveAttribute('aria-pressed','true')
+  await expect(page.locator('[data-trait="body"]')).toHaveCount(3)
 })

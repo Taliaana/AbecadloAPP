@@ -13,8 +13,11 @@ const sameConfig = (a,b) => Object.keys(a).length === Object.keys(b).length && O
 export function avatarView({ student, navigate }) {
   const saved = structuredClone(student.profile.avatarConfig || { face:'round', hair:'short', hairColor:'brown', shirtColor:'green', backgroundColor:'mint' })
   let config = structuredClone(saved), history = [], category = 'colors'
+  const groups=[...new Set(natureFriends.map(friend=>friend.group))]
+  let group=natureFriends.find(friend=>friend.id===config.species)?.group || groups[0]
   const profile = () => ({ ...student.profile, avatarConfig:config })
   const animal = () => normalizeNatureAvatar(config)
+  const speciesHtml=()=>natureFriends.filter(friend=>friend.group===group).map(friend=>`<button class="option-pill friend-option" type="button" data-species="${friend.id}" aria-pressed="${config.kind==='nature' && config.species===friend.id}">${avatar({avatarConfig:defaultNatureAvatar(friend.id)},'large')}<span>${friend.name}</span></button>`).join('')
   function optionsHtml() {
     const c = animal(), friend = natureFriends.find(item => item.id === c.species), options = natureOptions(c.species)
     return traits[category].map(trait => `<fieldset><legend>${trait === 'part' ? friend.partLabel : labels[trait]}</legend><div class="friend-choices">${options[trait].map(([value,label]) => {
@@ -29,7 +32,7 @@ export function avatarView({ student, navigate }) {
         <button type="button" class="button button-ghost" data-reset-avatar>Przywróć zapisany wygląd</button>
       </aside>
       <section class="avatar-options friend-options" aria-label="Wygląd przyjaciela">
-        <fieldset class="friend-species"><legend>Zwierzę</legend><div class="friend-species-grid">${natureFriends.map(friend => `<button class="option-pill friend-option" type="button" data-species="${friend.id}" aria-pressed="${config.kind==='nature' && config.species===friend.id}">${avatar({avatarConfig:defaultNatureAvatar(friend.id)},'large')}<span>${friend.name}</span><small>${friend.group}</small></button>`).join('')}</div></fieldset>
+        <fieldset class="friend-species"><legend>Zwierzę</legend><div class="friend-categories" role="group" aria-label="Grupy zwierząt">${groups.map(name=>`<button type="button" class="option-pill" data-animal-group="${name}" aria-pressed="${group===name}">${name}</button>`).join('')}</div><div class="friend-species-grid">${speciesHtml()}</div></fieldset>
         <div class="friend-categories" role="group" aria-label="Kategorie wyglądu">${categories.map(([key,label])=>`<button type="button" class="option-pill" data-category="${key}" aria-pressed="${key===category}">${label}</button>`).join('')}</div>
         <div data-avatar-options>${optionsHtml()}</div>
         <p class="form-feedback" role="status" data-avatar-status></p>
@@ -41,6 +44,12 @@ export function avatarView({ student, navigate }) {
     let alive=true, busy=false, failedSave=false
     const status=root.querySelector('[data-avatar-status]'), controls=root.querySelector('.friend-editor')
     function update(redraw=false) {
+      const currentGroup=natureFriends.find(friend=>friend.id===config.species)?.group || groups[0]
+      if(group!==currentGroup) {
+        group=currentGroup
+        root.querySelector('.friend-species-grid').innerHTML=speciesHtml()
+        root.querySelectorAll('[data-animal-group]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.animalGroup===group)))
+      }
       root.querySelector('[data-avatar-preview]').innerHTML=avatar(profile(),'xlarge')
       root.querySelector('.profile-chip .avatar').outerHTML=avatar(profile(),'small')
       root.querySelector('.friend-legacy-note').hidden=config.kind==='nature'
@@ -63,6 +72,11 @@ export function avatarView({ student, navigate }) {
     controls.addEventListener('click', async event=>{
       const button=event.target.closest('button'); if(!button || busy) return
       if(button.dataset.trait) change({...animal(),[button.dataset.trait]:button.dataset.value})
+      else if(button.dataset.animalGroup) {
+        group=button.dataset.animalGroup
+        root.querySelectorAll('[data-animal-group]').forEach(option=>option.setAttribute('aria-pressed',String(option===button)))
+        root.querySelector('.friend-species-grid').innerHTML=speciesHtml()
+      }
       else if(button.hasAttribute('data-species')) change(defaultNatureAvatar(button.dataset.species),true)
       else if(button.dataset.category) {
         category=button.dataset.category

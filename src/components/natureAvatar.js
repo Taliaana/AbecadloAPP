@@ -1,4 +1,9 @@
 import { normalizeNatureAvatar, natureColors } from '../data/natureFriends.js'
+import { mammalRenderers, mammalAnchors } from './nature/mammals.js'
+import { birdRenderers, birdAnchors } from './nature/birds.js'
+import { reptileRenderers, reptileAnchors } from './nature/reptiles.js'
+import { amphibianRenderers, amphibianAnchors } from './nature/amphibians.js'
+import { fishRenderers, fishAnchors } from './nature/fish.js'
 
 const ink = '#51474a'
 const path = (d, fill, extra = '') => `<path d="${d}" fill="${fill}" ${extra}/>`
@@ -54,15 +59,16 @@ function fish(c,b,cream,detail) {
     <g data-layer="pattern" fill="${cream}" stroke="${detail}" stroke-width="2.5">${c.pattern==='bands' ? '<path d="M77 76q9 26-1 49l14 7q15-32-1-61ZM120 69q-6 33 5 70l14-4q-10-30-3-61Z"/>' : '<path d="M80 75q10 29-1 52l7 3q14-29-1-57ZM124 70q-5 33 5 68l7-2q-10-30-3-64Z"/>'}</g>
     <g data-layer="head">${c.eyes==='sleepy' ? line('M146 95q6 6 12 0') : ellipse(151,94,c.eyes==='bright'?6:5,7,ink)+ellipse(153,91,2,2,'#fffaf5')}${mouth(c,161,111)}${path('M105 102q-3 14 13 17l6-9-19-8',b,`stroke="${detail}" stroke-width="2" stroke-linejoin="round"`)}${line('M31 91 49 99m-19 15 19-9')}</g>`
 }
-const renderers = { 'roe-deer':deer, owl, turtle, frog, clownfish:fish }
-const anchors = { 'roe-deer':[101,79,125,39], owl:[100,76,113,37], turtle:[163,100,132,79], frog:[100,61,124,36], clownfish:[151,94,126,65] }
+const renderers = { 'roe-deer':deer, owl, turtle, frog, clownfish:fish, ...mammalRenderers, ...birdRenderers, ...reptileRenderers, ...amphibianRenderers, ...fishRenderers }
+const anchors = { 'roe-deer':[101,79,125,39], owl:[100,76,113,37], turtle:[163,100,132,79], frog:[100,61,124,36], clownfish:[151,94,126,65], ...mammalAnchors, ...birdAnchors, ...reptileAnchors, ...amphibianAnchors, ...fishAnchors }
 function accessory(c) {
   const [x,y,neck,top] = anchors[c.species]
   const detail = natureColors[c.detail][1], rose='#bd7f88', paper='#fff4df'
-  const gap=c.species==='frog'?28:c.species==='owl'?22:c.species==='turtle'?8:18
-  const rim=c.species==='turtle'?7:12
+  const gap=anchors[c.species][4] ?? (c.species==='frog'?28:c.species==='owl'?22:c.species==='turtle'?8:18)
+  const rim=anchors[c.species][5] ?? (c.species==='turtle'?7:c.species==='clownfish'?11:12)
+  const singleEye=c.species==='clownfish' || anchors[c.species][6]
   switch(c.accessory) {
-    case 'glasses': return `<g fill="none" stroke="${detail}" stroke-width="3">${c.species==='clownfish' ? `<circle cx="${x}" cy="${y}" r="11"/><path d="M${x+11} ${y}h12"/>` : `<circle cx="${x-gap}" cy="${y}" r="${rim}"/><circle cx="${x+gap}" cy="${y}" r="${rim}"/><path d="M${x-gap+rim} ${y}q${gap-rim}-4 ${2*(gap-rim)} 0"/>`}</g>`
+    case 'glasses': return `<g fill="none" stroke="${detail}" stroke-width="3">${singleEye ? `<circle cx="${x}" cy="${y}" r="${rim}"/><path d="M${x+rim} ${y}h12"/>` : `<circle cx="${x-gap}" cy="${y}" r="${rim}"/><circle cx="${x+gap}" cy="${y}" r="${rim}"/><path d="M${x-gap+rim} ${y}q${gap-rim}-4 ${2*(gap-rim)} 0"/>`}</g>`
     case 'bow': return path(`M${x} ${top+9}q-20-19-21-2t21 5q20-20 21-2t-21 4`,rose)+ellipse(x,top+10,4,5,detail)
     case 'hat': return path(`M${x-18} ${top+8}l6-20h24l6 20Z`,detail)+path(`M${x-25} ${top+7}q25-6 50 0v6h-50Z`,rose)
     case 'scarf': return path(`M${x-22} ${neck-5}q22 7 44 0l-2 10q-23 7-43-1Zm30 12 14-1 6 25-14 3Z`,rose)+line(`M${x+16} ${neck+22}l9-2`)

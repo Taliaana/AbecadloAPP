@@ -14,8 +14,10 @@ function setup() {
   repo.state.students=fixture.students;repo.state.assignments=fixture.assignments
   return {repo, files, run:createService(repo,files)}
 }
-test('five species: defaults, every allowed variant and safe deterministic SVG rendering',()=>{
-  assert.equal(natureFriends.length,5)
+test('25 species: five per group, distinct silhouettes, every allowed variant and safe SVG rendering',()=>{
+  assert.equal(natureFriends.length,25)
+  assert.equal(new Set(natureFriends.map(friend=>friend.id)).size,25)
+  for(const group of ['Ssaki','Ptaki','Gady','Płazy','Ryby']) assert.equal(natureFriends.filter(friend=>friend.group===group).length,5)
   const bodies=new Set<string>()
   for(const friend of natureFriends) {
     const config=defaultNatureAvatar(friend.id)
@@ -29,7 +31,7 @@ test('five species: defaults, every allowed variant and safe deterministic SVG r
       if(value!==config[trait as keyof typeof config]) assert.notEqual(avatar({avatarConfig:changed},'large'),original,`${friend.id}/${trait}/${value} must change the illustration`)
     }
   }
-  assert.equal(bodies.size,5,'Each species has its own silhouette')
+  assert.equal(bodies.size,25,'Each species has its own silhouette')
   const unsafe=avatar({avatarConfig:{kind:'nature',species:'<script>',body:'" onload="alert(1)',accessory:'backpack'}})
   assert.ok(!unsafe.includes('<script>') && !unsafe.includes('onload='))
   assert.equal(isValidNatureAvatar({...defaultNatureAvatar('clownfish'),accessory:'backpack'}),false)
@@ -66,7 +68,7 @@ test('avatar saves through existing repository, persists on next session and pre
 test('server rejects forged owners, invalid parts, extra attributes and unauthenticated writes',async()=>{
   const {repo,run}=setup(), before=structuredClone(repo.state.students), config=defaultNatureAvatar()
   await assert.rejects(run('PUT','avatar',config,null),error=>error instanceof ApiError && error.status===401)
-  for(const bad of [{...config,studentId:'antek'}, {...config,body:'#fff'}, {...config,part:'wings'}, {...config,species:'fox'}, {...config,version:2}]) await assert.rejects(run('PUT','avatar',bad,pupil))
+  for(const bad of [{...config,studentId:'antek'}, {...config,body:'#fff'}, {...config,part:'wings'}, {...config,species:'unicorn'}, {...config,version:2}]) await assert.rejects(run('PUT','avatar',bad,pupil))
   await assert.rejects(run('POST','session/student',{studentId:'antek'},pupil),error=>error instanceof ApiError && error.status===403)
   await assert.rejects(run('GET','students',{},pupil),error=>error instanceof ApiError && error.status===403)
   assert.deepEqual(repo.state.students,before)

@@ -1,4 +1,11 @@
 import { expect } from '@playwright/test'
+import { getNatureFriend } from '../../src/data/natureFriends.js'
+
+export async function selectNatureFriend(page, species) {
+  const friend=getNatureFriend(species)
+  await page.locator(`[data-animal-group="${friend.group}"]`).click()
+  await page.locator(`button[data-species="${species}"]`).click()
+}
 
 export async function resetApp(page) {
   await page.context().clearCookies()
