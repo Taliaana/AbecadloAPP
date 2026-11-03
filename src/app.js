@@ -110,7 +110,13 @@ export function startApp(root) {
       navigate(link.getAttribute('href').slice(1))
     })
     root.querySelector('[data-action="leave-role"]')?.addEventListener('click', async () => { await leaveRole(); navigate('/welcome') })
-    requestAnimationFrame(() => root.querySelector(view.focusTarget || '#main-content')?.focus({ preventScroll: true }))
+    const mountedView = root.firstElementChild
+    requestAnimationFrame(() => {
+      // Never let a delayed focus callback override a user's first keyboard
+      // action, a view's own focus, or a newer screen mounted in the meantime.
+      if (root.firstElementChild !== mountedView || document.activeElement !== document.body) return
+      root.querySelector(view.focusTarget || '#main-content')?.focus({ preventScroll: true })
+    })
   }
 
   function context(extra = {}) {

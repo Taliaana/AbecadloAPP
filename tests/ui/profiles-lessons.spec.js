@@ -77,6 +77,7 @@ test('teacher PIN stays hidden; cancelling deletion preserves data, confirming r
   await page.getByRole('button', { name: 'Uczeń' }).click()
   await page.getByLabel('PIN nauczyciela').fill('1234')
   await page.getByRole('button', {name:'Wejdź do panelu'}).click()
+  await page.locator('[data-grade="1"]').click()
   await expect(page.getByRole('button', { name: /Zosia/ })).toHaveCount(0)
   await expect(page.getByRole('button', { name: /Antek/ })).toBeVisible()
 })

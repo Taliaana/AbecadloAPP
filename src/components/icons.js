@@ -1,3 +1,5 @@
+import { natureAvatar } from './natureAvatar.js'
+
 const paths = {
   play: '<path d="m8 4 12 8-12 8Z"/>',
   sound: '<path d="M4 9h4l5-4v14l-5-4H4zM16 8c3 2 3 6 0 8m3-11c5 4 5 10 0 14"/>',
@@ -37,6 +39,7 @@ export function icon(name, className = '') {
 }
 
 export function avatar(profile, size = 'medium') {
+  if (profile.avatarConfig?.kind === 'nature') return natureAvatar(profile.avatarConfig, size)
   const config = profile.avatarConfig || { face: 'round', hair: 'short', hairColor: 'brown', shirtColor: profile.color || 'green', backgroundColor: profile.color || 'mint' }
   const allowed = (value, options, fallback) => options.includes(value) ? value : fallback
   const face = allowed(config.face, ['round', 'soft', 'wide'], 'round')

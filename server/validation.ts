@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { isValidNatureAvatar } from '../src/data/natureFriends.js'
 export const id = z.string().min(1).max(160).regex(/^[\w-]+$/)
 const text = (max: number) => z.string().trim().min(1).max(max)
 const command = z.enum(['forward','left','right'])
@@ -12,7 +13,10 @@ export const inputs = {
   student: z.object({ name: text(40), className: text(12), operationId: z.uuid().optional() }).strict(),
   select: z.object({ studentId: id }).strict(),
   delete: z.object({ confirmation: z.literal('delete-student') }).strict(),
-  avatar: z.object({ face: z.enum(['round','soft','wide']), hair: z.enum(['short','bob','tufts']), hairColor: z.enum(['dark','brown','gold','copper']), shirtColor: z.enum(['green','blue','yellow','coral']), backgroundColor: z.enum(['mint','sky','sand','rose']) }).strict(),
+  avatar: z.union([
+    z.object({ face: z.enum(['round','soft','wide']), hair: z.enum(['short','bob','tufts']), hairColor: z.enum(['dark','brown','gold','copper']), shirtColor: z.enum(['green','blue','yellow','coral']), backgroundColor: z.enum(['mint','sky','sand','rose']) }).strict(),
+    z.record(z.string(), z.unknown()).refine(isValidNatureAvatar, 'Wybierz dostępne cechy zwierzęcia.'),
+  ]),
   lesson: z.object({ lessonId: z.number().int().positive(), action: z.enum(['start','complete','repeat','finish-repeat']), attemptId: id.optional() }).strict(),
   unlock: z.object({ lessonId: z.number().int().positive() }).strict(),
   work: z.object({ title: text(160), type: text(80), lessonId: z.number().int().positive().nullable().optional(), assignmentId: id.nullable().optional(), completionType: completion.optional(), data: json.default({}), operationId: z.uuid().optional() }).strict(),

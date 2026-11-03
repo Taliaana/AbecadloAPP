@@ -1,0 +1,59 @@
+/* Scoped additions: the existing PinkTower tokens and global styles stay intact. */
+.nature-avatar svg { width: 100%; height: 100%; overflow: hidden; }
+.nature-profile-screen { place-content: start center; justify-items: center; padding: var(--page-padding); gap: 24px; }
+.nature-profile-screen .profile-intro { text-align: center; }
+.nature-profile-screen .profile-brand { position: static; display: inline-flex; margin-bottom: 20px; }
+.nature-profile-screen .profile-intro .eyebrow { margin-top: 0; }
+.nature-profile-screen .profile-role-link { position: static; }
+.nature-profile-screen .form-feedback:empty { display: none; }
+.grade-grid { width: min(900px, calc(100vw - 2 * var(--page-padding))); display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: var(--grid-gap); }
+.grade-card { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; min-height: 250px; padding: var(--card-padding); border: 1px solid var(--border); border-radius: var(--radius-material); box-shadow: var(--shadow-soft); cursor: pointer; transition: transform 180ms ease, box-shadow 180ms ease; }
+.grade-card--1 { background: #e3ecef; }
+.grade-card--2 { background: #f0e7ce; }
+.grade-card--3 { background: #e1e9dc; }
+.grade-card > span:not(.grade-number) { font: 500 var(--font-size-section)/1.2 var(--font-heading); }
+.grade-card small { font-size: .9rem; }
+.grade-number { font: 500 5rem/1 var(--font-heading); }
+.grade-card:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
+.grade-card:active { transform: translateY(1px); }
+.nature-profile-grid { width: min(1000px, calc(100vw - 2 * var(--page-padding))); grid-template-columns: repeat(auto-fit,minmax(min(210px,100%),1fr)); }
+.nature-profile-grid .profile-card { min-height: 245px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); transform: none; }
+.nature-profile-grid .profile-card:hover { background: var(--brand-pink-wash); }
+.nature-profile-grid .avatar--large { width: 140px; height: 140px; }
+.friend-editor { grid-template-columns: minmax(260px,.8fr) minmax(0,1.4fr); gap: var(--grid-gap); }
+.friend-preview { position: sticky; top: 24px; min-width: 0; background: var(--paper); padding: var(--card-padding); }
+.friend-preview .avatar--xlarge { width: clamp(220px,25vw,320px); height: auto; aspect-ratio: 1; max-width: 100%; }
+.friend-preview [data-avatar-preview] { width: 100%; text-align: center; }
+.friend-preview .form-actions { justify-content: center; }
+.friend-preview .button { font-size: 1rem; }
+.friend-legacy-note { font-size: .95rem; text-align: center; color: var(--text-muted); }
+.friend-options { min-width: 0; background: var(--surface); }
+.friend-options fieldset { min-width: 0; }
+.friend-species-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(86px,1fr)); gap: 8px; }
+.friend-categories { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
+.friend-choices { display: grid; grid-template-columns: repeat(auto-fit,minmax(112px,1fr)); gap: 10px; }
+.friend-option { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 10px 8px; min-width: 0; width: 100%; border-radius: var(--radius-small); text-align: center; }
+.friend-option[aria-pressed="true"], .friend-categories [aria-pressed="true"] { background: var(--brand-pink-wash); border-color: var(--brand-pink-dark); box-shadow: inset 0 0 0 1px var(--brand-pink-dark); }
+.friend-option small { font-size: .75rem; color: var(--text-muted); }
+.friend-option .avatar--large { width: 80px; height: 80px; }
+.friend-swatch { width: 32px; height: 32px; border: 1px solid rgba(55,50,52,.2); border-radius: 50%; }
+.friend-options > [data-switch-profile] { margin-top: 18px; }
+@media (max-width: 900px) {
+  .friend-editor { grid-template-columns: 1fr; }
+  .friend-preview { position: static; }
+  .friend-preview .avatar--xlarge { width: 240px; }
+}
+@media (max-width: 620px) {
+  .grade-grid { grid-template-columns: 1fr; }
+  .grade-card { min-height: 120px; display: grid; grid-template-columns: 70px 1fr; text-align: left; gap: 8px 18px; justify-items: start; }
+  .grade-number { grid-row: span 2; font-size: 4rem; }
+  .nature-profile-grid .profile-card { min-height: 170px; }
+  .nature-profile-grid .avatar--large { width: 112px; height: 112px; }
+  .friend-species-grid { grid-template-columns: repeat(3,minmax(0,1fr)); }
+  .friend-option .avatar--large { width: 68px; height: 68px; }
+  .friend-preview { padding: 22px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .grade-card { transition: none; }
+  .grade-card:hover, .grade-card:active { transform: none; }
+}

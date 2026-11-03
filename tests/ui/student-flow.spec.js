@@ -45,6 +45,7 @@ test('można zmienić ucznia bez mieszania danych', async ({ page }) => {
   await expect(page.getByLabel('PIN nauczyciela')).toBeVisible()
   await page.getByLabel('PIN nauczyciela').fill('1234')
   await page.getByRole('button', { name: 'Wejdź do panelu' }).click()
+  await page.locator('[data-grade="1"]').click()
   await page.getByRole('button', { name: /Antek/ }).click()
   await expect(page.getByRole('heading', { name: /Cześć, Antku/ })).toBeVisible()
 })

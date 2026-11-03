@@ -8,9 +8,9 @@ export async function resetApp(page) {
   await page.reload()
 }
 
-export async function chooseStudent(page, name = 'Zosia') {
+export async function chooseStudent(page, name = 'Zosia', grade = '1') {
   await page.getByRole('button', { name: 'Uczeń' }).click()
-  await expect(page.locator('[data-pin], [data-profile], .home-welcome').first()).toBeVisible()
+  await expect(page.locator('[data-pin], [data-grade], .home-welcome').first()).toBeVisible()
   if (await page.locator('.home-welcome').count()) {
     await page.goto('/#/teacher-login?prepare=student')
     await expect(page.locator('[data-pin]')).toBeVisible()
@@ -19,6 +19,7 @@ export async function chooseStudent(page, name = 'Zosia') {
     await page.locator('[data-pin]').fill('1234')
     await page.getByRole('button', { name: 'Wejdź do panelu' }).click()
   }
+  await page.locator(`[data-grade="${grade}"]`).click()
   await page.getByRole('button', { name: new RegExp(name) }).click()
   await expect(page.locator('.main-nav')).toBeVisible()
 }
