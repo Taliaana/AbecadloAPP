@@ -12,7 +12,11 @@ Kliknięcie zaznacza, dwuklik lub Enter otwiera folder, dokument albo obraz. Pli
 
 Okna można przeciągać za tytuł, przesuwać strzałkami po ustawieniu fokusu na tytule, zamknąć lub zminimalizować. Pasek zadań przywraca istniejące okno. „Pulpit” na pasku chowa otwarte okna. W folderze działają „Wstecz” i powrót do pulpitu.
 
-„Pełny ekran” korzysta z Fullscreen API; wyjście jest dostępne przyciskiem lub standardowym Esc przeglądarki. Przy braku obsługi pozostaje zwykły widok. „Schowaj pulpit” dotyczy wyłącznie symulatora w PinkTower i zachowuje jego stan.
+„Pełny ekran” korzysta z Fullscreen API i pokazuje wyłącznie pulpit, otwarte okna oraz pasek zadań. Powrót jest dostępny krzyżykiem w prawym górnym rogu lub klawiszem Esc. Pełny ekran jest opcjonalny: wszystkie zadania można wykonać w zwykłym oknie. „Schowaj pulpit” dotyczy wyłącznie symulatora w PinkTower i zachowuje jego stan.
+
+Folder „Przewijanie” zawiera galerię z własnym paskiem przewijania. Można używać kółka, gładzika i klawiatury, a na końcu wrócić przyciskiem na górę. Folder korzysta z istniejącego modelu okien i zapisu; stare sesje pozostają zgodne. Obrazki są generowane jako SVG w interfejsie, nie zapisujemy ich w stanie ucznia.
+
+Zwijany samouczek „Jak używać myszy?” jest dostępny w lekcji i ćwiczeniach. Samouczek oraz polecenia lekcji mają przycisk odsłuchu korzystający ze wspólnego mechanizmu głosu PinkTower; nic nie odtwarza się automatycznie. Podczas przeciągania lekki podgląd pliku podąża za kursorem, a folder docelowy jest podświetlany. Ograniczone animacje respektują ustawienia systemu.
 
 ## Stan i bezpieczeństwo
 

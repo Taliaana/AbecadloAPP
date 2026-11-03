@@ -56,3 +56,13 @@ test('teacher exercise session keeps test state in memory without fetching or wr
   state.board.locations.note='trash'
   assert.equal(session.readDesktop().board.locations.note,'desktop')
 })
+
+test('scroll folder extends the same state without resetting old desktop saves',()=>{
+  const state=initialDesktopSession();openDesktopWindow(state.board,'works')
+  const old=structuredClone(state)
+  assert.deepEqual(readDesktopSession(old),state)
+  openDesktopWindow(state.board,'scroll');assert.equal(isValidDesktopSession(state),true)
+  assert.equal(moveDesktopFile(state.board,'note','scroll'),true)
+  assert.equal(readDesktopSession(state).board.locations.note,'scroll')
+  assert.equal(old.board.locations.note,'desktop')
+})

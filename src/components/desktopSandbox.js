@@ -3,12 +3,12 @@ import {desktopIcon,desktopPicture} from './desktopGraphics.js'
 import {escapeHtml as esc} from '../utils/html.js'
 
 export function mountDesktopSandbox(host,{board,onChange=()=>{}}) {
-  let dragged=null,dragWindow=null
+  let dragged=null,dragWindow=null,dragPreview=null
   const item=id=>desktopItems.find(item=>item.id===id)
   const name=id=>id==='desktop'?'Pulpit':item(id)?.name || ''
   const windows=()=>board.windows
   function fileButton(file) {
-    return `<button type="button" class="desktop-file ${board.selected===file.id?'is-selected':''}" data-file="${file.id}" aria-pressed="${board.selected===file.id}" ${file.parent?'draggable="true"':''} ${['folder','trash'].includes(file.type)?`data-destination="${file.id}"`:''}>${desktopIcon(file)}<span>${esc(file.name)}</span></button>`
+    return `<button type="button" class="desktop-file ${board.selected===file.id?'is-selected':''}" data-file="${file.id}" title="${esc(file.name)}" aria-pressed="${board.selected===file.id}" ${file.parent?'draggable="true"':''} ${['folder','trash'].includes(file.type)?`data-destination="${file.id}"`:''}>${desktopIcon(file)}<span>${esc(file.name)}</span></button>`
   }
   const filesAt=folder=>folder==='desktop'?[...desktopItems.filter(i=>!i.parent),...desktopFiles.filter(i=>board.locations[i.id]===folder)]:desktopFiles.filter(i=>board.locations[i.id]===folder)
   function fileActions() {
@@ -18,7 +18,8 @@ export function mountDesktopSandbox(host,{board,onChange=()=>{}}) {
   }
   function windowHtml(window,index) {
     const target=item(window.target),folder=desktopFolders.includes(window.target)
-    const body=folder?`<nav class="desktop-explorer-nav" aria-label="Nawigacja folderu"><button type="button" class="button button-ghost" data-window-back="${window.id}" ${window.history.length?'':'disabled'}>Wstecz</button><button type="button" class="button button-ghost" data-window-desktop="${window.id}">Pulpit</button><span>${esc(name(window.target))}</span></nav><div class="desktop-folder-content" data-destination="${window.target}">${filesAt(window.target).map(fileButton).join('')||'<p>Ten folder jest pusty.</p>'}</div>`:target?.type==='image'?`<div class="desktop-image-preview">${desktopPicture(target.picture)}</div>`:`<div class="desktop-document"><p>${esc(target?.content||'')}</p></div>`
+    const content=window.target==='scroll'?`<div class="desktop-scroll-content" data-destination="scroll" tabindex="0" role="region" aria-label="Galeria do ćwiczenia przewijania"><p>Przewiń w dół. Zobacz wszystkie obrazki.</p>${filesAt('scroll').map(fileButton).join('')}<div class="desktop-scroll-gallery">${Array.from({length:12},(_,i)=>`<figure>${desktopPicture(i%2?'flower':'landscape')}<figcaption>Obrazek ${i+1}</figcaption></figure>`).join('')}</div><p class="desktop-scroll-end">Dotarłeś do końca galerii.</p><button type="button" class="button button-secondary" data-scroll-top>Wróć na górę</button></div>`:`<div class="desktop-folder-content" data-destination="${window.target}">${filesAt(window.target).map(fileButton).join('')||'<p>Ten folder jest pusty.</p>'}</div>`
+    const body=folder?`<nav class="desktop-explorer-nav" aria-label="Nawigacja folderu"><button type="button" class="button button-ghost" data-window-back="${window.id}" ${window.history.length?'':'disabled'}>Wstecz</button><button type="button" class="button button-ghost" data-window-desktop="${window.id}">Pulpit</button><span>${esc(name(window.target))}</span></nav>${content}`:target?.type==='image'?`<div class="desktop-image-preview">${desktopPicture(target.picture)}</div>`:`<div class="desktop-document"><p>${esc(target?.content||'')}</p></div>`
     return `<section class="desktop-window" data-window="${window.id}" aria-label="Okno: ${esc(name(window.target))}" ${window.minimized?'hidden':''} style="z-index:${index+2}"><header class="desktop-titlebar"><button type="button" class="desktop-window-handle" data-window-drag="${window.id}" aria-label="Przesuń okno ${esc(name(window.target))}">${desktopIcon(target||{type:'folder'})}<span>${esc(name(window.target))}</span></button><button type="button" class="button button-icon" data-minimize-window="${window.id}" aria-label="Minimalizuj okno ${esc(name(window.target))}">−</button><button type="button" class="button button-icon" data-close-window="${window.id}" aria-label="Zamknij okno ${esc(name(window.target))}">×</button></header>${body}</section>`
   }
   function positionWindows() {
@@ -67,7 +68,7 @@ export function mountDesktopSandbox(host,{board,onChange=()=>{}}) {
   }
   function destination(event) {
     const zone=event.target.closest('[data-destination]')
-    if(event.target.closest('.desktop-window') && !event.target.closest('.desktop-folder-content, [data-file][data-destination]')) return null
+    if(event.target.closest('.desktop-window') && !event.target.closest('.desktop-folder-content, .desktop-scroll-content, [data-file][data-destination]')) return null
     return zone&&host.contains(zone)?zone.dataset.destination:null
   }
   const click=event=>{
@@ -83,6 +84,7 @@ export function mountDesktopSandbox(host,{board,onChange=()=>{}}) {
     else if(d.windowDesktop){openDesktopWindow(board,'desktop',d.windowDesktop);changed()}
     else if(d.windowBack){const win=windows().find(w=>w.id===d.windowBack);if(win.history.length){win.target=win.history.pop();changed()}}
     else if(button.hasAttribute('data-show-desktop')){windows().forEach(w=>minimizeDesktopWindow(board,w.id));changed()}
+    else if(button.hasAttribute('data-scroll-top')){const area=button.closest('.desktop-scroll-content');area.scrollTo({top:0,behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});area.focus({preventScroll:true})}
   }
   const dblclick=event=>{const button=event.target.closest('[data-file]');if(button)open(button.dataset.file,button.closest('[data-window]')?.dataset.window)}
   const keydown=event=>{
@@ -96,9 +98,37 @@ export function mountDesktopSandbox(host,{board,onChange=()=>{}}) {
       positionWindows();changed(false)
     }
   }
-  const dragstart=event=>{const file=event.target.closest('[data-file]');if(!file||!item(file.dataset.file)?.parent)return;dragged=file.dataset.file;event.dataTransfer.setData('application/x-pinktower-file',dragged);event.dataTransfer.effectAllowed='move';selected(dragged)}
-  const dragover=event=>{if(destination(event)&&event.dataTransfer.types.includes('application/x-pinktower-file')){event.preventDefault();event.dataTransfer.dropEffect='move'}}
-  const drop=event=>{const folder=destination(event),id=event.dataTransfer.getData('application/x-pinktower-file');if(folder&&id){event.preventDefault();if(moveDesktopFile(board,id,folder))changed()}dragged=null}
+  const movePreview=event=>{
+    if(!dragPreview)return
+    if(!host.contains(event.target))host.querySelectorAll('.is-drop-target').forEach(node=>node.classList.remove('is-drop-target'))
+    dragPreview.style.left=`${Math.max(0,Math.min(innerWidth-120,event.clientX+16))}px`
+    dragPreview.style.top=`${Math.max(0,Math.min(innerHeight-125,event.clientY+12))}px`
+  }
+  function clearDrag() {
+    dragPreview?.remove();dragPreview=null;dragged=null
+    host.querySelectorAll('.is-dragging,.is-drop-target').forEach(node=>node.classList.remove('is-dragging','is-drop-target'))
+  }
+  const dragstart=event=>{
+    const file=event.target.closest('[data-file]');if(!file||!item(file.dataset.file)?.parent)return
+    clearDrag();dragged=file.dataset.file;selected(dragged)
+    event.dataTransfer.setData('application/x-pinktower-file',dragged);event.dataTransfer.effectAllowed='move'
+    dragPreview=document.createElement('div');dragPreview.className='desktop-drag-preview';dragPreview.setAttribute('aria-hidden','true')
+    dragPreview.innerHTML=`${desktopIcon(item(dragged))}<span>${esc(name(dragged))}</span>`;(document.fullscreenElement||document.body).append(dragPreview);movePreview(event)
+    const blank=document.createElement('canvas');blank.width=blank.height=1;event.dataTransfer.setDragImage(blank,0,0)
+    file.classList.add('is-dragging')
+  }
+  const dragover=event=>{
+    if(!event.dataTransfer.types.includes('application/x-pinktower-file'))return
+    host.querySelectorAll('.is-drop-target').forEach(node=>node.classList.remove('is-drop-target'))
+    if(destination(event)){
+      event.preventDefault();event.dataTransfer.dropEffect='move'
+      event.target.closest('[data-destination]')?.classList.add('is-drop-target')
+    }
+  }
+  const drop=event=>{
+    const folder=destination(event),id=event.dataTransfer.getData('application/x-pinktower-file');clearDrag()
+    if(folder&&id){event.preventDefault();if(moveDesktopFile(board,id,folder)){changed();host.querySelectorAll(`[data-file="${folder}"]`).forEach(node=>node.classList.add('is-drop-received'))}}
+  }
   const pointerdown=event=>{
     const window=event.target.closest('[data-window]');if(window)focusWindow(window.dataset.window)
     const handle=event.target.closest('[data-window-drag]');if(!handle||event.button!==0)return
@@ -108,9 +138,10 @@ export function mountDesktopSandbox(host,{board,onChange=()=>{}}) {
   }
   const pointermove=event=>{if(!dragWindow)return;const w=windows().find(w=>w.id===dragWindow.id);w.x=Math.max(0,Math.min(1,dragWindow.x+(event.clientX-dragWindow.startX)/dragWindow.rangeX));w.y=Math.max(0,Math.min(1,dragWindow.y+(event.clientY-dragWindow.startY)/dragWindow.rangeY));positionWindows()}
   const pointerup=event=>{if(!dragWindow)return;dragWindow=null;if(host.hasPointerCapture(event.pointerId))host.releasePointerCapture(event.pointerId);changed(false)}
-  const handlers={click,dblclick,keydown,dragstart,dragover,drop,pointerdown,pointermove,pointerup,pointercancel:pointerup}
+  const handlers={click,dblclick,keydown,dragstart,dragover,drop,dragend:clearDrag,pointerdown,pointermove,pointerup,pointercancel:pointerup}
   for(const[type,handler]of Object.entries(handlers))host.addEventListener(type,handler)
+  document.addEventListener('dragover',movePreview)
   const observer=new ResizeObserver(positionWindows);observer.observe(host)
   render()
-  return ()=>{observer.disconnect();for(const[type,handler]of Object.entries(handlers))host.removeEventListener(type,handler)}
+  return ()=>{clearDrag();observer.disconnect();document.removeEventListener('dragover',movePreview);for(const[type,handler]of Object.entries(handlers))host.removeEventListener(type,handler)}
 }

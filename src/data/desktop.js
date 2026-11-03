@@ -1,11 +1,12 @@
 export const desktopItems=[
   {id:'works',name:'Moje prace',type:'folder'}, {id:'images',name:'Obrazki',type:'folder'}, {id:'tasks',name:'Zadania',type:'folder'}, {id:'trash',name:'Kosz',type:'trash'},
+  {id:'scroll',name:'Przewijanie',type:'folder'},
   {id:'note',name:'Notatka.txt',type:'text',parent:'desktop',content:'Dzisiaj uczę się obsługiwać komputer. Mogę próbować i poprawiać swoją pracę.'},
   {id:'letter',name:'List.txt',type:'text',parent:'works',content:'Cześć! Zapraszam Cię do wspólnej pracy w PinkTower. Razem odkrywamy nowe rzeczy.'},
   {id:'drawing',name:'Rysunek.png',type:'image',parent:'desktop',picture:'landscape'},
   {id:'flower',name:'Kwiat.png',type:'image',parent:'images',picture:'flower'},
 ]
-export const desktopFolders=['desktop','works','images','tasks','trash']
+export const desktopFolders=['desktop','works','images','tasks','trash','scroll']
 export const desktopFiles=desktopItems.filter(item=>item.parent)
 export const desktopTasks=[
   {id:'open-folder',title:'Otwórz folder „Moje prace”.',hint:'Kliknij dwa razy. Możesz też zaznaczyć i nacisnąć Enter.'},
@@ -35,7 +36,7 @@ export function isValidDesktopSession(s) {
   if(!sameKeys(b,['locations','restoreLocations','windows','selected','achievements']) || !sameKeys(b.locations,ids) || ids.some(id=>!desktopFolders.includes(b.locations[id])) || !sameKeys(b.restoreLocations,ids) || Object.values(b.restoreLocations).some(id=>!desktopFolders.includes(id)||id==='trash')) return false
   if(b.selected!==null && !desktopItems.some(item=>item.id===b.selected)) return false
   if(!Array.isArray(b.achievements) || b.achievements.length>marks.length || !b.achievements.every(mark=>marks.includes(mark))) return false
-  if(!Array.isArray(b.windows) || b.windows.length>9 || b.windows.some(w=>!w||typeof w!=='object') || new Set(b.windows.map(w=>w.id)).size!==b.windows.length) return false
+  if(!Array.isArray(b.windows) || b.windows.length>desktopFolders.length+ids.length || b.windows.some(w=>!w||typeof w!=='object') || new Set(b.windows.map(w=>w.id)).size!==b.windows.length) return false
   return b.windows.every(w=>sameKeys(w,['id','target','history','x','y','minimized']) && [...desktopFolders,...ids].includes(w.id) && [...desktopFolders,...ids].includes(w.target) && typeof w.minimized==='boolean' && Number.isFinite(w.x)&&w.x>=0&&w.x<=1&&Number.isFinite(w.y)&&w.y>=0&&w.y<=1&&Array.isArray(w.history)&&w.history.length<=20&&w.history.every(id=>desktopFolders.includes(id)))
 }
 export function readDesktopSession(value) {

@@ -28,6 +28,7 @@ h1, h2, h3, .profile-name, .work-origin, .review-card strong { overflow-wrap: an
 .form-error, .form-feedback { color: var(--color-support); font-size: .95rem; }
 .form-feedback { margin: 12px 0; }
 .form-feedback:empty, .form-error:empty { margin: 0; min-height: 0; }
+.login-card > [type="submit"] { margin-top: 22px; }
 .check-label { cursor: pointer; padding-block: 5px; }
 .check-label input { accent-color: var(--brand-pink-dark); flex-shrink: 0; }
 .student-checks { padding: 10px 16px; border-radius: var(--radius-small); background: var(--surface-muted); }

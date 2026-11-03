@@ -4,8 +4,7 @@
 .teacher-lesson-test .eyebrow { margin-bottom:5px; }
 .lesson-preview-note { padding:12px 18px; margin-bottom:24px; border-radius:var(--radius-small); background:var(--brand-pink-wash); color:var(--text); }
 .desktop-activity { min-width:0; }
-.desktop-fullscreen-instruction { display:none; }
-.desktop-activity:fullscreen .desktop-fullscreen-instruction { display:block; font:500 var(--font-size-section)/1.3 var(--font-heading); }
+.desktop-fullscreen-close { display:none; }
 .desktop-toolbar { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px; }
 .desktop-file-actions { display:flex; align-items:center; flex-wrap:wrap; gap:10px 14px; padding:14px; border:1px solid var(--border); border-radius:var(--radius-small) var(--radius-small) 0 0; background:var(--surface); min-height:78px; font-size:.95rem; }
 .desktop-file-actions strong { overflow-wrap:anywhere; }
@@ -17,7 +16,7 @@
 .desktop-icons { display:grid; grid-template-columns:repeat(2,100px); gap:14px; padding:18px; align-content:start; }
 .desktop-file { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; width:100%; min-width:0; min-height:92px; padding:6px; border:1px solid transparent; border-radius:12px; background:transparent; cursor:pointer; color:var(--text); font:600 .88rem/1.3 var(--font-body); }
 .desktop-file svg { width:54px; height:54px; flex-shrink:0; filter:drop-shadow(0 2px 2px rgba(81,71,74,.08)); }
-.desktop-file span { overflow-wrap:anywhere; }
+.desktop-file span { max-width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .desktop-file:hover { background:rgba(255,250,245,.6); }
 .desktop-file.is-selected { border-color:var(--brand-pink-dark); background:rgba(255,250,245,.8); }
 .desktop-window { position:absolute; width:min(600px,calc(100% - 24px)); height:350px; max-height:calc(100% - 16px); display:flex; flex-direction:column; overflow:hidden; border:1px solid #cdbdb6; border-radius:var(--radius-small); background:var(--surface); box-shadow:var(--shadow); }
@@ -41,8 +40,37 @@
 .desktop-task span { overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
 .desktop-task.is-open { box-shadow:inset 0 -3px 0 var(--brand-pink); }
 .desktop-minimized { min-height:160px; margin-block:20px; }
-.desktop-activity:fullscreen { padding:var(--page-padding); background:var(--paper); overflow:auto; }
-.desktop-activity:fullscreen .desktop-surface { height:calc(100vh - 270px); min-height:350px; }
+.desktop-activity:fullscreen { position:relative; padding:0; background:var(--paper); overflow:hidden; }
+.desktop-activity:fullscreen > :not([data-simulator], .desktop-fullscreen-close) { display:none; }
+.desktop-activity:fullscreen .desktop-fullscreen-close { display:inline-flex; position:absolute; right:max(14px,env(safe-area-inset-right)); top:max(14px,env(safe-area-inset-top)); z-index:2000; width:50px; height:50px; padding:0; background:var(--paper); border:1px solid var(--border); box-shadow:var(--shadow-soft); font-size:1.6rem; }
+.desktop-activity:fullscreen [data-simulator], .desktop-activity:fullscreen [data-desktop-host] { height:100%; min-height:0; }
+.desktop-activity:fullscreen [data-desktop-host] { display:flex; flex-direction:column; }
+.desktop-activity:fullscreen .desktop-file-actions { display:none; }
+.desktop-activity:fullscreen .desktop-surface { height:auto; min-height:0; flex:1; border:0; }
+.desktop-activity:fullscreen .desktop-taskbar { flex-shrink:0; flex-wrap:nowrap; overflow-x:auto; border-radius:0; }
+.desktop-activity:fullscreen .desktop-taskbar > * { flex-shrink:0; }
+.desktop-activity:fullscreen .desktop-window { max-width:calc(100% - 80px); }
+.mouse-instruction { display:flex; justify-content:center; align-items:center; gap:14px; margin-bottom:20px; }
+.mouse-instruction h2 { margin:0; }
+.mouse-instruction .speech-button { flex-shrink:0; }
+.mouse-tutorial { margin:20px 0; padding:16px 20px; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-small); text-align:left; }
+.mouse-tutorial summary { cursor:pointer; min-height:44px; align-content:center; font-weight:700; }
+.mouse-tutorial-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:16px; }
+.mouse-tutorial-heading h3 { margin:0; }
+.mouse-tutorial ol { list-style:none; padding:0; display:grid; gap:20px; margin-block:20px; }
+.mouse-tutorial li { display:flex; gap:14px; }
+.mouse-tutorial li > svg { width:28px; height:28px; flex-shrink:0; color:var(--brand-pink-dark); }
+.mouse-tutorial p { margin:6px 0 0; }
+.desktop-scroll-content { flex:1; min-height:0; overflow-y:auto; overscroll-behavior:contain; padding:18px; background:var(--paper); }
+.desktop-scroll-gallery { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+.desktop-scroll-gallery figure { margin:0; }
+.desktop-scroll-gallery svg { display:block; width:100%; }
+.desktop-scroll-gallery figcaption { padding-block:8px; text-align:center; }
+.desktop-scroll-end { margin-top:20px; font-weight:700; }
+.desktop-drag-preview { position:fixed; z-index:1000; pointer-events:none; display:flex; flex-direction:column; align-items:center; gap:5px; width:114px; padding:10px; border:1px solid var(--brand-pink); border-radius:var(--control-radius); background:var(--paper); box-shadow:0 14px 28px rgba(81,71,74,.22); transform:rotate(-3deg); font:600 .85rem/1.3 var(--font-body); text-align:center; }
+.desktop-drag-preview svg { width:54px; height:54px; }
+.desktop-file.is-dragging { opacity:.35; }
+.is-drop-target { outline:2px solid var(--brand-pink-dark); outline-offset:-3px; background:var(--brand-pink-wash); }
 .desktop-lesson-next { margin-block:24px; }
 @media(max-width:700px) {
   .teacher-lesson-test { align-items:start; flex-direction:column; }
@@ -54,4 +82,11 @@
   .desktop-file-actions label { width:100%; }
   .desktop-file-actions select { flex:1; min-width:0; }
 }
-@media(prefers-reduced-motion:no-preference) { .desktop-file { transition:background 160ms ease,border-color 160ms ease; } }
+@media(prefers-reduced-motion:no-preference) {
+  .desktop-file { transition:background 160ms ease,border-color 160ms ease,opacity 160ms ease; }
+  .desktop-drag-preview { animation:desktop-pick-up 160ms ease-out; }
+  .desktop-file.is-drop-received { animation:desktop-file-placed 200ms ease-out; }
+  @keyframes desktop-pick-up { from { opacity:.4; transform:translateY(4px) rotate(0); } to { opacity:1; transform:translateY(0) rotate(-3deg); } }
+  @keyframes desktop-file-placed { from { background:var(--brand-pink-soft); } to { background:transparent; } }
+}
+@media(prefers-reduced-motion:reduce) { .desktop-drag-preview { transform:none; } }
