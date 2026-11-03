@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { isValidNatureAvatar } from '../src/data/natureFriends.js'
+import { isValidDesktopSession } from '../src/data/desktop.js'
 export const id = z.string().min(1).max(160).regex(/^[\w-]+$/)
 const text = (max: number) => z.string().trim().min(1).max(max)
 const command = z.enum(['forward','left','right'])
@@ -23,6 +24,7 @@ export const inputs = {
   save: z.object({ title: text(160).optional(), data: json.optional(), status: status.optional() }).strict(),
   review: z.object({ decision: z.enum(['completed','returned']) }).strict(),
   tool: z.discriminatedUnion('kind', [
+    z.object({kind:z.literal('desktop'),mode:z.enum(['lesson','practice']),state:z.record(z.string(),z.unknown()).refine(isValidDesktopSession,'Sprawdź stan pulpitu.')}).strict(),
     z.object({ kind: z.literal('typing'), exerciseId: id, result: z.object({ correct: z.number().int().min(0).max(10000), attempts: z.number().int().min(1).max(10000), wpm: z.number().min(0).max(1000).optional() }).strict() }).strict(),
     z.object({ kind: z.literal('robot-program'), challengeId: id, program }).strict(),
     z.object({ kind: z.literal('robot-attempt'), challengeId: id, program, workId: id.optional() }).strict(),

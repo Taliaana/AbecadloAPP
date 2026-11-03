@@ -5,6 +5,7 @@ import { postgresRepository } from '../../server/db/repository.js'
 import { supabaseFiles } from '../../server/storage/supabase.js'
 import { createService } from '../../server/services.js'
 import type { Role } from '../../server/model.js'
+import {initialDesktopSession,readDesktopSession,moveDesktopFile,openDesktopWindow} from '../../src/data/desktop.js'
 
 const configured = ['DATABASE_URL', 'SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY'].every(key => process.env[key])
 test('real Supabase: two repositories share a marked set, private upload/read and scoped cleanup', { skip: configured ? false : 'Brak credentials Supabase — prawdziwego testu nie wykonano.', timeout: 120_000 }, async () => {
@@ -19,6 +20,13 @@ test('real Supabase: two repositories share a marked set, private upload/read an
     assert.equal(pupil.testRunId, created.id); assert.equal(pupil.progress[1], 'completed')
     const bytes = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/l0cAAAAASUVORK5CYII=', 'base64')
     const student: Role = { role: 'student', studentId: created.studentId, tokenId: randomUUID() }
+    const desktop=initialDesktopSession();desktop.currentStep=6
+    moveDesktopFile(desktop.board,'note','works');openDesktopWindow(desktop.board,'works')
+    await runA('POST','tools',{kind:'desktop',mode:'lesson',state:desktop},student)
+    const restored=(await runB('GET',`students/${created.studentId}`,{},teacher)).value
+    assert.deepEqual(readDesktopSession(restored.toolProgress.desktop.lesson),desktop)
+    assert.deepEqual(restored.progress,pupil.progress)
+    assert.deepEqual(restored.toolProgress.typingResults,pupil.toolProgress.typingResults)
     const workId = pupil.works[0].id
     const upload = (await runA('POST', 'assets', { workId, mimeType: 'image/png', size: bytes.length, hash: createHash('sha256').update(bytes).digest('hex') }, student)).value
     const sent = await fetch(upload.signedUrl, { method: 'PUT', body: bytes, headers: { 'Content-Type': 'image/png' } }); assert.equal(sent.ok, true)

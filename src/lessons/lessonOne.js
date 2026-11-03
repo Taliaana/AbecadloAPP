@@ -5,10 +5,10 @@ import { equipmentImage, equipmentStation } from '../components/equipmentStation
 import { bindSpeechButtons, speechButton } from '../components/speechButton.js'
 import { acceptsEquipment, equipment, matchesEquipmentName } from '../data/computerEquipment.js'
 import { getLesson } from '../data/lessons.js'
-import { completeLesson, startLesson } from '../storage/studentStorage.js'
+import { studentLessonSession } from './session.js'
 
-export async function lessonOneView({ render }) {
-  await startLesson(1)
+export async function lessonOneView({ render, lessonSession=studentLessonSession }) {
+  await lessonSession.start(1)
   const flow = createStepFlow(5)
   const title = getLesson(1).title
   const placed = new Set()
@@ -40,11 +40,11 @@ export async function lessonOneView({ render }) {
     return `${instruction('Połącz obraz z nazwą. Możesz posłuchać.', 'eye')}<p class="eyebrow">Obraz i nazwa · ${index + 1} z ${equipment.length}</p>${equipmentImage(item, 'equipment-portrait equipment-portrait--small')}${matched ? `${deviceName(item)}<p class="equipment-description">${item.description} ${speechButton(item.speechText, `Opis: ${item.name}`)}</p><p role="status">Gotowe.</p>${next}` : `<div class="equipment-name-choices">${[...equipment.slice(2), ...equipment.slice(0, 2)].map(choice => `<div><button type="button" class="button button-secondary" data-match="${choice.id}">${choice.name.toLocaleUpperCase('pl-PL')}</button>${speechButton(`${choice.name}.`, choice.name)}</div>`).join('')}</div><p class="gentle-hint" data-match-status role="status"></p>`}`
   }
   function current() {
-    const content = flow.phase === 'complete' ? completionScreen({ final: flow.isFinalStep, lessonTitle: `Lekcja „${title}”`, nextLessonId: 2, nextUnlocked: flow.isFinalStep, finalMessage: 'Sprzęt komputerowy już poznany. Możesz przejść do kolejnej lekcji.' }) : [learn, copy, observe, arrange, match][flow.currentStep - 1]()
-    return { html: lessonLayout(`<div class="equipment-lesson">${content}</div>`, title, flow.currentStep, 5), focusTarget: modelUntil && Date.now() < modelUntil ? '[data-hide-model]' : '#main-content', mount }
+    const content = flow.phase === 'complete' ? completionScreen({ preview:lessonSession.preview, final: flow.isFinalStep, lessonTitle: `Lekcja „${title}”`, nextLessonId: 2, nextUnlocked: flow.isFinalStep, finalMessage: 'Sprzęt komputerowy już poznany. Możesz przejść do kolejnej lekcji.' }) : [learn, copy, observe, arrange, match][flow.currentStep - 1]()
+    return { html: lessonLayout(`<div class="equipment-lesson">${content}</div>`, title, flow.currentStep, 5,lessonSession), scrollKey:`equipment-${flow.currentStep}-${flow.phase}-${index}`, focusTarget: modelUntil && Date.now() < modelUntil ? '[data-hide-model]' : flow.phase==='activity'&&flow.currentStep===2?'[data-copy-input]':'#main-content', mount }
   }
   const rerender = () => render(current())
-  async function finishStep() { if (flow.isFinalStep) await completeLesson(1); flow.completeStep(); index = 0; copied = false; matched = false; rerender() }
+  async function finishStep() { if (flow.isFinalStep) await lessonSession.complete(1); flow.completeStep(); index = 0; copied = false; matched = false; rerender() }
   function nextDevice() {
     if ((flow.currentStep === 2 && !copied) || (flow.currentStep === 5 && !matched)) return
     if (index === equipment.length - 1) finishStep()

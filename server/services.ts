@@ -171,6 +171,11 @@ export function createService(repository: Repository, files: Files) {
           if (!student.toolProgress.unlockedTools.includes('typewriting')) fail('Narzędzie jest jeszcze niedostępne.', 409)
           if (input.result.correct > input.result.attempts) fail('Sprawdź wynik.')
           student.toolProgress.typingResults[input.exerciseId] = { ...input.result, updatedAt: now() }
+        } else if(input.kind==='desktop') {
+          if(input.mode==='lesson') lessonFor(student,2)
+          else if(!student.toolProgress.unlockedTools.includes('mouse-practice')) fail('Narzędzie jest jeszcze niedostępne.',409)
+          student.toolProgress.desktop ||= {}
+          student.toolProgress.desktop[input.mode]={...input.state,updatedAt:now()}
         } else {
           const assignedWork = input.kind === 'robot-attempt' && input.workId ? workFor(state, session, input.workId) : null
           if (assignedWork && assignedWork.data.kind !== 'robot-assignment') fail('To nie jest zadanie Robota.')

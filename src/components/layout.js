@@ -47,15 +47,15 @@ export function teacherLayout(content, activeRoute = '') {
     </div>`
 }
 
-export function lessonLayout(content, title, step, total = 3) {
+export function lessonLayout(content, title, step, total = 3, { preview=false } = {}) {
   return `
     <div class="lesson-shell">
       <header class="lesson-header">
-        <a class="button button-icon" href="#/home" aria-label="Zamknij lekcję">${icon('back')}</a>
+        <a class="button button-icon" href="#${preview?'/teacher/lessons':'/home'}" aria-label="Zamknij lekcję">${icon('back')}</a>
         <div><span class="eyebrow">Lekcja</span><h1>${title}</h1></div>
         <span class="step-count" aria-label="Krok ${step} z ${total}">${step} z ${total}</span>
       </header>
       <div class="lesson-progress" aria-hidden="true"><span style="width:${(step / total) * 100}%"></span></div>
-      <main id="main-content" class="lesson-content" tabindex="-1"><div class="lesson-stage">${content}</div></main>
+      <main id="main-content" class="lesson-content" tabindex="-1">${preview?'<aside class="lesson-preview-note" role="note">Tryb testowy nauczyciela · bez zapisu postępów dzieci</aside>':''}<div class="lesson-stage">${content}</div></main>
     </div>`
 }

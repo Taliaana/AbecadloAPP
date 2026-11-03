@@ -65,6 +65,7 @@ export const updateStudentProfile = (studentId, changes) => mutation(`students/$
 export const archiveStudent = studentId => mutation(`students/${studentId}/archive`)
 export const deleteStudentProfile = studentId => mutation(`students/${studentId}`, { confirmation: 'delete-student' }, 'DELETE')
 export const updateCurrentAvatar = config => mutation('avatar', config, 'PUT')
+export const saveDesktopSession = (mode,state) => mutation('tools',{kind:'desktop',mode,state})
 export const getStudentProgress = (studentId = cache.currentStudentId) => cache.students[studentId]?.progress || {}
 export const getCurrentLesson = studentId => { const progress = getStudentProgress(studentId); return implementedLessons.find(lesson => ['available','in-progress'].includes(progress[lesson.id])) || [...implementedLessons].reverse().find(lesson => progress[lesson.id] === 'completed') || implementedLessons[0] }
 export const startLesson = lessonId => mutation('progress', { lessonId, action: getStudentProgress()[lessonId] === 'completed' ? 'repeat' : 'start' })

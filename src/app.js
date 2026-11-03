@@ -27,11 +27,17 @@ import { researchBoardView } from './modules/researchBoard.js'
 import { getCurrentRole, getCurrentStudent, getStudentProgress, leaveRole, getAssignment, getWork, revalidate, retryPending, getStateSnapshot, mustWaitForSave, hasUnsavedChanges, flushData } from './storage/studentStorage.js'
 import { flushAutosaves } from './utils/autosave.js'
 import { getLesson } from './data/lessons.js'
+import { teacherLessonsView } from './views/teacher/lessonsView.js'
+import { teacherLessonSession } from './lessons/session.js'
+import { resetViewScroll } from './utils/viewScroll.js'
+import { desktopPracticeView } from './modules/desktopPractice.js'
 
 export function startApp(root) {
   let cleanup = null
   let expectedHashChange = null
   let routeVersion = 0
+  let lastScrollKey=null
+  const lessonViews = { 1: lessonOneView, 2: lessonTwoView, 3: lessonThreeView, 4: lessonFourView }
   const status = document.createElement('aside')
   status.className = 'data-status no-print'; status.setAttribute('aria-live', 'polite'); status.hidden = true
   document.body.append(status)
@@ -94,6 +100,9 @@ export function startApp(root) {
     cleanup = null
     root.innerHTML = view.html
     root.firstElementChild?.classList.add('view-enter')
+    const scrollKey=`${location.hash}:${view.scrollKey || ''}`
+    if(scrollKey!==lastScrollKey) resetViewScroll(root)
+    lastScrollKey=scrollKey
     cleanup = view.mount?.(root) || null
     root.firstElementChild?.addEventListener('submit', event => {
       const button = event.submitter
@@ -128,6 +137,7 @@ export function startApp(root) {
   function renderTeacherRoute(route) {
     const staticRoutes = {
       '/teacher/class': teacherClassView,
+      '/teacher/lessons': teacherLessonsView,
       '/teacher/voice': teacherVoiceView,
       '/teacher/migration': teacherMigrationView,
       '/profiles': profileView,
@@ -137,6 +147,13 @@ export function startApp(root) {
       '/teacher/students/new': teacherStudentFormView,
     }
     if (staticRoutes[route]) { renderView(staticRoutes[route](context())); return true }
+    const lessonTest=route.match(/^\/teacher\/test-lesson\/(\d+)$/)
+    if(lessonTest) {
+      const id=Number(lessonTest[1])
+      if(!getLesson(id)?.implemented || !lessonViews[id]) navigate('/teacher/lessons')
+      else renderView(lessonViews[id](context({lessonSession:teacherLessonSession()})))
+      return true
+    }
     const studentMatch = route.match(/^\/teacher\/student\/([^/]+)$/)
     if (studentMatch) { renderView(teacherStudentView(context({ studentId: studentMatch[1] }))); return true }
     const workMatch = route.match(/^\/teacher\/work\/([^/]+)$/)
@@ -153,6 +170,7 @@ export function startApp(root) {
       '/avatar': avatarView,
       '/tools/typewriting': typewritingView,
       '/tools/mouse': mousePracticeView,
+      '/tools/desktop': desktopPracticeView,
       '/tools/robot': robotView,
       '/tools/research': researchBoardView,
     }
@@ -162,7 +180,6 @@ export function startApp(root) {
       const id = Number(lessonMatch[1])
       const progress = getStudentProgress()
       const lesson = getLesson(id)
-      const lessonViews = { 1: lessonOneView, 2: lessonTwoView, 3: lessonThreeView, 4: lessonFourView }
       if (progress[id] === 'locked' || !lesson?.implemented || !lessonViews[id]) { navigate('/path'); return true }
       renderView(lessonViews[id](context())); return true
     }

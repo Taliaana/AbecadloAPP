@@ -26,6 +26,8 @@ Stare zapisy `abecadlo-state-v1/v2/v3` i obrazy IndexedDB są czytane wyłączni
 - `api/index.ts` – jedno wejście Vercel Functions; rewrite obejmuje także zagnieżdżone ścieżki API.
 - `tests/backend`, `tests/storage`, `tests/ui` – domena/HTTP, transport i scenariusze przeglądarki.
 
+Ćwiczebny pulpit w lekcji myszy, zapis i tryb testowania materiałów nauczyciela opisuje [instrukcja modułu](docs/desktop-practice.md).
+
 ## Model produktu
 
 Ścieżka lekcji jest sekwencyjna. Powtórka nie cofa ukończonej lekcji. Typewriting ma osobny `toolProgress`; dodatkowe zadania nie zmieniają aktualnej lekcji.

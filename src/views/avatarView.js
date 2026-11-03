@@ -25,7 +25,7 @@ export function avatarView({ student, navigate }) {
       return `<button type="button" class="option-pill friend-option" data-trait="${trait}" data-value="${value}" aria-pressed="${config.kind === 'nature' && c[trait] === value}">${color ? `<span class="friend-swatch" style="background-color:${color[1]}" aria-hidden="true"></span>` : avatar({avatarConfig:{...c,[trait]:value}},'large')}<span>${label}</span></button>`
     }).join('')}</div></fieldset>`).join('')
   }
-  const content = `<section class="page-heading"><p class="eyebrow">Mój profil</p><h1>Przyjaciele Natury</h1><p>Wybierz zwierzę i nadaj mu swój wygląd.</p></section>
+  const content = `<section class="page-heading"><div class="heading-actions"><p class="eyebrow">Mój profil</p><button class="button button-secondary" type="button" data-switch-profile>Zmień profil</button></div><h1>Przyjaciele Natury</h1><p>Wybierz zwierzę i nadaj mu swój wygląd.</p></section>
     <div class="avatar-editor friend-editor">
       <aside class="avatar-preview friend-preview"><div data-avatar-preview>${avatar(profile(),'xlarge')}</div><strong>${escapeHtml(student.profile.name)}</strong><p class="friend-legacy-note" ${config.kind==='nature'?'hidden':''}>Twój obecny avatar zostanie, dopóki nie zapiszesz nowego.</p>
         <div class="form-actions"><button type="button" class="button button-secondary" data-random-avatar>Losuj wygląd</button><button type="button" class="button button-ghost" data-undo-avatar disabled>Cofnij zmianę</button></div>
@@ -37,12 +37,11 @@ export function avatarView({ student, navigate }) {
         <div data-avatar-options>${optionsHtml()}</div>
         <p class="form-feedback" role="status" data-avatar-status></p>
         <div class="form-actions"><button class="button button-primary" type="button" data-save-avatar>Zapisz avatar</button><button class="button button-secondary" type="button" data-cancel-avatar>Anuluj</button></div>
-        <button class="button button-ghost" type="button" data-switch-profile>Zmień profil</button>
       </section>
     </div>`
   return { html:appLayout(content,student), mount(root) {
     let alive=true, busy=false, failedSave=false
-    const status=root.querySelector('[data-avatar-status]'), controls=root.querySelector('.friend-editor')
+    const status=root.querySelector('[data-avatar-status]')
     function update(redraw=false) {
       const currentGroup=natureFriends.find(friend=>friend.id===config.species)?.group || groups[0]
       if(group!==currentGroup) {
@@ -69,7 +68,7 @@ export function avatarView({ student, navigate }) {
       history.push(structuredClone(config)); if(history.length>30) history.shift()
       config=next; update(redraw); status.textContent='Podgląd zmieniony. Zapisz, gdy będzie gotowy.'
     }
-    controls.addEventListener('click', async event=>{
+    const onClick=async event=>{
       const button=event.target.closest('button'); if(!button || busy) return
       if(button.dataset.trait) change({...animal(),[button.dataset.trait]:button.dataset.value})
       else if(button.dataset.animalGroup) {
@@ -92,7 +91,7 @@ export function avatarView({ student, navigate }) {
       } else if(button.hasAttribute('data-reset-avatar')) change(structuredClone(saved),true)
       else if(button.hasAttribute('data-cancel-avatar')) navigate('/home')
       else if(button.hasAttribute('data-save-avatar') || button.hasAttribute('data-switch-profile')) {
-        busy=true; const disabled=new Map([...controls.querySelectorAll('button')].map(control=>[control,control.disabled]))
+        busy=true; const disabled=new Map([...root.querySelectorAll('.friend-editor button, [data-switch-profile]')].map(control=>[control,control.disabled]))
         disabled.forEach((_,control)=>{control.disabled=true});button.setAttribute('aria-busy','true')
         try {
           if(failedSave) { await retryPending(); failedSave=false }
@@ -101,7 +100,8 @@ export function avatarView({ student, navigate }) {
         } catch { failedSave=true; if(alive) status.textContent='Nie udało się zapisać. Twój podgląd pozostał. Spróbuj ponownie.' }
         finally { if(alive) { busy=false;disabled.forEach((value,control)=>{control.disabled=value});button.removeAttribute('aria-busy') } }
       }
-    })
-    return ()=>{alive=false}
+    }
+    root.addEventListener('click',onClick)
+    return ()=>{alive=false;root.removeEventListener('click',onClick)}
   } }
 }

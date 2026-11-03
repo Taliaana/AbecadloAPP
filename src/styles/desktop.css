@@ -1,0 +1,57 @@
+.teacher-lesson-test { display:flex; justify-content:space-between; align-items:center; gap:var(--grid-gap); padding:24px var(--card-padding); border-bottom:1px solid var(--border); }
+.teacher-lesson-test:last-child { border-bottom:0; }
+.teacher-lesson-test h2 { font-size:var(--font-size-section); margin-bottom:0; }
+.teacher-lesson-test .eyebrow { margin-bottom:5px; }
+.lesson-preview-note { padding:12px 18px; margin-bottom:24px; border-radius:var(--radius-small); background:var(--brand-pink-wash); color:var(--text); }
+.desktop-activity { min-width:0; }
+.desktop-fullscreen-instruction { display:none; }
+.desktop-activity:fullscreen .desktop-fullscreen-instruction { display:block; font:500 var(--font-size-section)/1.3 var(--font-heading); }
+.desktop-toolbar { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px; }
+.desktop-file-actions { display:flex; align-items:center; flex-wrap:wrap; gap:10px 14px; padding:14px; border:1px solid var(--border); border-radius:var(--radius-small) var(--radius-small) 0 0; background:var(--surface); min-height:78px; font-size:.95rem; }
+.desktop-file-actions strong { overflow-wrap:anywhere; }
+.desktop-file-actions label { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+.desktop-file-actions select { min-height:44px; max-width:100%; padding:8px 12px; color:var(--text); border:1px solid var(--border); border-radius:var(--control-radius); background:var(--paper); }
+.desktop-file-actions .button { min-height:44px; }
+.desktop-surface { position:relative; height:520px; isolation:isolate; overflow:hidden; background:#f5e6e3; border-inline:1px solid var(--border); }
+.desktop-wallpaper { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; z-index:-1; }
+.desktop-icons { display:grid; grid-template-columns:repeat(2,100px); gap:14px; padding:18px; align-content:start; }
+.desktop-file { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; width:100%; min-width:0; min-height:92px; padding:6px; border:1px solid transparent; border-radius:12px; background:transparent; cursor:pointer; color:var(--text); font:600 .88rem/1.3 var(--font-body); }
+.desktop-file svg { width:54px; height:54px; flex-shrink:0; filter:drop-shadow(0 2px 2px rgba(81,71,74,.08)); }
+.desktop-file span { overflow-wrap:anywhere; }
+.desktop-file:hover { background:rgba(255,250,245,.6); }
+.desktop-file.is-selected { border-color:var(--brand-pink-dark); background:rgba(255,250,245,.8); }
+.desktop-window { position:absolute; width:min(600px,calc(100% - 24px)); height:350px; max-height:calc(100% - 16px); display:flex; flex-direction:column; overflow:hidden; border:1px solid #cdbdb6; border-radius:var(--radius-small); background:var(--surface); box-shadow:var(--shadow); }
+.desktop-titlebar { display:flex; align-items:center; padding:4px 6px; gap:4px; background:#f4e8e4; border-bottom:1px solid var(--border); }
+.desktop-window-handle { display:flex; align-items:center; gap:8px; flex:1; min-width:0; min-height:44px; padding:4px 8px; border:0; border-radius:10px; background:transparent; cursor:move; touch-action:none; text-align:left; font-weight:700; }
+.desktop-window-handle svg { width:28px; height:28px; flex-shrink:0; }
+.desktop-window-handle span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.desktop-titlebar .button { min-height:44px; width:44px; padding:0; flex-shrink:0; font-size:1.5rem; }
+.desktop-explorer-nav { display:flex; align-items:center; flex-wrap:wrap; gap:6px; padding:8px; border-bottom:1px solid var(--border); font-size:.9rem; }
+.desktop-explorer-nav .button { min-height:44px; padding:8px 10px; font-size:.95rem; }
+.desktop-folder-content { display:grid; grid-template-columns:repeat(auto-fill,minmax(95px,1fr)); align-content:start; flex:1; gap:8px; padding:12px; overflow:auto; min-height:0; }
+.desktop-folder-content p { grid-column:1/-1; color:var(--text-muted); padding:12px; }
+.desktop-document { padding:24px; overflow:auto; line-height:1.7; background:var(--paper); flex:1; }
+.desktop-image-preview { display:grid; place-items:center; min-height:0; flex:1; padding:18px; overflow:auto; }
+.desktop-image-preview svg { display:block; width:100%; max-height:100%; }
+.desktop-taskbar { display:flex; align-items:center; flex-wrap:wrap; gap:6px; padding:8px; border:1px solid var(--border); border-radius:0 0 var(--radius-small) var(--radius-small); background:var(--surface); }
+.desktop-brand img { display:block; width:32px; height:38px; object-fit:contain; }
+.desktop-taskbar .button { min-height:44px; padding:8px 12px; }
+.desktop-task { display:flex; align-items:center; gap:6px; max-width:160px; min-height:44px; border:1px solid var(--border); border-radius:12px; background:var(--paper); padding:5px 8px; cursor:pointer; }
+.desktop-task svg { width:28px; height:28px; flex-shrink:0; }
+.desktop-task span { overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+.desktop-task.is-open { box-shadow:inset 0 -3px 0 var(--brand-pink); }
+.desktop-minimized { min-height:160px; margin-block:20px; }
+.desktop-activity:fullscreen { padding:var(--page-padding); background:var(--paper); overflow:auto; }
+.desktop-activity:fullscreen .desktop-surface { height:calc(100vh - 270px); min-height:350px; }
+.desktop-lesson-next { margin-block:24px; }
+@media(max-width:700px) {
+  .teacher-lesson-test { align-items:start; flex-direction:column; }
+  .desktop-icons { grid-template-columns:repeat(3,minmax(0,1fr)); gap:4px; padding:8px; }
+  .desktop-surface { height:500px; }
+  .desktop-toolbar .button { flex:1 1 140px; }
+  .desktop-file-actions { padding:10px; }
+  .desktop-file-actions .button { flex:1 1 100px; }
+  .desktop-file-actions label { width:100%; }
+  .desktop-file-actions select { flex:1; min-width:0; }
+}
+@media(prefers-reduced-motion:no-preference) { .desktop-file { transition:background 160ms ease,border-color 160ms ease; } }

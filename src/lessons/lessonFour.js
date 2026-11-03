@@ -1,10 +1,10 @@
 import { lessonLayout } from '../components/layout.js'
 import { icon } from '../components/icons.js'
 import { completionScreen, createStepFlow } from '../components/lessonFlow.js'
-import { completeLesson, startLesson } from '../storage/studentStorage.js'
+import { studentLessonSession } from './session.js'
 
-export async function lessonFourView({ render }) {
-  await startLesson(4)
+export async function lessonFourView({ render, lessonSession=studentLessonSession }) {
+  await lessonSession.start(4)
   const flow = createStepFlow(3)
   const found = new Set()
   let position = 0
@@ -18,11 +18,11 @@ export async function lessonFourView({ render }) {
     return `<section class="lesson-task lesson-task--center"><p class="eyebrow">Układam dłonie</p><h2>Gdzie położyć palce wskazujące?</h2><div class="hand-choice-grid"><button type="button" class="hand-choice" data-answer="wrong"><strong>Na A i L</strong><span>Skrajne klawisze</span></button><button type="button" class="hand-choice" data-answer="correct"><strong>Na F i J</strong><span>Klawisze z wypustkami</span></button></div></section>`
   }
   function current() {
-    const content = flow.phase === 'complete' ? completionScreen({ final: flow.isFinalStep, lessonTitle: 'Typewriting – układam dłonie', finalMessage: 'Możesz ćwiczyć F i J w Pracowni.' }) : activity()
-    return { html: lessonLayout(content, 'Typewriting – układam dłonie', flow.currentStep, 3), mount }
+    const content = flow.phase === 'complete' ? completionScreen({ preview:lessonSession.preview, final: flow.isFinalStep, lessonTitle: 'Typewriting – układam dłonie', finalMessage: 'Możesz ćwiczyć F i J w Pracowni.' }) : activity()
+    return { html: lessonLayout(content, 'Typewriting – układam dłonie', flow.currentStep, 3,lessonSession), scrollKey:`hands-${flow.currentStep}-${flow.phase}`, mount }
   }
   const rerender = () => render(current())
-  async function finishStep() { if (flow.isFinalStep) await completeLesson(4); flow.completeStep(); rerender() }
+  async function finishStep() { if (flow.isFinalStep) await lessonSession.complete(4); flow.completeStep(); rerender() }
   function press(key) { if (key !== sequence[position]) return; position += 1; if (position === sequence.length) finishStep(); else rerender() }
   function mount(root) {
     if (flow.phase === 'complete') { root.querySelector('[data-step-continue]')?.addEventListener('click', () => { flow.continue(); rerender() }); return }

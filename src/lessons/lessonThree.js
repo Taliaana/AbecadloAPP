@@ -1,10 +1,10 @@
 import { lessonLayout } from '../components/layout.js'
 import { icon } from '../components/icons.js'
 import { completionScreen, createStepFlow } from '../components/lessonFlow.js'
-import { completeLesson, startLesson } from '../storage/studentStorage.js'
+import { studentLessonSession } from './session.js'
 
-export async function lessonThreeView({ render }) {
-  await startLesson(3)
+export async function lessonThreeView({ render, lessonSession=studentLessonSession }) {
+  await lessonSession.start(3)
   const flow = createStepFlow(4)
   const found = new Set()
   let usedSpace = false
@@ -17,25 +17,25 @@ export async function lessonThreeView({ render }) {
     return `<section class="lesson-task lesson-task--center"><p class="eyebrow">Znajdź klawisze</p><h2>Wybierz: Spacja, Backspace i Enter.</h2><div class="key-finder">${['Shift','Spacja','A','Backspace','Enter','Tab'].map((key) => `<button type="button" class="key-button ${found.has(key) ? 'is-found' : ''}" data-key="${key}" ${found.has(key) ? 'disabled' : ''}>${found.has(key) ? `${icon('check')} ` : ''}${key}</button>`).join('')}</div><p class="gentle-hint" role="status">Znaleziono ${found.size} z 3.</p></section>`
   }
   function current() {
-    const content = flow.phase === 'complete' ? completionScreen({ final: flow.isFinalStep, lessonTitle: 'Poznaję klawiaturę', nextLessonId: 4, nextUnlocked: flow.isFinalStep }) : activity()
-    return { html: lessonLayout(content, 'Poznaję klawiaturę', flow.currentStep, 4), mount }
+    const content = flow.phase === 'complete' ? completionScreen({ preview:lessonSession.preview, final: flow.isFinalStep, lessonTitle: 'Poznaję klawiaturę', nextLessonId: 4, nextUnlocked: flow.isFinalStep }) : activity()
+    return { html: lessonLayout(content, 'Poznaję klawiaturę', flow.currentStep, 4,lessonSession), scrollKey:`keyboard-${flow.currentStep}-${flow.phase}`, mount }
   }
   const rerender = () => render(current())
-  async function finishStep() { if (flow.isFinalStep) await completeLesson(3); flow.completeStep(); rerender() }
+  async function finishStep() { if (flow.isFinalStep) await lessonSession.complete(3); flow.completeStep(); rerender() }
   function mount(root) {
     if (flow.phase === 'complete') { root.querySelector('[data-step-continue]')?.addEventListener('click', () => { flow.continue(); rerender() }); return }
     if (flow.currentStep === 1) {
-      const input = root.querySelector('[data-name]'); const button = root.querySelector('[data-finish-step]'); input.focus()
+      const input = root.querySelector('[data-name]'); const button = root.querySelector('[data-finish-step]'); input.focus({preventScroll:true})
       input.addEventListener('input', () => { button.disabled = input.value.trim().length < 2 }); button.addEventListener('click', finishStep)
     }
     if (flow.currentStep === 2) {
-      const input = root.querySelector('[data-phrase]'); const button = root.querySelector('[data-finish-step]'); input.focus()
+      const input = root.querySelector('[data-phrase]'); const button = root.querySelector('[data-finish-step]'); input.focus({preventScroll:true})
       input.addEventListener('keydown', (event) => { if (event.key === ' ') usedSpace = true; if (event.key === 'Backspace') usedBackspace = true })
       input.addEventListener('input', () => { button.disabled = input.value.trim().toLocaleLowerCase('pl') !== 'mały kot' || !usedSpace || !usedBackspace })
       button.addEventListener('click', finishStep)
     }
     if (flow.currentStep === 3) {
-      const input = root.querySelector('[data-enter]'); input.focus(); input.addEventListener('keydown', (event) => { if (event.key === 'Enter' && input.value.trim().toLowerCase() === 'gotowe') finishStep() })
+      const input = root.querySelector('[data-enter]'); input.focus({preventScroll:true}); input.addEventListener('keydown', (event) => { if (event.key === 'Enter' && input.value.trim().toLowerCase() === 'gotowe') finishStep() })
     }
     if (flow.currentStep === 4) root.querySelectorAll('[data-key]').forEach((button) => button.addEventListener('click', () => {
       if (!['Spacja', 'Backspace', 'Enter'].includes(button.dataset.key)) return

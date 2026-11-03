@@ -1,9 +1,9 @@
 import { icon } from './icons.js'
 
-export function createStepFlow(totalSteps) {
-  let currentStep = 1
-  let phase = 'activity'
-  const completedSteps = new Set()
+export function createStepFlow(totalSteps, initial = {}) {
+  let currentStep = Math.max(1,Math.min(totalSteps,Number(initial.currentStep)||1))
+  let phase = initial.phase === 'complete' ? 'complete' : 'activity'
+  const completedSteps = new Set((initial.completedSteps || []).filter(step=>Number.isInteger(step)&&step>=1&&step<=totalSteps))
 
   return {
     get currentStep() { return currentStep },
@@ -34,7 +34,7 @@ export function getCompletionModel({ final = false, nextLessonId = null, nextUnl
   }
 }
 
-export function completionScreen({ final = false, lessonTitle = '', nextLessonId = null, nextUnlocked = false, finalMessage = '' } = {}) {
+export function completionScreen({ final = false, lessonTitle = '', nextLessonId = null, nextUnlocked = false, finalMessage = '', preview=false } = {}) {
   const model = getCompletionModel({ final, nextLessonId, nextUnlocked })
   if (!final) {
     return `<section class="completion-card completion-card--step" role="status" aria-live="polite">
@@ -47,8 +47,8 @@ export function completionScreen({ final = false, lessonTitle = '', nextLessonId
     <span class="completion-check">${icon('check')}</span><p class="eyebrow">Lekcja ukończona</p>
     <h2>${lessonTitle} ukończona.</h2><p>${finalMessage || (model.nextLessonId ? 'Następna lekcja jest już dostępna.' : 'Dobra praca. Możesz wrócić do domu.')}</p>
     <div class="completion-actions">
-      <a class="button button-secondary" href="#/home">Wróć do domu</a>
-      ${model.nextLessonId ? `<a class="button button-primary" href="#/lesson/${model.nextLessonId}">Przejdź dalej ${icon('arrow')}</a>` : ''}
+      <a class="button button-secondary" href="#${preview?'/teacher/lessons':'/home'}">${preview?'Wróć do testów':'Wróć do domu'}</a>
+      ${model.nextLessonId ? `<a class="button button-primary" href="#${preview?'/teacher/test-lesson':'/lesson'}/${model.nextLessonId}">Przejdź dalej ${icon('arrow')}</a>` : ''}
     </div>
   </section>`
 }
