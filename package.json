@@ -12,6 +12,7 @@
     "test:ui": "node scripts/run-ui-tests.mjs",
     "test:backend": "node --import tsx --test tests/backend/*.test.ts",
     "test:supabase": "node --env-file-if-exists=.env --import tsx --test tests/integration/*.test.ts",
+    "test:live-backend": "node --env-file=.env --import tsx scripts/verify-live-backend.mjs",
     "typecheck:server": "tsc -p tsconfig.server.json",
     "hash-pin": "node --import tsx scripts/hash-pin.ts",
     "db:generate": "node --env-file-if-exists=.env node_modules/drizzle-kit/bin.cjs generate",

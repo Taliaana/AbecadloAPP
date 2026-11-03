@@ -147,7 +147,7 @@ Checklist:
 
 Po buildzie `node --test tests/security/*.test.mjs` sprawdza brak nazw sekretów i PIN-u pilotażu w bundlu przeglądarki. `npm run typecheck:server` sprawdza backend TypeScript. Ustaw `PINKTOWER_NO_SCREENSHOTS=1` dla testów bez screenshotów.
 
-Bez credentials nie sprawdzono prawdziwego połączenia PostgreSQL, wykonania DDL w Supabase, konfiguracji uprawnień projektu, rzeczywistych signed uploads ani wdrożenia Vercela/cron. Po ich ustawieniu trzeba wykonać checklistę powyżej. Żaden test nie zastępuje potwierdzenia rzeczywistego importu na produkcyjnym origin.
+Bez credentials testy pomijają prawdziwe usługi. Aktualna weryfikacja z dostępem do rzeczywistego projektu jest opisana w [raporcie z 2 listopada 2026](backend-verification.md). Żaden test nie zastępuje potwierdzenia rzeczywistego importu na produkcyjnym origin.
 
 ## Test bazy danych w aplikacji
 
@@ -174,3 +174,15 @@ Lokalnie utwórz **`C:\Abcadlo\.env`** z `.env.example`. Na Vercelu te same nazw
 Następnie uruchom osobno `npm run db:migrate`, `npm run storage:setup` oraz `npm run test:supabase`. Istniejące migracje są addytywne; migrator Drizzle pamięta wykonane pliki. Setup bucketu nie usuwa plików, a ponowne wywołanie ustawia tę samą prywatność i limity. Nie uruchamiaj `db:generate` tylko po to, żeby podłączyć istniejący projekt.
 
 `test:supabase` używa **prawdziwego repozytorium PostgreSQL i Storage**. Tworzy wyłącznie własny oznaczony zestaw, czyta go przez drugie połączenie, wykonuje signed upload/read, usuwa dokładnie ten zestaw i sprawdza zniknięcie danych. `finally` ponawia sprzątanie również po błędzie. Nie wywołuje zbiorczego usuwania wszystkich zestawów. W razie niedostępności usług także cleanup może wymagać ponowienia w panelu. Test nie wykonuje migracji ani setupu automatycznie. Bez wymaganych credentials jest **pomijany z jawnym komunikatem**, co nie potwierdza połączenia z Supabase. Dwa połączenia testowe nie zastępują ręcznego sprawdzenia dwóch fizycznych komputerów na tej samej domenie.
+
+## Weryfikacja interfejsu z prawdziwą bazą
+
+`npm run test:live-backend` uruchamia istniejący frontend i API na lokalnych portach 4175/3005, z prawdziwymi credentials z `.env`. Nie używa mocków ani testowego serwera w pamięci. PIN jest pobierany z `PINKTOWER_TEST_TEACHER_PIN` lub używa pilotażowego 1234; musi pasować do poprawnego `TEACHER_PIN_HASH`. Skrypt nie ustawia ani nie resetuje hasha samodzielnie. Lokalny runtime ustawia Origin na swój rzeczywisty lokalny adres; nie wyłącza kontroli Origin, autoryzacji ani RLS.
+
+Test tworzy tylko własne zestawy z panelu/endpointu testowego, weryfikuje rekordy SQL, dwie sesje, reload, wybór ucznia przez UI, zapis pracy, prywatne obrazy, logout i odrzucenie starego cookie. Przygotowuje sztuczną kopię legacy w nowym, izolowanym profilu przeglądarki i wykonuje wyłącznie **preview**. Nie klika importu. Cleanup zawsze używa `DELETE teacher/test-data` z konkretnym `testRunId`, nigdy opcji „usuń wszystkie”. Sprawdza usunięcie zależnych rekordów i odświeżenie drugiej sesji. Nie tworzy screenshotów ani trace.
+
+Po uzgodnionym deploymencie można wskazać `PINKTOWER_VERIFY_URL=https://abecadlo-app.vercel.app`, aby uruchomić ten sam scenariusz na produkcyjnym UI. Nie ustawiaj tej zmiennej dla innego projektu. Lokalny DATABASE_URL musi wskazywać tę samą bazę, bo skrypt sprawdza SQL dla własnych testowych ID. Produkcyjny PIN musi pasować; po HTTPS sprawdzana jest również flaga Secure cookie. Każdy przebieg otwiera nowe, tymczasowe profile Chromium, więc nie korzysta z prawdziwych starych kopii przeglądarki nauczyciela.
+
+## Routing Vercela
+
+Jednym wejściem funkcji jest teraz `api/index.ts`. W `vercel.json` rewrite `/api/:path* → /api` obejmuje także `/api/auth/login`, `/api/session/student`, `/api/teacher/test-data` i `/api/works/:id/review`. Handler nadal rozpoznaje oryginalną ścieżkę żądania. Poprzednie `api/[...route].ts` na deploymencie Vite obsługiwało pojedyncze segmenty, a ścieżki zagnieżdżone kończyły się platformowym 404 przed autoryzacją. Po osobnej zgodzie poprawkę wdrożono 2 listopada 2026 i potwierdzono na rzeczywistym produkcyjnym API oraz przez logowanie w przeglądarce. Szczegóły rotacji sesji opisuje [dokument wydania](api-routing-release.md).
