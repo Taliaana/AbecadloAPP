@@ -8,15 +8,19 @@
 
 ## Obsługa pulpitu
 
-Kliknięcie zaznacza, dwuklik lub Enter otwiera folder, dokument albo obraz. Pliki przenosi się przez przeciąganie do folderu/kosza lub przez wybór „Przenieś do” i przycisk „Przenieś”. Delete przenosi zaznaczony plik do kosza; „Przywróć” odkłada go do poprzedniego folderu.
+Kliknięcie zaznacza, dwuklik lub Enter otwiera folder, dokument albo obraz. Pliki i foldery przenosi się przez przeciąganie do folderu/kosza lub przez wybór „Przenieś do” i przycisk „Przenieś”. Folder zachowuje zawartość; nie można włożyć go do siebie ani swojego podfolderu. Delete przenosi zaznaczony element do kosza; „Przywróć” odkłada go do poprzedniego folderu.
+
+Ikony plików i folderów można również przeciągać na wolne miejsce pulpitu albo przesuwać strzałkami, gdy mają fokus. Opcjonalne `board.iconPositions` przechowuje tylko współrzędne 0–1; po odświeżeniu i zmianie rozmiaru ekranu pozycje są odtwarzane bez wychodzenia poza planszę. Stare zapisy bez tego pola zachowują dotychczasowy układ.
 
 Okna można przeciągać za tytuł, przesuwać strzałkami po ustawieniu fokusu na tytule, zamknąć lub zminimalizować. Pasek zadań przywraca istniejące okno. „Pulpit” na pasku chowa otwarte okna. W folderze działają „Wstecz” i powrót do pulpitu.
 
-„Pełny ekran” korzysta z Fullscreen API i pokazuje wyłącznie pulpit, otwarte okna oraz pasek zadań. Powrót jest dostępny krzyżykiem w prawym górnym rogu lub klawiszem Esc. Pełny ekran jest opcjonalny: wszystkie zadania można wykonać w zwykłym oknie. „Schowaj pulpit” dotyczy wyłącznie symulatora w PinkTower i zachowuje jego stan.
+„Pełny ekran” korzysta z Fullscreen API i pokazuje pulpit, otwarte okna, pasek zadań oraz bieżącą wskazówkę samouczka. Powrót jest dostępny krzyżykiem w prawym górnym rogu lub klawiszem Esc, także podczas rozpoczynania przejścia. Pełny ekran jest opcjonalny: wszystkie zadania można wykonać w zwykłym oknie. „Schowaj pulpit” dotyczy wyłącznie symulatora w PinkTower i zachowuje jego stan.
 
 Folder „Przewijanie” zawiera galerię z własnym paskiem przewijania. Można używać kółka, gładzika i klawiatury, a na końcu wrócić przyciskiem na górę. Folder korzysta z istniejącego modelu okien i zapisu; stare sesje pozostają zgodne. Obrazki są generowane jako SVG w interfejsie, nie zapisujemy ich w stanie ucznia.
 
-Zwijany samouczek „Jak używać myszy?” jest dostępny w lekcji i ćwiczeniach. Samouczek oraz polecenia lekcji mają przycisk odsłuchu korzystający ze wspólnego mechanizmu głosu PinkTower; nic nie odtwarza się automatycznie. Podczas przeciągania lekki podgląd pliku podąża za kursorem, a folder docelowy jest podświetlany. Ograniczone animacje respektują ustawienia systemu.
+Samouczek uruchamia się dopiero po wejściu na pełny ekran. Jedna wskazówka pokazuje bieżącą czynność, rysunek myszy z wyróżnionym lewym przyciskiem lub kółkiem i właściwy element pulpitu. Kolejny krok pojawia się po rzeczywistym zaznaczeniu Kosza, otwarciu go, zamknięciu okna, przesunięciu ikony, otwarciu galerii i przewinięciu jej na dół. Nie ma przycisku pomijającego niezrobiony krok. Samouczek można przerwać i uruchomić ponownie; opuszczenie pełnego ekranu chowa wskazówkę. Ćwiczenia w zwykłym oknie pozostają dostępne bez samouczka.
+
+Samouczek i polecenia lekcji mają przycisk odsłuchu korzystający ze wspólnego mechanizmu głosu PinkTower; nic nie odtwarza się automatycznie. Zmiana kroku zatrzymuje poprzedni odsłuch. Samouczek nie zalicza lekcji ani nie zeruje stanu pulpitu. Podczas przeciągania lekki podgląd podąża za kursorem. Ograniczone animacje respektują ustawienia systemu.
 
 ## Stan i bezpieczeństwo
 
@@ -32,4 +36,4 @@ Wspólny renderer przewija początek właściwego kontenera tylko po zmianie tra
 
 ## Testy
 
-`tests/backend/desktop.test.ts` sprawdza model plików, przywracanie, okna, walidację, zapis przez repozytorium, izolację uczniów i brak zapisu w trybie nauczycielskim. `tests/ui/desktop.spec.js` sprawdza rzeczywiste interakcje, pełny ekran, fokus, odtwarzanie i błędy zapisu oraz cztery szerokości ekranu. Testy UI korzystają z izolowanego API w pamięci, nie z danych dzieci w Supabase.
+`tests/backend/desktop.test.ts` sprawdza model plików i folderów, cykle, współrzędne, przywracanie, okna, walidację, zapis przez repozytorium, izolację uczniów i brak zapisu w trybie nauczycielskim. `tests/ui/desktop.spec.js` sprawdza rzeczywiste interakcje, pełny ekran, fokus, odtwarzanie i błędy zapisu oraz cztery szerokości ekranu. `tests/ui/desktop-tutorial.spec.js` odtwarza błędy przesuwania ikon/folderów i sprawdza kolejność samouczka, brak pomijania kroków, klawiaturę i mały ekran. Testy UI korzystają z izolowanego API w pamięci, nie z danych dzieci w Supabase.

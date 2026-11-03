@@ -7,7 +7,7 @@ import { studentLessonSession } from './session.js'
 import { initialDesktopSession, readDesktopSession, desktopTasks, desktopTaskDone, DESKTOP_LESSON_STEPS } from '../data/desktop.js'
 import { desktopActivityHtml, mountDesktopActivity } from '../components/desktopActivity.js'
 import { createAutosave } from '../utils/autosave.js'
-import {mouseTutorial,mouseInstruction} from '../components/mouseTutorial.js'
+import {mouseInstruction} from '../components/mouseTutorial.js'
 import {bindSpeechButtons} from '../components/speechButton.js'
 
 export async function lessonTwoView({ render, navigate, lessonSession=studentLessonSession }) {
@@ -37,7 +37,7 @@ export async function lessonTwoView({ render, navigate, lessonSession=studentLes
   }
   function current() {
     const content = flow.phase === 'complete' ? completionScreen({ preview:lessonSession.preview, final: flow.isFinalStep, lessonTitle: 'Obsługuję mysz', nextLessonId: 3, nextUnlocked: flow.isFinalStep }) : activity()
-    return { html: lessonLayout(`${content}${flow.currentStep<=4&&flow.phase==='activity'?mouseTutorial():''}${flow.currentStep<=4?'<button type="button" class="button button-ghost" data-save-lesson-exit>Zapisz i wyjdź</button>':''}`, 'Obsługuję mysz', flow.currentStep, DESKTOP_LESSON_STEPS,lessonSession), scrollKey:`mouse-${flow.currentStep}-${flow.phase}`, mount }
+    return { html: lessonLayout(`${content}${flow.currentStep<=4?'<button type="button" class="button button-ghost" data-save-lesson-exit>Zapisz i wyjdź</button>':''}`, 'Obsługuję mysz', flow.currentStep, DESKTOP_LESSON_STEPS,lessonSession), scrollKey:`mouse-${flow.currentStep}-${flow.phase}`, mount }
   }
   const rerender = () => render(current())
   async function finishStep() {

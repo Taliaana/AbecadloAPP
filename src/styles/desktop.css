@@ -13,7 +13,8 @@
 .desktop-file-actions .button { min-height:44px; }
 .desktop-surface { position:relative; height:520px; isolation:isolate; overflow:hidden; background:#f5e6e3; border-inline:1px solid var(--border); }
 .desktop-wallpaper { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; z-index:-1; }
-.desktop-icons { display:grid; grid-template-columns:repeat(2,100px); gap:14px; padding:18px; align-content:start; }
+.desktop-icons { position:absolute; inset:0; pointer-events:none; }
+.desktop-icons > .desktop-file { position:absolute; height:96px; min-height:96px; pointer-events:auto; }
 .desktop-file { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; width:100%; min-width:0; min-height:92px; padding:6px; border:1px solid transparent; border-radius:12px; background:transparent; cursor:pointer; color:var(--text); font:600 .88rem/1.3 var(--font-body); }
 .desktop-file svg { width:54px; height:54px; flex-shrink:0; filter:drop-shadow(0 2px 2px rgba(81,71,74,.08)); }
 .desktop-file span { max-width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -41,7 +42,7 @@
 .desktop-task.is-open { box-shadow:inset 0 -3px 0 var(--brand-pink); }
 .desktop-minimized { min-height:160px; margin-block:20px; }
 .desktop-activity:fullscreen { position:relative; padding:0; background:var(--paper); overflow:hidden; }
-.desktop-activity:fullscreen > :not([data-simulator], .desktop-fullscreen-close) { display:none; }
+.desktop-activity:fullscreen > :not([data-simulator], .desktop-fullscreen-close, .desktop-tutorial, .desktop-tutorial-launcher) { display:none; }
 .desktop-activity:fullscreen .desktop-fullscreen-close { display:inline-flex; position:absolute; right:max(14px,env(safe-area-inset-right)); top:max(14px,env(safe-area-inset-top)); z-index:2000; width:50px; height:50px; padding:0; background:var(--paper); border:1px solid var(--border); box-shadow:var(--shadow-soft); font-size:1.6rem; }
 .desktop-activity:fullscreen [data-simulator], .desktop-activity:fullscreen [data-desktop-host] { height:100%; min-height:0; }
 .desktop-activity:fullscreen [data-desktop-host] { display:flex; flex-direction:column; }
@@ -53,14 +54,17 @@
 .mouse-instruction { display:flex; justify-content:center; align-items:center; gap:14px; margin-bottom:20px; }
 .mouse-instruction h2 { margin:0; }
 .mouse-instruction .speech-button { flex-shrink:0; }
-.mouse-tutorial { margin:20px 0; padding:16px 20px; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-small); text-align:left; }
-.mouse-tutorial summary { cursor:pointer; min-height:44px; align-content:center; font-weight:700; }
-.mouse-tutorial-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:16px; }
-.mouse-tutorial-heading h3 { margin:0; }
-.mouse-tutorial ol { list-style:none; padding:0; display:grid; gap:20px; margin-block:20px; }
-.mouse-tutorial li { display:flex; gap:14px; }
-.mouse-tutorial li > svg { width:28px; height:28px; flex-shrink:0; color:var(--brand-pink-dark); }
-.mouse-tutorial p { margin:6px 0 0; }
+.desktop-tutorial, .desktop-tutorial-launcher { display:none; }
+.desktop-activity:fullscreen .desktop-tutorial { display:block; position:absolute; z-index:1500; right:16px; bottom:82px; width:min(380px,calc(100% - 32px)); max-height:calc(100% - 165px); overflow-y:auto; padding:20px; background:var(--paper); border:1px solid var(--border); border-radius:var(--radius-small); box-shadow:var(--shadow); }
+.desktop-activity:fullscreen .desktop-tutorial-launcher { display:inline-flex; position:absolute; right:78px; top:14px; z-index:1500; }
+.tutorial-current { display:grid; grid-template-columns:48px minmax(0,1fr); gap:14px; }
+.tutorial-mouse { display:block; width:48px; height:72px; }
+.desktop-tutorial h2 { font-size:1.35rem; margin:4px 0 12px; }
+.desktop-tutorial p { font-size:.93rem; margin-bottom:12px; }
+.tutorial-actions { display:flex; align-items:center; flex-wrap:wrap; gap:8px; }
+.tutorial-actions .button { min-height:44px; font-size:.9rem; padding:10px 12px; }
+.tutorial-actions .speech-button { width:44px; padding:0; flex-shrink:0; }
+.is-tutorial-target { outline:3px solid var(--brand-pink-dark); outline-offset:2px; }
 .desktop-scroll-content { flex:1; min-height:0; overflow-y:auto; overscroll-behavior:contain; padding:18px; background:var(--paper); }
 .desktop-scroll-gallery { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
 .desktop-scroll-gallery figure { margin:0; }
@@ -74,7 +78,6 @@
 .desktop-lesson-next { margin-block:24px; }
 @media(max-width:700px) {
   .teacher-lesson-test { align-items:start; flex-direction:column; }
-  .desktop-icons { grid-template-columns:repeat(3,minmax(0,1fr)); gap:4px; padding:8px; }
   .desktop-surface { height:500px; }
   .desktop-toolbar .button { flex:1 1 140px; }
   .desktop-file-actions { padding:10px; }
@@ -86,6 +89,8 @@
   .desktop-file { transition:background 160ms ease,border-color 160ms ease,opacity 160ms ease; }
   .desktop-drag-preview { animation:desktop-pick-up 160ms ease-out; }
   .desktop-file.is-drop-received { animation:desktop-file-placed 200ms ease-out; }
+  .tutorial-current { animation:desktop-tutorial-in 180ms ease-out; }
+  @keyframes desktop-tutorial-in { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:none; } }
   @keyframes desktop-pick-up { from { opacity:.4; transform:translateY(4px) rotate(0); } to { opacity:1; transform:translateY(0) rotate(-3deg); } }
   @keyframes desktop-file-placed { from { background:var(--brand-pink-soft); } to { background:transparent; } }
 }

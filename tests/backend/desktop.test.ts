@@ -1,6 +1,6 @@
 import {test} from 'node:test'
 import assert from 'node:assert/strict'
-import {initialDesktop,initialDesktopSession,moveDesktopFile,restoreDesktopFile,openDesktopWindow,minimizeDesktopWindow,isValidDesktopSession,readDesktopSession,desktopTaskDone} from '../../src/data/desktop.js'
+import {initialDesktop,initialDesktopSession,moveDesktopFile,restoreDesktopFile,openDesktopWindow,minimizeDesktopWindow,isValidDesktopSession,readDesktopSession,desktopTaskDone,placeDesktopIcon,parentOf} from '../../src/data/desktop.js'
 import {MemoryRepository,MemoryFiles} from '../support/memoryRepository.js'
 import {storeTestFixture} from '../support/seed.js'
 import {createService} from '../../server/services.js'
@@ -14,7 +14,7 @@ test('virtual file moves have a single location; trash restores the original fol
   assert.equal(restoreDesktopFile(b,'note'),true);assert.equal(b.locations.note,'works')
   assert.equal(b.restoreLocations.note,undefined)
   assert.ok(desktopTaskDone(b,3)&&desktopTaskDone(b,4)&&desktopTaskDone(b,5))
-  assert.equal(moveDesktopFile(b,'works','images'),false)
+  assert.equal(moveDesktopFile(b,'works','works'),false)
   assert.equal(moveDesktopFile(b,'note','C:/Users'),false)
 })
 test('folder history, minimization and restoration reuse one window',()=>{
@@ -65,4 +65,25 @@ test('scroll folder extends the same state without resetting old desktop saves',
   assert.equal(moveDesktopFile(state.board,'note','scroll'),true)
   assert.equal(readDesktopSession(state).board.locations.note,'scroll')
   assert.equal(old.board.locations.note,'desktop')
+})
+
+test('folders retain their children; self nesting and cycles are rejected, trash restores whole folders',()=>{
+  const b=initialDesktop();assert.equal(moveDesktopFile(b,'images','works'),true)
+  assert.equal(parentOf(b,'flower'),'images');assert.equal(moveDesktopFile(b,'works','images'),false)
+  assert.equal(moveDesktopFile(b,'images','images'),false);assert.equal(moveDesktopFile(b,'trash','works'),false)
+  assert.equal(moveDesktopFile(b,'images','trash'),true);assert.equal(restoreDesktopFile(b,'images'),true)
+  assert.equal(parentOf(b,'images'),'works');assert.equal(parentOf(b,'flower'),'images')
+  const state=initialDesktopSession();state.board=b;assert.equal(isValidDesktopSession(state),true)
+  b.locations.works='images';assert.equal(isValidDesktopSession(state),false)
+})
+
+test('icon coordinates are bounded, persist as small JSON, and remain optional for old sessions',()=>{
+  const state=initialDesktopSession(),old=structuredClone(state)
+  assert.equal(placeDesktopIcon(state.board,'note',.6,.4),true)
+  assert.equal(placeDesktopIcon(state.board,'trash',.8,.5),true)
+  assert.deepEqual(readDesktopSession(state).board.iconPositions,state.board.iconPositions)
+  assert.equal(placeDesktopIcon(state.board,'note',Infinity,0),false)
+  assert.equal(placeDesktopIcon(state.board,'note',2,0),false)
+  assert.deepEqual(readDesktopSession(old),old)
+  state.board.iconPositions!.note.x=2;assert.equal(isValidDesktopSession(state),false)
 })

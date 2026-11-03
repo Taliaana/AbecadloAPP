@@ -1,20 +1,20 @@
-import {desktopItems,desktopFiles,desktopFolders,moveDesktopFile,restoreDesktopFile,openDesktopWindow,minimizeDesktopWindow} from '../data/desktop.js'
+import {desktopItems,desktopFolders,parentOf,isInTrash,canMoveDesktopItem,placeDesktopIcon,moveDesktopFile,restoreDesktopFile,openDesktopWindow,minimizeDesktopWindow} from '../data/desktop.js'
 import {desktopIcon,desktopPicture} from './desktopGraphics.js'
 import {escapeHtml as esc} from '../utils/html.js'
 
-export function mountDesktopSandbox(host,{board,onChange=()=>{}}) {
-  let dragged=null,dragWindow=null,dragPreview=null
+export function mountDesktopSandbox(host,{board,onChange=()=>{},onAction=()=>{}}) {
+  let dragged=null,dragWindow=null,dragPreview=null,grabOffset={x:30,y:30}
   const item=id=>desktopItems.find(item=>item.id===id)
   const name=id=>id==='desktop'?'Pulpit':item(id)?.name || ''
   const windows=()=>board.windows
   function fileButton(file) {
-    return `<button type="button" class="desktop-file ${board.selected===file.id?'is-selected':''}" data-file="${file.id}" title="${esc(file.name)}" aria-pressed="${board.selected===file.id}" ${file.parent?'draggable="true"':''} ${['folder','trash'].includes(file.type)?`data-destination="${file.id}"`:''}>${desktopIcon(file)}<span>${esc(file.name)}</span></button>`
+    return `<button type="button" class="desktop-file ${board.selected===file.id?'is-selected':''}" data-file="${file.id}" title="${esc(file.name)}" aria-pressed="${board.selected===file.id}" draggable="true" ${['folder','trash'].includes(file.type)?`data-destination="${file.id}"`:''}>${desktopIcon(file)}<span>${esc(file.name)}</span></button>`
   }
-  const filesAt=folder=>folder==='desktop'?[...desktopItems.filter(i=>!i.parent),...desktopFiles.filter(i=>board.locations[i.id]===folder)]:desktopFiles.filter(i=>board.locations[i.id]===folder)
+  const filesAt=folder=>desktopItems.filter(i=>parentOf(board,i.id)===folder)
   function fileActions() {
     const file=item(board.selected)
     if(!file)return '<span>Wybierz plik lub folder.</span>'
-    return `<strong>${esc(file.name)}</strong><button type="button" class="button button-secondary" data-open-selected ${board.locations[file.id]==='trash'?'disabled title="Najpierw przywróć plik z kosza"':''}>Otwórz</button>${file.parent?`<label>Przenieś do<select data-move-destination aria-label="Przenieś do">${desktopFolders.filter(folder=>folder!==board.locations[file.id]).map(folder=>`<option value="${folder}">${name(folder)}</option>`).join('')}</select></label><button type="button" class="button button-secondary" data-move-selected>Przenieś</button>${board.locations[file.id]==='trash'?'<button type="button" class="button button-primary" data-restore-file>Przywróć</button>':''}`:''}`
+    return `<strong>${esc(file.name)}</strong><button type="button" class="button button-secondary" data-open-selected ${file.id!=='trash'&&isInTrash(board,file.id)?'disabled title="Najpierw przywróć z kosza"':''}>Otwórz</button>${file.id!=='trash'?`<label>Przenieś do<select data-move-destination aria-label="Przenieś do">${desktopFolders.filter(folder=>canMoveDesktopItem(board,file.id,folder)).map(folder=>`<option value="${folder}">${name(folder)}</option>`).join('')}</select></label><button type="button" class="button button-secondary" data-move-selected>Przenieś</button>${parentOf(board,file.id)==='trash'?'<button type="button" class="button button-primary" data-restore-file>Przywróć</button>':''}`:''}`
   }
   function windowHtml(window,index) {
     const target=item(window.target),folder=desktopFolders.includes(window.target)
@@ -25,6 +25,13 @@ export function mountDesktopSandbox(host,{board,onChange=()=>{}}) {
   function positionWindows() {
     const surface=host.querySelector('.desktop-surface')
     if(!surface)return
+    const columns=surface.clientWidth<700?3:2,cellWidth=columns===3?(surface.clientWidth-16)/3:114
+    host.querySelectorAll('.desktop-icons > [data-file]').forEach((node,index)=>{
+      const width=Math.min(100,cellWidth-4),saved=board.iconPositions?.[node.dataset.file]
+      node.style.width=`${width}px`
+      node.style.left=`${saved?8+saved.x*Math.max(0,surface.clientWidth-width-16):(columns===3?8:18)+(index%columns)*cellWidth}px`
+      node.style.top=`${saved?8+saved.y*Math.max(0,surface.clientHeight-112):Math.min(Math.max(8,surface.clientHeight-104),18+Math.floor(index/columns)*106)}px`
+    })
     for(const window of windows()) {
       const node=host.querySelector(`[data-window="${window.id}"]`)
       if(!node||node.hidden)continue
@@ -47,16 +54,17 @@ export function mountDesktopSandbox(host,{board,onChange=()=>{}}) {
     host.innerHTML=`<div class="desktop-file-actions" aria-label="Operacje na zaznaczonym pliku">${fileActions()}</div><div class="desktop-surface" data-destination="desktop"><svg class="desktop-wallpaper" viewBox="0 0 1200 600" preserveAspectRatio="none" aria-hidden="true"><path d="M0 0h1200v600H0Z" fill="#f5e6e3"/><path d="M0 360Q300 180 600 360T1200 300v300H0Z" fill="#ead0d0"/><path d="M0 470Q300 560 650 450T1200 430v170H0Z" fill="#d4ddc9"/><path d="M0 570q300-170 600-40t600 0v70H0Z" fill="#bfcdb4"/></svg><div class="desktop-icons">${filesAt('desktop').map(fileButton).join('')}</div>${windows().map(windowHtml).join('')}</div><nav class="desktop-taskbar" aria-label="Pasek zadań pulpitu"><span class="desktop-brand"><img src="/brand/pinktower-icon.png" alt="PinkTower" /></span><button type="button" class="button button-ghost" data-show-desktop>Pulpit</button>${windows().map(w=>`<button type="button" class="desktop-task ${!w.minimized?'is-open':''}" data-task-window="${w.id}" aria-label="${w.minimized?'Przywróć':'Pokaż'} okno ${esc(name(w.target))}">${desktopIcon(item(w.target)||{type:'folder'})}<span>${esc(name(w.target))}</span></button>`).join('')}</nav>`
     positionWindows();restoreFocus()
   }
-  function changed(redraw=true) {if(redraw)render();onChange(board)}
-  function selected(id) {
+  function changed(redraw=true,action) {if(redraw)render();onChange(board);if(action)onAction(action)}
+  function selected(id,clicked=false) {
     board.selected=id
     host.querySelectorAll('[data-file]').forEach(button=>{const active=button.dataset.file===id;button.classList.toggle('is-selected',active);button.setAttribute('aria-pressed',String(active))})
     host.querySelector('.desktop-file-actions').innerHTML=fileActions()
     onChange(board)
+    if(clicked)onAction({type:'select',id})
   }
   function open(id,windowId) {
-    if(board.locations[id]==='trash')return
-    openDesktopWindow(board,id,desktopFolders.includes(id)?windowId:null);changed()
+    if(id!=='trash'&&isInTrash(board,id))return
+    openDesktopWindow(board,id,desktopFolders.includes(id)?windowId:null);changed(true,{type:'open',id})
     host.querySelector(`[data-window="${desktopFolders.includes(id)&&windowId?windowId:id}"] .desktop-window-handle`)?.focus({preventScroll:true})
   }
   function focusWindow(id) {
@@ -73,14 +81,14 @@ export function mountDesktopSandbox(host,{board,onChange=()=>{}}) {
   }
   const click=event=>{
     const button=event.target.closest('button');if(!button)return
-    if(button.dataset.file){selected(button.dataset.file);return}
+    if(button.dataset.file){selected(button.dataset.file,true);return}
     const d=button.dataset
     if(button.hasAttribute('data-open-selected'))open(board.selected)
     else if(button.hasAttribute('data-move-selected')) {if(moveDesktopFile(board,board.selected,host.querySelector('[data-move-destination]').value))changed()}
     else if(button.hasAttribute('data-restore-file')) {if(restoreDesktopFile(board,board.selected))changed()}
     else if(d.minimizeWindow){minimizeDesktopWindow(board,d.minimizeWindow);changed()}
-    else if(d.closeWindow){board.windows=windows().filter(w=>w.id!==d.closeWindow);changed()}
-    else if(d.taskWindow){const win=windows().find(w=>w.id===d.taskWindow);openDesktopWindow(board,win.target,win.id);changed()}
+    else if(d.closeWindow){const id=windows().find(w=>w.id===d.closeWindow)?.target;board.windows=windows().filter(w=>w.id!==d.closeWindow);changed(true,{type:'close',id})}
+    else if(d.taskWindow){const win=windows().find(w=>w.id===d.taskWindow);openDesktopWindow(board,win.target,win.id);changed(true,{type:'open',id:win.target})}
     else if(d.windowDesktop){openDesktopWindow(board,'desktop',d.windowDesktop);changed()}
     else if(d.windowBack){const win=windows().find(w=>w.id===d.windowBack);if(win.history.length){win.target=win.history.pop();changed()}}
     else if(button.hasAttribute('data-show-desktop')){windows().forEach(w=>minimizeDesktopWindow(board,w.id));changed()}
@@ -91,6 +99,10 @@ export function mountDesktopSandbox(host,{board,onChange=()=>{}}) {
     const file=event.target.closest('[data-file]'),handle=event.target.closest('[data-window-drag]')
     if(file&&event.key==='Enter'){event.preventDefault();open(file.dataset.file,file.closest('[data-window]')?.dataset.window)}
     else if(file&&event.key==='Delete'){event.preventDefault();selected(file.dataset.file);if(moveDesktopFile(board,file.dataset.file,'trash'))changed()}
+    else if(file&&parentOf(board,file.dataset.file)==='desktop'&&['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.key)) {
+      event.preventDefault();const surface=host.querySelector('.desktop-surface'),rect=file.getBoundingClientRect(),area=surface.getBoundingClientRect()
+      placeAt(file.dataset.file,rect.x-area.x+(event.key==='ArrowRight'?32:event.key==='ArrowLeft'?-32:0),rect.y-area.y+(event.key==='ArrowDown'?32:event.key==='ArrowUp'?-32:0))
+    }
     else if(handle&&['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.key)) {
       event.preventDefault();const win=windows().find(w=>w.id===handle.dataset.windowDrag)
       win.x=Math.max(0,Math.min(1,win.x+(event.key==='ArrowRight'?.08:event.key==='ArrowLeft'?-.08:0)))
@@ -108,8 +120,14 @@ export function mountDesktopSandbox(host,{board,onChange=()=>{}}) {
     dragPreview?.remove();dragPreview=null;dragged=null
     host.querySelectorAll('.is-dragging,.is-drop-target').forEach(node=>node.classList.remove('is-dragging','is-drop-target'))
   }
+  function placeAt(id,left,top) {
+    const surface=host.querySelector('.desktop-surface'),width=Math.min(100,surface.clientWidth<700?(surface.clientWidth-16)/3-4:110)
+    const clamp=n=>Math.max(0,Math.min(1,n))
+    if(placeDesktopIcon(board,id,clamp((left-8)/Math.max(1,surface.clientWidth-width-16)),clamp((top-8)/Math.max(1,surface.clientHeight-112))))changed(true,{type:'place',id})
+  }
   const dragstart=event=>{
-    const file=event.target.closest('[data-file]');if(!file||!item(file.dataset.file)?.parent)return
+    const file=event.target.closest('[data-file]');if(!file)return
+    const rect=file.getBoundingClientRect();grabOffset={x:event.clientX-rect.x,y:event.clientY-rect.y}
     clearDrag();dragged=file.dataset.file;selected(dragged)
     event.dataTransfer.setData('application/x-pinktower-file',dragged);event.dataTransfer.effectAllowed='move'
     dragPreview=document.createElement('div');dragPreview.className='desktop-drag-preview';dragPreview.setAttribute('aria-hidden','true')
@@ -120,14 +138,21 @@ export function mountDesktopSandbox(host,{board,onChange=()=>{}}) {
   const dragover=event=>{
     if(!event.dataTransfer.types.includes('application/x-pinktower-file'))return
     host.querySelectorAll('.is-drop-target').forEach(node=>node.classList.remove('is-drop-target'))
-    if(destination(event)){
+    const target=destination(event),id=dragged
+    if(target&&(canMoveDesktopItem(board,id,target)||target==='desktop')){
       event.preventDefault();event.dataTransfer.dropEffect='move'
       event.target.closest('[data-destination]')?.classList.add('is-drop-target')
     }
   }
   const drop=event=>{
     const folder=destination(event),id=event.dataTransfer.getData('application/x-pinktower-file');clearDrag()
-    if(folder&&id){event.preventDefault();if(moveDesktopFile(board,id,folder)){changed();host.querySelectorAll(`[data-file="${folder}"]`).forEach(node=>node.classList.add('is-drop-received'))}}
+    if(folder&&id){
+      event.preventDefault()
+      if(folder==='desktop') {
+        if(parentOf(board,id)!=='desktop'&&!moveDesktopFile(board,id,'desktop'))return
+        const rect=host.querySelector('.desktop-surface').getBoundingClientRect();placeAt(id,event.clientX-rect.x-grabOffset.x,event.clientY-rect.y-grabOffset.y)
+      } else if(moveDesktopFile(board,id,folder)){changed(true,{type:'move',id,destination:folder});host.querySelectorAll(`[data-file="${folder}"]`).forEach(node=>node.classList.add('is-drop-received'))}
+    }
   }
   const pointerdown=event=>{
     const window=event.target.closest('[data-window]');if(window)focusWindow(window.dataset.window)
@@ -141,7 +166,9 @@ export function mountDesktopSandbox(host,{board,onChange=()=>{}}) {
   const handlers={click,dblclick,keydown,dragstart,dragover,drop,dragend:clearDrag,pointerdown,pointermove,pointerup,pointercancel:pointerup}
   for(const[type,handler]of Object.entries(handlers))host.addEventListener(type,handler)
   document.addEventListener('dragover',movePreview)
+  const scroll=event=>{const area=event.target;if(area.matches?.('.desktop-scroll-content'))onAction({type:'scroll',id:'scroll',atEnd:area.scrollTop>0&&area.scrollTop+area.clientHeight>=area.scrollHeight-8})}
+  host.addEventListener('scroll',scroll,true)
   const observer=new ResizeObserver(positionWindows);observer.observe(host)
   render()
-  return ()=>{clearDrag();observer.disconnect();document.removeEventListener('dragover',movePreview);for(const[type,handler]of Object.entries(handlers))host.removeEventListener(type,handler)}
+  return {dispose(){clearDrag();observer.disconnect();document.removeEventListener('dragover',movePreview);host.removeEventListener('scroll',scroll,true);for(const[type,handler]of Object.entries(handlers))host.removeEventListener(type,handler)},restore(id){if(restoreDesktopFile(board,id))changed()}}
 }
