@@ -41,10 +41,13 @@
 .desktop-task span { overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
 .desktop-task.is-open { box-shadow:inset 0 -3px 0 var(--brand-pink); }
 .desktop-minimized { min-height:160px; margin-block:20px; }
-.desktop-activity:fullscreen { position:relative; padding:0; background:var(--paper); overflow:hidden; }
-.desktop-activity:fullscreen > :not([data-simulator], .desktop-fullscreen-close, .desktop-tutorial, .desktop-tutorial-launcher) { display:none; }
+.desktop-activity:fullscreen { position:relative; display:flex; flex-direction:column; padding:0; background:var(--paper); overflow:hidden; }
+.desktop-activity:fullscreen > :not([data-simulator], .desktop-fullscreen-close, .desktop-tutorial, .desktop-tutorial-launcher, .desktop-task-heading, .desktop-lesson-next, .desktop-task-completion, .desktop-drag-preview, [data-desktop-status]) { display:none; }
+.desktop-activity:fullscreen > [data-desktop-status]:not([data-error]) { display:none; }
+.desktop-activity:fullscreen > [data-desktop-status][data-error] { padding:10px 24px; margin:0; flex-shrink:0; }
 .desktop-activity:fullscreen .desktop-fullscreen-close { display:inline-flex; position:absolute; right:max(14px,env(safe-area-inset-right)); top:max(14px,env(safe-area-inset-top)); z-index:2000; width:50px; height:50px; padding:0; background:var(--paper); border:1px solid var(--border); box-shadow:var(--shadow-soft); font-size:1.6rem; }
 .desktop-activity:fullscreen [data-simulator], .desktop-activity:fullscreen [data-desktop-host] { height:100%; min-height:0; }
+.desktop-activity:fullscreen [data-simulator] { flex:1; }
 .desktop-activity:fullscreen [data-desktop-host] { display:flex; flex-direction:column; }
 .desktop-activity:fullscreen .desktop-file-actions { display:none; }
 .desktop-activity:fullscreen .desktop-surface { height:auto; min-height:0; flex:1; border:0; }
@@ -75,7 +78,27 @@
 .desktop-drag-preview svg { width:54px; height:54px; }
 .desktop-file.is-dragging { opacity:.35; }
 .is-drop-target { outline:2px solid var(--brand-pink-dark); outline-offset:-3px; background:var(--brand-pink-wash); }
-.desktop-lesson-next { margin-block:24px; }
+.lesson-shell--desktop .lesson-content { padding-top:24px; }
+.desktop-task-heading { padding-block:4px 12px; }
+.desktop-task-heading .eyebrow { margin-bottom:8px; }
+.desktop-task-heading .mouse-instruction { justify-content:flex-start; margin-bottom:8px; }
+.desktop-task-heading h2 { font-size:clamp(1.3rem,2.4vw,1.9rem); line-height:1.25; }
+.desktop-task-heading .gentle-hint { margin:0; max-width:72ch; font-size:1rem; }
+.desktop-lesson-next { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; padding-block:16px; }
+.desktop-lesson-next p { margin:0; color:var(--text-muted); }
+.desktop-lesson-next .button { flex-shrink:0; }
+.desktop-task-completion { padding:24px 0; }
+.desktop-activity--lesson:fullscreen .desktop-task-heading { flex-shrink:0; padding:14px 150px 14px 24px; border-bottom:1px solid var(--border); }
+.desktop-activity--lesson:fullscreen .desktop-task-heading h2 { font-size:clamp(1.2rem,2vw,1.65rem); }
+.desktop-activity--lesson:fullscreen .desktop-task-heading .eyebrow { font-size:.8rem; margin-bottom:4px; }
+.desktop-activity--lesson:fullscreen .desktop-task-heading .gentle-hint { font-size:.9rem; }
+.desktop-activity--lesson:fullscreen .desktop-task-heading .mouse-instruction { margin-bottom:4px; }
+.desktop-activity--lesson:fullscreen .desktop-lesson-next { flex-shrink:0; padding:10px 24px; border-top:1px solid var(--border); background:var(--paper); }
+.desktop-activity--lesson:fullscreen .desktop-file-actions { display:flex; flex-shrink:0; height:78px; min-height:78px; overflow-y:auto; padding:8px 14px; border-radius:0; font-size:.9rem; }
+.desktop-activity--lesson:fullscreen .desktop-task-completion { flex:1; overflow-y:auto; padding:70px 20px 24px; }
+.desktop-activity--lesson:fullscreen.is-complete .desktop-tutorial,
+.desktop-activity--lesson:fullscreen.is-complete .desktop-tutorial-launcher { display:none; }
+.desktop-activity--lesson:fullscreen .desktop-tutorial-launcher { font-size:.85rem; padding:8px 10px; }
 @media(max-width:700px) {
   .teacher-lesson-test { align-items:start; flex-direction:column; }
   .desktop-surface { height:500px; }
@@ -84,6 +107,14 @@
   .desktop-file-actions .button { flex:1 1 100px; }
   .desktop-file-actions label { width:100%; }
   .desktop-file-actions select { flex:1; min-width:0; }
+  .lesson-shell--desktop .lesson-content { padding-top:16px; }
+  .desktop-activity--lesson:fullscreen .desktop-task-heading { padding:72px 14px 10px; }
+  .desktop-activity--lesson:fullscreen .desktop-lesson-next { padding:10px 14px; flex-wrap:nowrap; font-size:.85rem; }
+  .desktop-activity--lesson:fullscreen .desktop-lesson-next .button { width:auto; min-width:80px; }
+  .desktop-activity--lesson:fullscreen .desktop-file-actions { height:112px; min-height:112px; }
+  .desktop-activity--lesson:fullscreen .desktop-file-actions label { width:auto; }
+  .desktop-activity--lesson:fullscreen .desktop-file-actions .button { flex:0 1 auto; }
+  .desktop-activity--lesson:fullscreen .desktop-tutorial { max-height:calc(100% - 290px); bottom:135px; }
 }
 @media(prefers-reduced-motion:no-preference) {
   .desktop-file { transition:background 160ms ease,border-color 160ms ease,opacity 160ms ease; }

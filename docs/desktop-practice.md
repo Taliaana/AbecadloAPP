@@ -16,6 +16,10 @@ Okna można przeciągać za tytuł, przesuwać strzałkami po ustawieniu fokusu 
 
 „Pełny ekran” korzysta z Fullscreen API i pokazuje pulpit, otwarte okna, pasek zadań oraz bieżącą wskazówkę samouczka. Powrót jest dostępny krzyżykiem w prawym górnym rogu lub klawiszem Esc, także podczas rozpoczynania przejścia. Pełny ekran jest opcjonalny: wszystkie zadania można wykonać w zwykłym oknie. „Schowaj pulpit” dotyczy wyłącznie symulatora w PinkTower i zachowuje jego stan.
 
+W lekcji polecenie, odsłuch, numer zadania i „Dalej” są częścią pulpitu, więc pozostają dostępne również na pełnym ekranie. Sześć zadań oraz ich karty „Gotowe” aktualizują ten sam zamontowany element: nie opuszczają pełnego ekranu, nie odtwarzają okien i nie odpinają obsługi plików. Zakończenie jest pokazywane po potwierdzeniu zapisu przez API; w razie błędu można ponowić „Dalej”. Po ostatnim zadaniu karta ukończenia umożliwia przejście do lekcji klawiatury, co kończy pełny ekran. Wyjście krzyżykiem lub Esc nie zmienia etapu. Pełny ekran to stan przeglądarki, nie zapisywany profil ucznia.
+
+Operacje na zaznaczonym pliku, w tym „Przywróć”, są dostępne także w pełnoekranowej lekcji. Ich obszar ma stałą wysokość, aby zaznaczenie ikony nie przesuwało jej pod kursorem pomiędzy kliknięciami dwukliku. Układ lekcji używa jednego nagłówka zadania z krótką wskazówką i jednego paska postępu z przyciskiem pod pulpitem.
+
 Folder „Przewijanie” zawiera galerię z własnym paskiem przewijania. Można używać kółka, gładzika i klawiatury, a na końcu wrócić przyciskiem na górę. Folder korzysta z istniejącego modelu okien i zapisu; stare sesje pozostają zgodne. Obrazki są generowane jako SVG w interfejsie, nie zapisujemy ich w stanie ucznia.
 
 Samouczek uruchamia się dopiero po wejściu na pełny ekran. Jedna wskazówka pokazuje bieżącą czynność, rysunek myszy z wyróżnionym lewym przyciskiem lub kółkiem i właściwy element pulpitu. Kolejny krok pojawia się po rzeczywistym zaznaczeniu Kosza, otwarciu go, zamknięciu okna, przesunięciu ikony, otwarciu galerii i przewinięciu jej na dół. Nie ma przycisku pomijającego niezrobiony krok. Samouczek można przerwać i uruchomić ponownie; opuszczenie pełnego ekranu chowa wskazówkę. Ćwiczenia w zwykłym oknie pozostają dostępne bez samouczka.
@@ -37,3 +41,5 @@ Wspólny renderer przewija początek właściwego kontenera tylko po zmianie tra
 ## Testy
 
 `tests/backend/desktop.test.ts` sprawdza model plików i folderów, cykle, współrzędne, przywracanie, okna, walidację, zapis przez repozytorium, izolację uczniów i brak zapisu w trybie nauczycielskim. `tests/ui/desktop.spec.js` sprawdza rzeczywiste interakcje, pełny ekran, fokus, odtwarzanie i błędy zapisu oraz cztery szerokości ekranu. `tests/ui/desktop-tutorial.spec.js` odtwarza błędy przesuwania ikon/folderów i sprawdza kolejność samouczka, brak pomijania kroków, klawiaturę i mały ekran. Testy UI korzystają z izolowanego API w pamięci, nie z danych dzieci w Supabase.
+
+`tests/ui/desktop-lesson-fullscreen.spec.js` przechodzi wszystkie zadania bez wymiany elementu pełnoekranowego, sprawdza polecenia i nawigację na czterech rozmiarach ekranu, końcowe przywrócenie pliku, wyjście do następnej lekcji, wznowienie karty ukończenia i ponawianie nieudanego zapisu bez pominięcia etapu.
