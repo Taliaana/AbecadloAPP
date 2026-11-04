@@ -37,7 +37,7 @@ export async function lessonTwoView({ render, navigate, lessonSession=studentLes
     if (flow.currentStep === 1) return `<section class="lesson-task lesson-task--center"><p class="eyebrow">Kliknięcie</p>${mouseInstruction('Kliknij niebieskie koło.','Naciśnij i puść lewy przycisk myszy.')}<div class="click-field"><button class="click-target" type="button" aria-label="Niebieskie koło"></button></div></section>`
     if (flow.currentStep === 2) return `<section class="lesson-task lesson-task--center"><p class="eyebrow">Dwuklik</p>${mouseInstruction('Kliknij dwa razy w teczkę.','Dwa szybkie kliknięcia lewym przyciskiem myszy.')}<button class="folder-target" type="button" aria-label="Teczka. Wykonaj dwuklik"><span></span></button><p class="gentle-hint">Dwa szybkie kliknięcia.</p></section>`
     if (flow.currentStep === 3) return `<section class="lesson-task lesson-task--center"><p class="eyebrow">Przeciąganie</p>${mouseInstruction('Przenieś kartkę do koszyka.','Możesz przeciągnąć lub wybrać kartkę i koszyk.')}<div class="drag-field"><button type="button" draggable="true" class="paper-item ${selected ? 'is-selected' : ''}" data-paper aria-pressed="${Boolean(selected)}"><span></span>Kartka</button><button type="button" class="basket-zone" data-basket aria-label="Koszyk">${icon('works')}<span>Koszyk</span></button></div><p class="gentle-hint">Możesz przeciągnąć lub wybrać kartkę i koszyk.</p></section>`
-    return `<section class="lesson-task lesson-task--center"><p class="eyebrow">Małe puzzle</p>${mouseInstruction('Ułóż cztery części obrazka.')}<div class="puzzle-wrap"><div class="puzzle-pieces">${[1,2,3,4].filter((id) => !placed.has(id)).map((id) => `<button type="button" draggable="true" class="puzzle-piece piece-${id}" data-piece="${id}" aria-label="Element ${id}">${id}</button>`).join('')}</div><div class="puzzle-board">${[1,2,3,4].map((id) => `<button type="button" class="puzzle-slot slot-${id} ${placed.has(id) ? 'is-filled' : ''}" data-slot="${id}" aria-label="Miejsce ${id}">${placed.has(id) ? '' : id}</button>`).join('')}</div></div></section>`
+    return `<section class="lesson-task lesson-task--center"><p class="eyebrow">Małe puzzle</p>${mouseInstruction('Ułóż cztery części obrazka.')}<div class="puzzle-wrap"><div class="puzzle-pieces">${[1,2,3,4].map((id) => `<button type="button" draggable="true" class="puzzle-piece piece-${id} ${placed.has(id)?'is-placed':''}" data-piece="${id}" aria-label="Element ${id}" aria-pressed="false" ${placed.has(id)?'disabled aria-hidden="true"':''}>${id}</button>`).join('')}</div><div class="puzzle-board">${[1,2,3,4].map((id) => `<button type="button" class="puzzle-slot slot-${id} ${placed.has(id) ? 'is-filled' : ''}" data-slot="${id}" aria-label="Miejsce ${id}">${placed.has(id) ? '' : id}</button>`).join('')}</div></div><p class="gentle-hint" role="status" aria-live="polite" data-puzzle-status>Przeciągnij element lub wybierz go i kliknij miejsce.</p><button type="button" class="button button-primary" data-puzzle-retry hidden>Spróbuj zapisać ponownie</button></section>`
   }
   function current() {
     const content = flow.currentStep>4 ? activity() : flow.phase === 'complete' ? completed() : activity()
@@ -49,11 +49,6 @@ export async function lessonTwoView({ render, navigate, lessonSession=studentLes
     finishing=true
     try {flow.completeStep();updateDesktop?.({busy:true});await saveNow();if(flow.isFinalStep)await lessonSession.complete(2);desktopStepSaved=true;if(updateDesktop)updateDesktop({focus:true,showCompletion:true});else rerender()}
     finally {finishing=false}
-  }
-  function place(id, slot) {
-    if (String(id) !== String(slot)) return
-    placed.add(Number(id)); selected = false
-    if (placed.size === 4) finishStep(); else {autosave.schedule(snapshot());rerender()}
   }
   function mount(root) {
     const stopSpeech=flow.currentStep>4?()=>{}:bindSpeechButtons(root)
@@ -92,14 +87,45 @@ export async function lessonTwoView({ render, navigate, lessonSession=studentLes
     }
     if (flow.currentStep === 3) {
       const paper = root.querySelector('[data-paper]'); const basket = root.querySelector('[data-basket]')
-      paper.addEventListener('dragstart', (event) => event.dataTransfer.setData('text/plain', 'paper'))
-      paper.addEventListener('click', () => { selected = true; rerender() })
-      basket.addEventListener('dragover', (event) => event.preventDefault())
-      basket.addEventListener('drop', (event) => { event.preventDefault(); if (event.dataTransfer.getData('text/plain') === 'paper') finishStep() })
-      basket.addEventListener('click', () => { if (selected) finishStep() })
+      paper.dataset.paper='paper';basket.dataset.basket='paper'
+      const cleanup=bindDragDrop(root,{sourceSelector:'[data-paper]',zoneSelector:'[data-basket]',sourceAttribute:'paper',zoneAttribute:'basket',onSelect:()=>{selected=true;paper.classList.add('is-selected');paper.setAttribute('aria-pressed','true')},getSelected:()=>selected?'paper':null,onDrop:(id,slot)=>{if(id==='paper'&&slot==='paper')finishStep()}})
+      return ()=>{cleanup();autosave.flush();stopSpeech()}
     }
     if (flow.currentStep === 4) {
-      bindDragDrop(root, { sourceSelector: '[data-piece]', zoneSelector: '[data-slot]', sourceAttribute: 'piece', zoneAttribute: 'slot', onSelect: (id) => { selected = Number(id); rerender() }, getSelected: () => selected, onDrop: place })
+      let alive=true,completionTimer
+      const animations=new Set(),status=root.querySelector('[data-puzzle-status]'),retry=root.querySelector('[data-puzzle-retry]')
+      function select(id) {
+        selected=Number(id)
+        root.querySelectorAll('[data-piece]').forEach(node=>{const active=Number(node.dataset.piece)===selected;node.classList.toggle('is-selected',active);node.setAttribute('aria-pressed',String(active))})
+      }
+      async function completePuzzle() {
+        retry.hidden=true
+        try {await finishStep()}
+        catch {if(alive){status.textContent='Nie udało się zapisać. Twoje elementy są na miejscu.';retry.hidden=false;retry.focus({preventScroll:true})}}
+      }
+      function place(id,slot) {
+        id=Number(id)
+        if(finishing||id!==Number(slot)||![1,2,3,4].includes(id)||placed.has(id))return
+        placed.add(id);select(null)
+        const source=root.querySelector(`[data-piece="${id}"]`),zone=root.querySelector(`[data-slot="${id}"]`)
+        const moveFocus=document.activeElement===source
+        source.classList.add('is-placed');source.disabled=true;source.setAttribute('aria-hidden','true')
+        zone.classList.add('is-filled');zone.textContent='';zone.setAttribute('aria-label',`Miejsce ${id}, element ułożony`)
+        if(moveFocus)zone.focus({preventScroll:true})
+        const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches
+        if(!reduced) {
+          const animation=zone.animate([{opacity:.5,transform:'scale(.94)'},{opacity:1,transform:'scale(1)'}],{duration:200,easing:'ease-out'})
+          animations.add(animation);animation.finished.catch(()=>{}).finally(()=>animations.delete(animation))
+        }
+        status.textContent=placed.size===4?'Wszystkie części są na miejscu.':'Element na miejscu. Ułóż kolejną część.'
+        autosave.schedule(snapshot())
+        // Show the fourth placement before the normal completion screen.
+        if(placed.size===4)completionTimer=setTimeout(()=>{if(alive)completePuzzle()},reduced?0:220)
+      }
+      const cleanup=bindDragDrop(root,{sourceSelector:'[data-piece]',zoneSelector:'[data-slot]',sourceAttribute:'piece',zoneAttribute:'slot',onSelect:select,getSelected:()=>selected,onDrop:place})
+      retry.addEventListener('click',completePuzzle)
+      if(placed.size===4)completionTimer=setTimeout(()=>{if(alive)completePuzzle()},0)
+      return ()=>{alive=false;clearTimeout(completionTimer);for(const animation of animations)animation.cancel();retry.removeEventListener('click',completePuzzle);cleanup();autosave.flush();stopSpeech()}
     }
     return ()=>{autosave.flush();stopSpeech()}
   }

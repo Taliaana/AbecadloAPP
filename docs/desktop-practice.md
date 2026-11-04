@@ -6,6 +6,8 @@
 - **Lekcja 2 „Obsługuję mysz”**: dotychczasowe cztery ćwiczenia oraz sześć krótkich zadań na pulpicie. Każdy etap kończy się kartą „Gotowe” i ręcznym przejściem dalej.
 - **Pracownia → Ćwicz mysz → Ćwicz na pulpicie**: samodzielne ćwiczenie po odblokowaniu narzędzia myszy.
 
+W ćwiczeniu z kartką i układance 1–4 wybór i odkładanie elementów aktualizują istniejący DOM, bez ponownego montowania lekcji. Klocki zachowują stałe miejsca na półce. Podczas przeciągania podgląd podąża za kursorem; poprawne umieszczenie części ma krótką animację, ograniczaną przez `prefers-reduced-motion`. Dopiero po ułożeniu czwartej części i zapisaniu postępu pojawia się karta ukończenia. Testy regresyjne są w `tests/ui/mouse-puzzle.spec.js`.
+
 ## Obsługa pulpitu
 
 Kliknięcie zaznacza, dwuklik lub Enter otwiera folder, dokument albo obraz. Pliki i foldery przenosi się przez przeciąganie do folderu/kosza lub przez wybór „Przenieś do” i przycisk „Przenieś”. Folder zachowuje zawartość; nie można włożyć go do siebie ani swojego podfolderu. Delete przenosi zaznaczony element do kosza; „Przywróć” odkłada go do poprzedniego folderu.

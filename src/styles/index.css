@@ -306,8 +306,20 @@ a.lesson-row:hover { background: var(--surface-muted); }
 .puzzle-board { width: 300px; height: 300px; display: grid; grid-template-columns: 1fr 1fr; border: 8px solid white; box-shadow: 0 0 0 1px var(--border); background: var(--surface); }
 .puzzle-piece, .puzzle-slot { border: 1px solid rgba(36,48,43,.15); display: grid; place-items: center; font-weight: 800; color: rgba(36,48,43,.5); cursor: pointer; }
 .puzzle-piece { width: 100px; height: 100px; border-radius: 12px; }
+.puzzle-piece.is-placed { visibility: hidden; pointer-events: none; }
+.puzzle-piece.is-selected { outline: 3px solid var(--brand-pink-dark); outline-offset: 3px; }
+.puzzle-piece.is-dragging, .paper-item.is-dragging { opacity: .3; }
+.puzzle-piece, .paper-item { cursor: grab; }
+.puzzle-piece:active, .paper-item:active { cursor: grabbing; }
+.activity-drag-preview { position: fixed; z-index: 3000; pointer-events: none; margin: 0; box-shadow: 0 12px 24px rgba(81,71,74,.22); transform: rotate(-3deg); }
+.puzzle-pieces { grid-template-rows: repeat(2, 100px); }
 .puzzle-slot.is-filled { border-style: solid; color: transparent; }
 .piece-1, .slot-1.is-filled { background: #96a9ae; } .piece-2, .slot-2.is-filled { background: #d69a9d; } .piece-3, .slot-3.is-filled { background: #8f8080; } .piece-4, .slot-4.is-filled { background: #c4aaa0; }
+@media (prefers-reduced-motion: no-preference) {
+  .activity-drag-preview { animation: activity-pick-up 160ms ease-out; }
+  @keyframes activity-pick-up { from { opacity: .5; transform: translateY(4px) rotate(0); } to { opacity: 1; transform: translateY(0) rotate(-3deg); } }
+}
+@media (prefers-reduced-motion: reduce) { .activity-drag-preview { transform: none; } }
 .keyboard-task { display: flex; flex-direction: column; align-items: center; }
 .large-input { width: min(100%, 580px); margin: 34px auto 0; }
 .large-input input { width: 100%; height: 82px; padding: 0 24px; border: 2px solid var(--border); border-radius: 18px; background: var(--surface); color: var(--text); font-size: 1.6rem; text-align: center; }
