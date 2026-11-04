@@ -37,19 +37,21 @@ test('wybór i odkładanie 1–4 aktualizują ten sam DOM, bez przesuwania pozos
   await page.locator('[data-step-continue]').click();await expect(page.locator('.desktop-surface')).toBeVisible()
 })
 
-for(const motion of ['no-preference','reduce'])test(`przeciąganie ma pływający podgląd, upuszczenie animację i działa ponownie (${motion})`,async({page})=>{
+for(const motion of ['no-preference','reduce'])test(`przeciąganie pokazuje tylko chwycony klocek bez dodatkowych efektów (${motion})`,async({page})=>{
   await page.emulateMedia({reducedMotion:motion});await openPuzzle(page)
   await page.evaluate(()=>{window.placementAnimations=[];const original=Element.prototype.animate;Element.prototype.animate=function(frames,options){if(this.matches('.puzzle-slot'))window.placementAnimations.push({frames,options});return original.call(this,frames,options)}})
   const source=page.locator('[data-piece="1"]'),target=page.locator('[data-slot="1"]')
   const from=await source.boundingBox(),to=await target.boundingBox()
   await page.mouse.move(from.x+35,from.y+35);await page.mouse.down();await page.mouse.move(from.x+60,from.y+40,{steps:5})
   await expect(page.locator('.activity-drag-preview')).toBeVisible();await expect(source).toHaveClass(/is-dragging/)
+  await expect(source).toBeHidden()
+  expect(await page.locator('.activity-drag-preview').evaluate(node=>{const s=getComputedStyle(node);return {transform:s.transform,shadow:s.boxShadow,outline:s.outlineStyle,animation:s.animationName}})).toEqual({transform:'none',shadow:'none',outline:'none',animation:'none'})
   await stableView(page)
   await page.mouse.move(to.x+50,to.y+50,{steps:8});await expect(target).toHaveClass(/is-drop-target/)
   await expect.poll(async()=>Math.abs((await page.locator('.activity-drag-preview').boundingBox()).x-(to.x+64))).toBeLessThan(12)
   if(motion==='reduce')expect(await page.locator('.activity-drag-preview').evaluate(node=>getComputedStyle(node).transform)).toBe('none')
   await page.mouse.up();await expect(target).toHaveClass(/is-filled/);await expect(page.locator('.activity-drag-preview')).toHaveCount(0);await stableView(page)
-  expect(await page.evaluate(()=>window.placementAnimations.length)).toBe(motion==='reduce'?0:1)
+  expect(await page.evaluate(()=>window.placementAnimations.length)).toBe(0)
   await page.locator('[data-piece="2"]').dragTo(page.locator('[data-slot="2"]'))
   await expect(page.locator('[data-slot="2"]')).toHaveClass(/is-filled/);await stableView(page)
 })

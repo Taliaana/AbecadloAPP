@@ -230,7 +230,7 @@ test('folder Przewijanie działa kółkiem i klawiaturą także bez pełnego ekr
   await page.reload();await expect(page.getByRole('region',{name:'Galeria do ćwiczenia przewijania'})).toBeVisible()
 })
 
-for(const reducedMotion of ['no-preference','reduce'])test(`przeciągany plik unosi się przy kursorze i znika po upuszczeniu (${reducedMotion})`,async({page})=>{
+for(const reducedMotion of ['no-preference','reduce'])test(`przeciąganie pokazuje sam plik bez dodatkowej karty i efektów (${reducedMotion})`,async({page})=>{
   await page.emulateMedia({reducedMotion});await prepareDesktop(page,{practice:true})
   const source=desktopFile(page,'note'),target=desktopFile(page,'works')
   await source.scrollIntoViewIfNeeded()
@@ -238,6 +238,10 @@ for(const reducedMotion of ['no-preference','reduce'])test(`przeciągany plik un
   await page.mouse.move(start.x+30,start.y+30);await page.mouse.down();await page.mouse.move(start.x+55,start.y+25,{steps:5})
   await expect(page.locator('.desktop-drag-preview')).toBeVisible()
   await expect(source).toHaveClass(/is-dragging/)
+  await expect(source).toBeHidden()
+  const preview=page.locator('.desktop-drag-preview')
+  expect(await preview.evaluate(node=>{const s=getComputedStyle(node);return {transform:s.transform,shadow:s.boxShadow,outline:s.outlineStyle,animation:s.animationName,background:s.backgroundColor}})).toEqual({transform:'none',shadow:'none',outline:'none',animation:'none',background:'rgba(0, 0, 0, 0)'})
+  expect((await preview.boundingBox()).width).toBe(start.width)
   await page.mouse.move(end.x+40,end.y+40,{steps:8})
   await expect(target).toHaveClass(/is-drop-target/)
   await expect.poll(async()=>Math.abs((await page.locator('.desktop-drag-preview').boundingBox()).x-(end.x+56))).toBeLessThan(20)

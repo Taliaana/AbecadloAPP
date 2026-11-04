@@ -32,6 +32,7 @@ export function bindDragDrop(root, {
       onSelect(id)
       const rect = source.getBoundingClientRect()
       preview = source.cloneNode(true)
+      preview.classList.remove('is-selected')
       preview.removeAttribute(`data-${sourceAttribute}`)
       preview.removeAttribute('id')
       preview.removeAttribute('aria-pressed')

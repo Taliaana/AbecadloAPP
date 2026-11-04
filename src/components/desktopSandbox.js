@@ -130,8 +130,12 @@ export function mountDesktopSandbox(host,{board,onChange=()=>{},onAction=()=>{}}
     const rect=file.getBoundingClientRect();grabOffset={x:event.clientX-rect.x,y:event.clientY-rect.y}
     clearDrag();dragged=file.dataset.file;selected(dragged)
     event.dataTransfer.setData('application/x-pinktower-file',dragged);event.dataTransfer.effectAllowed='move'
-    dragPreview=document.createElement('div');dragPreview.className='desktop-drag-preview';dragPreview.setAttribute('aria-hidden','true')
-    dragPreview.innerHTML=`${desktopIcon(item(dragged))}<span>${esc(name(dragged))}</span>`;(document.fullscreenElement||document.body).append(dragPreview);movePreview(event)
+    dragPreview=file.cloneNode(true)
+    for(const attribute of ['data-file','data-destination','id','aria-pressed'])dragPreview.removeAttribute(attribute)
+    dragPreview.classList.remove('is-selected','is-tutorial-target','is-drop-target','is-drop-received')
+    dragPreview.classList.add('desktop-drag-preview');dragPreview.setAttribute('aria-hidden','true');dragPreview.tabIndex=-1;dragPreview.draggable=false
+    dragPreview.style.width=`${rect.width}px`;dragPreview.style.height=`${rect.height}px`
+    ;(document.fullscreenElement||document.body).append(dragPreview);movePreview(event)
     const blank=document.createElement('canvas');blank.width=blank.height=1;event.dataTransfer.setDragImage(blank,0,0)
     file.classList.add('is-dragging')
   }
@@ -151,7 +155,7 @@ export function mountDesktopSandbox(host,{board,onChange=()=>{},onAction=()=>{}}
       if(folder==='desktop') {
         if(parentOf(board,id)!=='desktop'&&!moveDesktopFile(board,id,'desktop'))return
         const rect=host.querySelector('.desktop-surface').getBoundingClientRect();placeAt(id,event.clientX-rect.x-grabOffset.x,event.clientY-rect.y-grabOffset.y)
-      } else if(moveDesktopFile(board,id,folder)){changed(true,{type:'move',id,destination:folder});host.querySelectorAll(`[data-file="${folder}"]`).forEach(node=>node.classList.add('is-drop-received'))}
+      } else if(moveDesktopFile(board,id,folder))changed(true,{type:'move',id,destination:folder})
     }
   }
   const pointerdown=event=>{

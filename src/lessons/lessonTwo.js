@@ -93,7 +93,7 @@ export async function lessonTwoView({ render, navigate, lessonSession=studentLes
     }
     if (flow.currentStep === 4) {
       let alive=true,completionTimer
-      const animations=new Set(),status=root.querySelector('[data-puzzle-status]'),retry=root.querySelector('[data-puzzle-retry]')
+      const status=root.querySelector('[data-puzzle-status]'),retry=root.querySelector('[data-puzzle-retry]')
       function select(id) {
         selected=Number(id)
         root.querySelectorAll('[data-piece]').forEach(node=>{const active=Number(node.dataset.piece)===selected;node.classList.toggle('is-selected',active);node.setAttribute('aria-pressed',String(active))})
@@ -113,10 +113,6 @@ export async function lessonTwoView({ render, navigate, lessonSession=studentLes
         zone.classList.add('is-filled');zone.textContent='';zone.setAttribute('aria-label',`Miejsce ${id}, element ułożony`)
         if(moveFocus)zone.focus({preventScroll:true})
         const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches
-        if(!reduced) {
-          const animation=zone.animate([{opacity:.5,transform:'scale(.94)'},{opacity:1,transform:'scale(1)'}],{duration:200,easing:'ease-out'})
-          animations.add(animation);animation.finished.catch(()=>{}).finally(()=>animations.delete(animation))
-        }
         status.textContent=placed.size===4?'Wszystkie części są na miejscu.':'Element na miejscu. Ułóż kolejną część.'
         autosave.schedule(snapshot())
         // Show the fourth placement before the normal completion screen.
@@ -125,7 +121,7 @@ export async function lessonTwoView({ render, navigate, lessonSession=studentLes
       const cleanup=bindDragDrop(root,{sourceSelector:'[data-piece]',zoneSelector:'[data-slot]',sourceAttribute:'piece',zoneAttribute:'slot',onSelect:select,getSelected:()=>selected,onDrop:place})
       retry.addEventListener('click',completePuzzle)
       if(placed.size===4)completionTimer=setTimeout(()=>{if(alive)completePuzzle()},0)
-      return ()=>{alive=false;clearTimeout(completionTimer);for(const animation of animations)animation.cancel();retry.removeEventListener('click',completePuzzle);cleanup();autosave.flush();stopSpeech()}
+      return ()=>{alive=false;clearTimeout(completionTimer);retry.removeEventListener('click',completePuzzle);cleanup();autosave.flush();stopSpeech()}
     }
     return ()=>{autosave.flush();stopSpeech()}
   }
