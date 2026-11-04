@@ -75,7 +75,9 @@
 .desktop-scroll-gallery figcaption { padding-block:8px; text-align:center; }
 .desktop-scroll-end { margin-top:20px; font-weight:700; }
 .desktop-drag-preview { position:fixed; z-index:1000; pointer-events:none; margin:0; background:transparent; border-color:transparent; outline:none; box-shadow:none; transform:none; }
-.desktop-file.is-dragging { visibility:hidden; }
+.desktop-drag-preview svg { filter:drop-shadow(0 5px 5px rgba(81,71,74,.16)); }
+.desktop-file.is-dragging { opacity:.35; }
+.is-drop-target { outline:2px solid var(--brand-pink-dark); outline-offset:-3px; background:var(--brand-pink-wash); }
 .lesson-shell--desktop .lesson-content { padding-top:24px; }
 .desktop-task-heading { padding-block:4px 12px; }
 .desktop-task-heading .eyebrow { margin-bottom:8px; }
@@ -116,6 +118,10 @@
 }
 @media(prefers-reduced-motion:no-preference) {
   .desktop-file { transition:background 160ms ease,border-color 160ms ease,opacity 160ms ease; }
+  .desktop-drag-preview { animation:desktop-pick-up 160ms ease-out; }
+  .desktop-file.is-drop-received { animation:desktop-file-placed 200ms ease-out; }
   .tutorial-current { animation:desktop-tutorial-in 180ms ease-out; }
   @keyframes desktop-tutorial-in { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:none; } }
+  @keyframes desktop-pick-up { from { opacity:.4; transform:translateY(4px); } to { opacity:1; transform:none; } }
+  @keyframes desktop-file-placed { from { background:var(--brand-pink-soft); } to { background:transparent; } }
 }

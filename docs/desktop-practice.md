@@ -6,7 +6,7 @@
 - **Lekcja 2 „Obsługuję mysz”**: dotychczasowe cztery ćwiczenia oraz sześć krótkich zadań na pulpicie. Każdy etap kończy się kartą „Gotowe” i ręcznym przejściem dalej.
 - **Pracownia → Ćwicz mysz → Ćwicz na pulpicie**: samodzielne ćwiczenie po odblokowaniu narzędzia myszy.
 
-W ćwiczeniu z kartką i układance 1–4 wybór i odkładanie elementów aktualizują istniejący DOM, bez ponownego montowania lekcji. Klocki zachowują stałe miejsca na półce. Podczas przeciągania widać tylko chwycony element przy kursorze; jego miejsce jest zachowane, bez wyświetlania drugiej kopii. Nie dodajemy obrotu, cienia, obramowania ani efektu osadzania. Tak samo działają pliki i foldery pulpitu. Dopiero po ułożeniu czwartej części i zapisaniu postępu pojawia się karta ukończenia. Testy regresyjne są w `tests/ui/mouse-puzzle.spec.js`.
+W ćwiczeniu z kartką i układance 1–4 wybór i odkładanie elementów aktualizują istniejący DOM, bez ponownego montowania lekcji. Klocki zachowują stałe miejsca na półce. Przywrócono subtelne uniesienie, cień, podświetlenie miejsca docelowego i reakcję na odłożenie. Chwycony element pozostaje prosty, bez przekrzywionej kopii ani dodatkowej karty wokół pliku. Tak samo działają pliki i foldery pulpitu. Animacje respektują `prefers-reduced-motion`. Dopiero po ułożeniu czwartej części i zapisaniu postępu pojawia się karta ukończenia. Testy regresyjne są w `tests/ui/mouse-puzzle.spec.js`.
 
 ## Obsługa pulpitu
 
@@ -26,7 +26,7 @@ Folder „Przewijanie” zawiera galerię z własnym paskiem przewijania. Można
 
 Samouczek uruchamia się dopiero po wejściu na pełny ekran. Jedna wskazówka pokazuje bieżącą czynność, rysunek myszy z wyróżnionym lewym przyciskiem lub kółkiem i właściwy element pulpitu. Kolejny krok pojawia się po rzeczywistym zaznaczeniu Kosza, otwarciu go, zamknięciu okna, przesunięciu ikony, otwarciu galerii i przewinięciu jej na dół. Nie ma przycisku pomijającego niezrobiony krok. Samouczek można przerwać i uruchomić ponownie; opuszczenie pełnego ekranu chowa wskazówkę. Ćwiczenia w zwykłym oknie pozostają dostępne bez samouczka.
 
-Samouczek i polecenia lekcji mają przycisk odsłuchu korzystający ze wspólnego mechanizmu głosu PinkTower; nic nie odtwarza się automatycznie. Zmiana kroku zatrzymuje poprzedni odsłuch. Samouczek nie zalicza lekcji ani nie zeruje stanu pulpitu. Podczas przeciągania chwycony element podąża za kursorem bez dodatkowych efektów. Animacje samouczka respektują ustawienia systemu.
+Samouczek i polecenia lekcji mają przycisk odsłuchu korzystający ze wspólnego mechanizmu głosu PinkTower; nic nie odtwarza się automatycznie. Zmiana kroku zatrzymuje poprzedni odsłuch. Samouczek nie zalicza lekcji ani nie zeruje stanu pulpitu. Podczas przeciągania prosty podgląd elementu podąża za kursorem. Animacje respektują ustawienia systemu.
 
 ## Stan i bezpieczeństwo
 

@@ -155,7 +155,7 @@ export function mountDesktopSandbox(host,{board,onChange=()=>{},onAction=()=>{}}
       if(folder==='desktop') {
         if(parentOf(board,id)!=='desktop'&&!moveDesktopFile(board,id,'desktop'))return
         const rect=host.querySelector('.desktop-surface').getBoundingClientRect();placeAt(id,event.clientX-rect.x-grabOffset.x,event.clientY-rect.y-grabOffset.y)
-      } else if(moveDesktopFile(board,id,folder))changed(true,{type:'move',id,destination:folder})
+      } else if(moveDesktopFile(board,id,folder)){changed(true,{type:'move',id,destination:folder});host.querySelectorAll(`[data-file="${folder}"]`).forEach(node=>node.classList.add('is-drop-received'))}
     }
   }
   const pointerdown=event=>{
